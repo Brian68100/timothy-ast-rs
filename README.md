@@ -6,7 +6,7 @@ To run it as a shell, on the command line, type:
 
 To run a script, on the command line, type:
 
-    @ timothy-ast-rs script-name.timothy
+    $ timothy-ast-rs script-name.timothy
 
 To run with command line args, type:
 
@@ -21,16 +21,18 @@ To run with command line args, type:
     $ timothy-ast-rs script-name.timothy -- [arg ...]
 
 
-To run it embedded within another program from within Rust, type:
+To run it embedded within another program from within Rust,
+type in a text editor:
 
-    use timothy_ast_rs::parser::Parser
-
-        and
+    use timothy_ast_rs::parser::Parser;
         
     fn main() {
         parser = Parser::new();
-        TResult result = parser.parse_text("println(\"Hello, world!\"");
-        match result {
+        let result = parser.parse_text("println(\"Hello, world!\"");
+        switch result {
+            Err(_) => println!("Error occurred!");
+            _ => return;
+        }
     }
 
 
