@@ -23,7 +23,7 @@ To run with command line args, type:
 
 To run it embedded within another program from within Rust, type:
 
-    use timothy-ast-rs::parser::Parser
+    use timothy_ast_rs::parser::Parser
 
         and
         
