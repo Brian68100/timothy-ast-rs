@@ -1,0 +1,870 @@
+   Compiling tim v0.1.0 (/home/brobeck/Documents/rust/tim)
+warning: unused import: `std::io`
+  --> src/vm.rs:13:5
+   |
+13 | use std::io;
+   |     ^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::ptr`
+ --> src/parser.rs:9:5
+  |
+9 | use std::ptr;
+  |     ^^^^^^^^
+
+error[E0063]: missing field `arity` in initializer of `ast::Ast`
+    --> src/parser.rs:1084:23
+     |
+1084 |         Some(Box::new(Ast::Variable {
+     |                       ^^^^^^^^^^^^^ missing `arity`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:1206:13
+     |
+1203 |         Some(Box::new(Ast::Call(
+     |                       --------- arguments to this enum variant are incorrect
+...
+1206 |             Some(arg_list.clone()),
+     |             ^^^^^^^^^^^^^^^^^^^^^^ expected `Vec<Box<Ast>>`, found `Option<Option<Vec<Box<Ast>>>>`
+     |
+     = note: expected struct `Vec<Box<ast::Ast>>`
+                  found enum `Option<Option<Vec<Box<ast::Ast>>>>`
+note: tuple variant defined here
+    --> src/ast.rs:117:5
+     |
+117  |     Call(Option<*mut Ast>, Option<Box<Ast>>, Vec<Box<Ast>>),
+     |     ^^^^
+
+error[E0027]: pattern does not mention field `arity`
+    --> src/parser.rs:2222:21
+     |
+2222 |                     Ast::Variable {ref mut parent, ref mut name} => {
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing field `arity`
+     |
+help: include the missing field in the pattern
+     |
+2222 |                     Ast::Variable {ref mut parent, ref mut name, arity } => {
+     |                                                                +++++++
+help: if you don't care about this missing field, you can explicitly ignore it
+     |
+2222 |                     Ast::Variable {ref mut parent, ref mut name, arity: _ } => {
+     |                                                                ++++++++++
+help: or always ignore missing fields here
+     |
+2222 |                     Ast::Variable {ref mut parent, ref mut name, .. } => {
+     |                                                                ++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2056:46
+     |
+2056 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2056:41
+     |
+2056 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2056 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2059:46
+     |
+2059 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2059:41
+     |
+2059 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2059 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2068:46
+     |
+2068 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2068:41
+     |
+2068 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2068 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2071:46
+     |
+2071 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2071:41
+     |
+2071 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2071 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2080:46
+     |
+2080 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2080:41
+     |
+2080 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2080 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2083:46
+     |
+2083 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2083:41
+     |
+2083 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2083 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2092:46
+     |
+2092 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2092:41
+     |
+2092 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2092 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2095:46
+     |
+2095 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2095:41
+     |
+2095 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2095 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2104:46
+     |
+2104 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2104:41
+     |
+2104 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2104 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2107:46
+     |
+2107 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2107:41
+     |
+2107 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2107 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2116:46
+     |
+2116 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2116:41
+     |
+2116 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2116 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2119:46
+     |
+2119 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2119:41
+     |
+2119 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2119 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2128:46
+     |
+2128 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2128:41
+     |
+2128 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2128 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2131:46
+     |
+2131 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2131:41
+     |
+2131 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2131 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2140:46
+     |
+2140 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2140:41
+     |
+2140 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2140 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2143:46
+     |
+2143 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2143:41
+     |
+2143 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2143 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2152:46
+     |
+2152 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2152:41
+     |
+2152 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2152 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2155:46
+     |
+2155 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2155:41
+     |
+2155 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2155 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2164:46
+     |
+2164 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2164:41
+     |
+2164 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2164 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2167:46
+     |
+2167 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2167:41
+     |
+2167 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2167 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2176:46
+     |
+2176 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2176:41
+     |
+2176 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2176 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2179:46
+     |
+2179 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2179:41
+     |
+2179 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2179 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2188:46
+     |
+2188 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2188:41
+     |
+2188 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2188 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2191:46
+     |
+2191 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2191:41
+     |
+2191 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2191 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2200:46
+     |
+2200 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2200:41
+     |
+2200 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2200 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2203:46
+     |
+2203 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2203:41
+     |
+2203 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2203 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2213:46
+     |
+2213 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2213:41
+     |
+2213 |                         self.print(&mut Some(left.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2213 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2216:46
+     |
+2216 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2216:41
+     |
+2216 |                         self.print(&mut Some(right.clone()), level + 1);
+     |                                         ^^^^^-------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2216 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
+     |                                                           +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2229:46
+     |
+2229 |                         self.print(&mut Some(recv.clone()), level + 1);
+     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
+     |                                         |
+     |                                         arguments to this enum variant are incorrect
+     |
+     = note: expected struct `Box<_>`
+                  found enum `Option<Box<_>>`
+help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
+    --> src/parser.rs:2229:41
+     |
+2229 |                         self.print(&mut Some(recv.clone()), level + 1);
+     |                                         ^^^^^------------^
+     |                                              |
+     |                                              this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+     |
+599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^^^
+help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+     |
+2229 |                         self.print(&mut Some(recv.clone().expect("REASON")), level + 1);
+     |                                                          +++++++++++++++++
+
+warning: variable does not need to be mutable
+    --> src/vm.rs:2056:37
+     |
+2056 | ...                   let mut var: Result<VarInfo, VarError> = 
+     |                           ----^^^
+     |                           |
+     |                           help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+    --> src/vm.rs:2061:25
+     |
+2061 |                                 let mut fun = 
+     |                                     ----^^^
+     |                                     |
+     |                                     help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/vm.rs:2103:25
+     |
+2103 |                     let mut is_function = match &**expr {
+     |                         ----^^^^^^^^^^^
+     |                         |
+     |                         help: remove this `mut`
+
+Some errors have detailed explanations: E0027, E0063, E0308.
+For more information about an error, try `rustc --explain E0027`.
+warning: `tim` (bin "tim") generated 5 warnings
+error: could not compile `tim` (bin "tim") due to 32 previous errors; 5 warnings emitted

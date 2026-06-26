@@ -1,0 +1,575 @@
+use std::{vec::Vec, mem};
+use crate::closure::{Closure};
+use crate::function_core::*;
+use crate::native_fun::*;
+use crate::managed::*;
+use crate::upvalue::*;
+use ordered_float::*;
+
+#[derive(Eq, Hash, Debug, Clone)]
+#[allow(dead_code)]
+pub enum Value {
+    Nil,
+    Bool(bool),
+    Int(i64),
+    UInt(u64),
+    IntSize(isize),
+    UIntSize(usize),
+	Float(OrderedFloat<f64>),
+    String(Managed<String>),
+    Array(Managed<Vec<Value>>),
+    //Dict(HashMap<Value, Value>),
+    Closure(Managed<Closure>),
+    Upvalue(Managed<Upvalue>),
+    FunctionCore(Managed<FunctionCore>),
+    NativeFun(Managed<NativeFun>),
+    //Method(Rc<Method>), 
+    //Class(Rc<Class>),
+}
+
+#[allow(dead_code)]
+impl Value {
+    pub fn is_obj(&self) ->bool {
+        !matches!(self, 
+            Value::Nil |
+            Value::Bool(_) |
+            Value::Int(_) |
+            Value::UInt(_) |
+            Value::IntSize(_) |
+            Value::UIntSize(_) |
+            Value::Float(_))
+    }
+    pub fn is_nil(&self) -> bool {
+	matches!(self, Value::Nil)
+    }
+    pub fn is_bool(&self) -> bool {
+	matches!(self, Value::Bool(_))
+    }
+    pub fn is_int(&self) -> bool {
+	matches!(self, Value::Int(_))
+    }
+    pub fn is_uint(&self) -> bool {
+	matches!(self, Value::Int(_))
+    }
+    pub fn is_uintsize(&self) -> bool {
+	matches!(self, Value::UIntSize(_))
+    }
+    pub fn is_float(&self) -> bool {
+	matches!(self, Value::Float(_))
+    }
+    pub fn is_string(&self) -> bool {
+	matches!(self, Value::String(_))
+    }
+    pub fn is_array(&self) -> bool {
+	matches!(self, Value::Array(_))
+    }
+    /*pub fn is_dict(&self) -> bool {
+    matches!(self, Value::Dict(_))
+}*/
+    pub fn is_closure(&self) -> bool {
+	matches!(self, Value::Closure(_))
+    }
+    pub fn is_upvalue(&self) -> bool {
+        matches!(self, Value::Upvalue(_))
+    }
+    pub fn is_core(&self) -> bool {
+	matches!(self, Value::FunctionCore(_))
+    }
+    pub fn is_native_fun(&self) -> bool {
+        matches!(self, Value::NativeFun(_))
+    }
+    /*pub fn is_method(&self) -> bool {
+    matches!(self, Value::Method(_))
+}
+    pub fn is_class(&self) -> bool {
+    matches!(self, Value::Class(_))
+}*/
+    
+    // Converts Tim value to a bool, panics if it isn't one
+	pub fn as_bool(&self) -> bool {
+	    match self {
+		Value::Bool(boolean) => *boolean,
+		_ => panic!("Value is not a boolean"),
+	    }
+	}	
+	// Converts Tim value to an i64, panics if it isn't one
+	pub fn as_int(&self) -> i64 {
+	    match self {
+		Value::Int(int) => *int,
+		_ => panic!("Value is not a 64-bit int"),
+	    }
+	}
+    // Converts Tim value to a u64, panics if it isn't one
+    pub fn as_uint(&self) -> u64 {
+	match self {
+	    Value::UInt(uint) => *uint,
+	    _ => panic!("Value is not a 64-bit unsigned int"),
+	}
+    }
+    // Converts Tim value to a usize, panics if it isn't one
+    pub fn as_uintsize(&self) -> usize {
+	match self {
+	    Value::UIntSize(uintsize) => *uintsize,
+	    _ => panic!("Value is not a 64-bit unsigned int"),
+	}
+    }
+    // Converts Tim value to an f64, panics if it isn't one
+    pub fn as_float(&self) -> f64 {
+	match self {
+	    Value::Float(float) => **float,
+	    _ => panic!("Value is not a 64-bit float"),
+	}
+    }
+    // Converts Tim value to a String, panics if it isn't one
+    pub fn as_string(&self) -> Managed<String> {
+	match self {
+	    Value::String(string) => *string,
+	    _ => panic!("Value is not a string"),
+	}
+    }
+    // Converts Tim value to an Array, panics if it isn't one
+    pub fn as_array(&self) -> Managed<Vec<Value>> {
+	match self {
+	    Value::Array(array) => *array,
+	    _ => panic!("Value is not an array"),
+	}
+    }
+    // Converts Tim value to a Dict, panics if it isn't one
+    /*pub fn as_dict(&self) -> HashMap<Value, Value> {
+    match self {
+    Value::Dict(dict) => *dict,
+    _ => panic!("Value is not a string"),
+}
+}*/
+    // Converts Tim value to a Closure, panics if it isn't one
+    pub fn as_closure(&mut self) -> Managed<Closure> {
+	match self {
+            Value::Closure(closure) => *closure,
+	    _ => panic!("Value is not a closure"),
+	}
+    }
+    pub fn as_upvalue(&mut self) -> Managed<Upvalue> {
+        match self {
+            Value::Upvalue(upvalue) => *upvalue,
+            _ => panic!("Value is not an upvalue"),
+        }
+    }
+    // Converts Tim value to a FunctionCore, panics if it isn't one
+    pub fn as_core(&mut self) -> Managed<FunctionCore> {
+	match self {
+	    Value::FunctionCore(core) => *core,
+	    _ => panic!("Value is not a function core"),
+	}
+    }
+    // Converts Tim value to a NativeFun, panics if it isn't one
+    pub fn as_native_fun(&mut self) -> Managed<NativeFun> {
+	match self {
+	    Value::NativeFun(native) => *native,
+	    _ => panic!("Value is not a native function"),
+	}
+    }
+    // Converts Tim value to a Class, panics if it isn't one
+    /*pub fn as_class(&self) -> Class {
+    match self {
+    Value::Class(class) => *class,
+    _ => panic!("Value is not a class"),
+}
+}*/
+    // Converts Tim value to a Method, panics if it isn't one
+    /*pub fn as_method(&self) -> Rc<Method> {
+    match self {
+    Value::Method(method) => *method,
+    _ => panic!("Value is not a method"),
+}
+}*/
+    // These methods return Result Objects
+
+    
+    // Converts Tim value to a Bool, returns an error string
+    // if it fails
+    pub fn get_bool(&self) -> Result<bool, String> {
+        match self {
+            Value::Bool(boolean) => Ok(*boolean),
+            _ => Err(String::from("value not a bool"))
+        }
+    }
+
+    // Converts Tim value to an Int, returns an error string
+    // if it fails
+    pub fn get_int(&self) -> Result<i64, String> {
+        match self {
+            Value::Int(int) => Ok(*int),
+            _ => Err(String::from("value not an int"))
+        }
+    }
+
+    // Converts Tim value to a UInt, returns an error string
+    // if it fails
+    pub fn get_uint(&self) -> Result<u64, String> {
+        match self {
+            Value::UInt(uint) => Ok(*uint),
+            _ => Err(String::from("value not a uint"))
+        }
+    }
+
+    // Converts Tim value to a IntSize, returns an error string
+    // if it fails
+    pub fn get_intsize(&self) -> Result<isize, String> {
+        match self {
+            Value::IntSize(intsize) => Ok(*intsize),
+            _ => Err(String::from("value not an intsize"))
+        }
+    }
+
+    // Converts Tim value to a UIntSize, returns an error string
+    // if it fails
+    pub fn get_uintsize(&self) -> Result<usize, String> {
+        match self {
+            Value::UIntSize(uintsize) => Ok(*uintsize),
+            _ => Err(String::from("value not a uintsize"))
+        }
+    }
+
+    // Converts Tim value to a Float, returns an error string
+    // if it fails
+    pub fn get_float(&self) -> Result<f64, String> {
+        match self { 
+            Value::Float(float) => Ok(float.0),
+            _ => Err(String::from("value not a float"))
+        }
+    }
+
+    // Converts Tim value to a String, returns an error string
+    // if it fails
+    pub fn get_string(&self) -> Result<Managed<String>, String> {
+        match self {
+            Value::String(string) => Ok(*string),
+            _ => Err(String::from("value not a string"))
+        }
+    }
+
+    // Converts Tim value to an Array, returns an error string
+    // if it fails
+    pub fn get_array(&self) -> Result<Managed<Vec<Value>>, String> {
+        match self {
+            Value::Array(array) => Ok(*array),
+            _ => Err(String::from("value not an array"))
+        }
+    }
+
+    // Converts Tim value to a Closure, returns an error string
+    // if it fails
+    pub fn get_closure(&self) -> Result<Managed<Closure>, String> {
+        match self {
+            Value::Closure(closure) => Ok(*closure),
+            _ => Err(String::from("value not a closure"))
+        }
+    }
+    
+    // Converts Tim value to an Upvalue, returns an error string
+    // if it fails
+    pub fn get_upvalue(&self) -> Result<Managed<Upvalue>, String> {
+        match self {
+            Value::Upvalue(upvalue) => Ok(*upvalue),
+            _ => Err(String::from("value not an upvalue"))
+        }
+    }
+
+    // Converts Tim value to a NativeFun, returns an error string
+    // if it fails
+    pub fn get_native_fun(&self) -> Result<Managed<NativeFun>, String> {
+        match self {
+            Value::NativeFun(native) => Ok(*native),
+            _ => Err(String::from("value not a native function"))
+        }
+    }
+
+    // Converts Tim value to a Class, returns an error string
+    // if it fails
+    /*pub fn get_class(&self) -> Result<Managed<Class>, String> {
+        match self {
+            Value::Class(class) => Ok(*class),
+            _ => Err(String::from("value not a class"))
+        }
+    }*/
+
+    // Converts Tim value to a Method, returns an error string
+    // if it fails
+    /*pub fn get_class(&self) -> Result<Managed<Method>, String> {
+        match self {
+            Value::Method(method) => Ok(*method),
+            _ => Err(String::from("value not a method"))
+        }
+    }*/
+    
+    // Converts Tim value to a Bool, returns an error string
+    // if it fails
+    pub fn get_bool_mut(&mut self) -> Result<bool, String> {
+        match self {
+            Value::Bool(boolean) => Ok(*boolean),
+            _ => Err(String::from("value not a bool"))
+        }
+    }
+
+    // Converts Tim value to an Int, returns an error string
+    // if it fails
+    pub fn get_int_mut(&mut self) -> Result<i64, String> {
+        match self {
+            Value::Int(int) => Ok(*int),
+            _ => Err(String::from("value not an int"))
+        }
+    }
+
+    // Converts Tim value to a UInt, returns an error string
+    // if it fails
+    pub fn get_uint_mut(&mut self) -> Result<u64, String> {
+        match self {
+            Value::UInt(uint) => Ok(*uint),
+            _ => Err(String::from("value not a uint"))
+        }
+    }
+
+    // Converts Tim value to a IntSize, returns an error string
+    // if it fails
+    pub fn get_intsize_mut(&mut self) -> Result<isize, String> {
+        match self {
+            Value::IntSize(intsize) => Ok(*intsize),
+            _ => Err(String::from("value not an intsize"))
+        }
+    }
+
+    // Converts Tim value to a UIntSize, returns an error string
+    // if it fails
+    pub fn get_uintsize_mut(&mut self) -> Result<usize, String> {
+        match self {
+            Value::UIntSize(uintsize) => Ok(*uintsize),
+            _ => Err(String::from("value not a uintsize"))
+        }
+    }
+
+    // Converts Tim value to a Float, returns an error string
+    // if it fails
+    pub fn get_float_mut(&mut self) -> Result<f64, String> {
+        match self { 
+            Value::Float(float) => Ok(float.0),
+            _ => Err(String::from("value not a float"))
+        }
+    }
+
+    // Converts Tim value to a String, returns an error string
+    // if it fails
+    pub fn get_string_mut(&mut self) -> Result<Managed<String>, String> {
+        match self {
+            Value::String(string) => Ok(*string),
+            _ => Err(String::from("value not a string"))
+        }
+    }
+
+    // Converts Tim value to an Array, returns an error string
+    // if it fails
+    pub fn get_array_mut(&mut self) -> Result<Managed<Vec<Value>>, String> {
+        match self {
+            Value::Array(array) => Ok(*array),
+            _ => Err(String::from("value not an array"))
+        }
+    }
+
+    // Converts Tim value to a Closure, returns an error string
+    // if it fails
+    pub fn get_closure_mut(&mut self) -> Result<Managed<Closure>, String> {
+        match self {
+            Value::Closure(closure) => Ok(*closure),
+            _ => Err(String::from("value not a closure"))
+        }
+    }
+    
+    // Converts Tim value to an Upvalue, returns an error string
+    // if it fails
+    pub fn get_upvalue_mut(&mut self) -> Result<Managed<Upvalue>, String> {
+        match self {
+            Value::Upvalue(upvalue) => Ok(*upvalue),
+            _ => Err(String::from("value not an upvalue"))
+        }
+    }
+    
+    // Converts Tim value to a NativeFun, returns an error string
+    // if it fails
+    pub fn get_native_fun_mut(&mut self) -> Result<Managed<NativeFun>, String> {
+        match self {
+            Value::NativeFun(native) => Ok(*native),
+            _ => Err(String::from("value not a native function"))
+        }
+    }
+
+    // Converts Tim value to a Class, returns an error string
+    // if it fails
+    /*pub fn get_class(&self) -> Result<Managed<Class>, String> {
+        match self {
+            Value::Class(class) => Ok(*class),
+            _ => Err(String::from("value not a class"))
+        }
+    }*/
+
+    // Converts Tim value to a Method, returns an error string
+    // if it fails
+    /*pub fn get_method(&self) -> Result<Managed<Method>, String> {
+        match self {
+            Value::Method(method) => Ok(*method),
+            _ => Err(String::from("value not a method"))
+        }
+    }*/
+
+    
+    
+    pub fn value_type(&self) -> String {
+        match self {
+            Value::Nil => "nil".to_string(),
+            Value::Bool(_) => "bool".to_string(),
+            Value::Int(_) => "int".to_string(),
+            Value::UInt(_) => "uint".to_string(),
+            Value::IntSize(_) => "intsize".to_string(),
+            Value::UIntSize(_) => "uintsize".to_string(),
+            Value::Float(_) => "float".to_string(),
+            Value::String(_) => "string".to_string(),
+            Value::Array(_) => "array".to_string(),
+            Value::Closure(_) => "function".to_string(),
+            Value::Upvalue(_) => "upvalue".to_string(),
+            Value::NativeFun(_) => "function".to_string(),
+            //Value::Method(_) => "method".to_string(),
+            //Value::NativeMethod(_) => "native method".to_string(),
+            //Value::Class(_) => "class".to_string(),
+            //Value::Instance(_) => "instance".to_string(),
+            Value::FunctionCore(_) => "function core".to_string(),
+            
+        }
+    }
+    pub fn get_dyn_managed(&self) -> Option<Managed<dyn Manage>> {
+        match self { 
+            Value::String(string) => Some(string.clone_dyn()),
+            Value::Closure(closure) => Some(closure.clone_dyn()),
+            Value::Upvalue(upvalue) => Some(upvalue.clone_dyn()),
+            Value::NativeFun(native_fun) => Some(native_fun.clone_dyn()),
+            //Value::Method(_) => Some(method.clone_dyn()),
+            //Value::NativeMethod(native_method) => Some(native_method.clone_dyn()),
+            //Value::Class(class) => Some(class.clone_dyn()),
+            //Value::Instance(instance) => Some(instance.clone_dyn()),
+            Value::FunctionCore(core) => Some(core.clone_dyn()),
+            _ => panic!("Cannot manage type!"),
+        }
+    }
+}
+
+use std::fmt;
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Value) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
+
+        match (self, other) {
+            (Self::Nil, Value::Nil) => true,
+            (Self::Bool(b1), Value::Bool(b2)) => b1 == b2,
+            (Self::Int(i1), Value::Int(i2)) => i1 == i2,
+            (Self::UInt(ui1), Value::UInt(ui2)) => ui1 == ui2,
+            (Self::UIntSize(size1), Value::UIntSize(size2)) => size1 == size2,
+            (Self::Float(f1), Value::Float(f2)) => f1 == f2,
+            (Self::String(s1), Value::String(s2)) => s1 == s2,
+            (Self::Array(a1), Value::Array(a2)) => a1.len() == a2.len(),
+            //(Self::Dict(d1), Value::Dict(d2)) => d1.len() == d2.len(),
+            (Self::Closure(c1), Value::Closure(c2)) => c1.get_core().get_name() == c2.get_core().get_name(),
+            (Self::FunctionCore(fc1), Value::FunctionCore(fc2)) => fc1.get_name() == fc2.get_name(),
+            (Self::NativeFun(n1), Value::NativeFun(n2)) => n1 == n2,
+            //Value::Method => self.as_method().get_name() == other.as_method().get_name(),
+            //Value::Class => self.as_class().get_name() == other.as_class().get_name(),
+            
+            _ => false
+        }
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Nil => {
+                write!(f, "nil")
+            },
+            Value::Bool(boolean) => {
+                write!(f, "(bool) {}", boolean)
+            },
+            Value::Int(int) => {
+                write!(f, "(int) {}", int)
+            },
+            Value::UInt(uint) => {
+                write!(f, "(uint) {}", uint)
+            },
+            Value::Float(float) => {
+                write!(f, "(float) {}", float)
+            }, 
+            Value::String(string) => {
+                write!(f, "\"{}\"", string.as_str())
+            },
+            Value::Closure(c) => {
+                match c.get_core().get_type() {
+                    FunctionType::TopLevel => {
+                        write!(f, "<top-level>")
+                    },
+                    FunctionType::NamedClosure => {
+                        write!(f, "<function {}(#{})>", 
+                            c.get_core().get_name(),
+                            c.get_core().get_arity())
+                    },
+                    FunctionType::AnonClosure => {
+                        write!(f, "<anonymous (#{})>",
+                            c.get_core().get_arity())
+                    },
+                    _ => { Ok(()) }
+                } 
+            },
+            Value::NativeFun(n) => {
+                write!(f, "<native function {}(#{})>",
+                    n.get_name(),
+                    n.get_arity(),
+                )
+            },
+            _ => {
+                write!(f, "<error>")
+            }
+        }
+    }
+}
+impl GcTrace for String {
+    fn trace(&self, _: &mut dyn FnMut(Managed<dyn Manage>)) -> bool {
+        true
+    }
+}
+
+impl Manage for String {
+    fn type_name(&self) -> &str {
+        "string"
+    }
+    fn debug(&self) -> String {
+        format!("{:?}", self)
+    }
+    fn size(&self) -> usize {
+        mem::size_of_val(self)
+    }
+}
+
+impl GcTrace for Vec<Value> {
+    fn trace(&self, _: &mut dyn FnMut(Managed<dyn Manage>)) -> bool {
+        true
+    }
+}
+
+impl Manage for Vec<Value> {
+    fn type_name(&self) -> &str {
+        "array"
+    }
+    fn debug(&self) -> String {
+        format!("{:?}", self)
+    }
+    fn size(&self) -> usize {
+        mem::size_of_val(self)
+    }
+}

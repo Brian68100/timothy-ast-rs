@@ -1,0 +1,201 @@
+use std::{
+    cell::Cell, 
+    fmt,
+    hash::{Hash, Hasher},
+    ops::{Deref, DerefMut},
+    ptr::{self, NonNull},
+};
+
+pub trait GcTrace {
+    fn trace(&self, mark_obj: &mut dyn FnMut(Managed<dyn Manage>)) -> bool;
+}
+
+pub trait Manage: GcTrace {
+    fn type_name(&self) -> &str;
+
+    fn debug(&self) -> String;
+
+    fn size(&self) -> usize;
+}
+
+#[derive(Debug, Default)]
+pub struct Header {
+    marked: Cell<bool>,
+}
+
+#[derive(Debug)]
+pub struct Allocation<T: 'static + GcTrace + ?Sized> {
+    header: Header,
+    data: T,
+}
+
+impl<T: 'static + Manage> Allocation<T> {
+    pub fn new(data: T) -> Self {
+        Self {
+            data,
+            header: Header {
+                marked: Cell::new(false)
+            },
+        }
+    }
+    pub fn size(&self) -> usize {
+        self.data.size()
+    }
+}
+
+impl Allocation<dyn Manage> {
+    pub fn size(&self) -> usize {
+        self.data.size()
+    }
+}
+
+impl<T: 'static + Manage + ?Sized> Allocation<T> {
+    pub fn mark(&self) -> bool {
+        self.header.marked.replace(true)
+    }
+
+    pub fn unmark(&self) -> bool {
+        self.header.marked.replace(false)
+    }
+
+    pub fn marked(&self) -> bool {
+        self.header.marked.get()
+    }
+
+    pub fn type_name(&self) -> &str {
+        self.data.type_name()
+    }
+
+    pub fn debug(&self) -> String {
+        self.data.debug()
+    }
+}
+
+pub struct Managed<T: 'static + Manage + ?Sized> {
+    ptr: NonNull<Allocation<T>>,
+}
+
+impl<T: 'static + Manage + ?Sized> Managed<T> {
+    pub fn obj(&self) -> &Allocation<T> {
+        unsafe { self.ptr.as_ref() }
+    }
+
+    pub fn obj_mut(&mut self) -> &mut Allocation<T> {
+        unsafe { self.ptr.as_mut() }
+    }
+}
+
+impl<T: 'static + Manage> Managed<T> {
+    pub fn clone_dyn(&self) -> Managed<dyn Manage> {
+        Managed {
+            ptr: NonNull::from(self.obj()) as NonNull<Allocation<dyn Manage>>,
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        self.obj().size()
+    }
+}
+
+impl<T: 'static + Manage> GcTrace for Managed<T> {
+    fn trace(&self, mark: &mut dyn FnMut(Managed<dyn Manage>)) -> bool {
+        self.obj().data.trace(mark);
+        true
+    }
+}
+
+impl<T: 'static + Manage> Manage for Managed<T> {
+    fn type_name(&self) -> &str {
+        self.obj().data.type_name()
+    }
+
+    fn debug(&self) -> String {
+        self.obj().data.debug()
+    }
+
+    fn size(&self) -> usize {
+        self.obj().size()
+    }
+}
+
+impl GcTrace for Managed<dyn Manage> {
+    fn trace(&self, mark: &mut dyn FnMut(Managed<dyn Manage>)) -> bool {
+        self.obj().data.trace(mark);
+        true
+    }
+}
+
+impl Manage for Managed<dyn Manage> {
+    fn type_name(&self) -> &str {
+        self.obj().data.type_name()
+    }
+
+    fn debug(&self) -> String {
+        self.obj().data.debug()
+    }
+
+    fn size(&self) -> usize {
+        self.obj().size()
+    }
+}
+
+impl<T: 'static + Manage + ?Sized> From<NonNull<Allocation<T>>> for Managed<T> {
+    fn from(fun: NonNull<Allocation<T>>) -> Self {
+        Self { ptr: fun }
+    }
+}
+
+impl<T: 'static + Manage + ?Sized> Copy for Managed<T> {}
+impl<T: 'static + Manage + ?Sized> Clone for Managed<T> {
+    fn clone(&self) -> Managed<T> {
+        *self
+    }
+}
+
+impl<T: 'static + Manage> Deref for Managed<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &self.obj().data
+    }
+}
+
+impl<T: 'static + Manage> DerefMut for Managed<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.obj_mut().data
+    }
+}
+
+impl<T: 'static + Manage> PartialEq for Managed<T> {
+    fn eq(&self, other: &Managed<T>) -> bool {
+        let left_inner: &T = self;
+        let right_inner: &T = other;
+
+        ptr::eq(left_inner, right_inner)
+    }
+}
+
+impl<T: 'static + Eq + Manage> Eq for Managed<T> {}
+
+impl<T: 'static + Hash + Manage> Hash for Managed<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let inner: &T = self;
+        ptr::hash(inner, state)
+    }
+}
+
+impl<T: 'static + Manage + fmt::Debug> fmt::Debug for Managed<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let inner: &T = self;
+
+        f.debug_struct("Managed").field("ptr", inner).finish()
+    }
+}
+
+pub fn make_managed<T: 'static + Manage>(data: T) -> (Managed<T>, Box<Allocation<T>>) {
+    let mut alloc = Box::new(Allocation::new(data));
+    let ptr = unsafe { NonNull::new_unchecked(&mut *alloc) };
+
+    (Managed::from(ptr), alloc)
+}
+

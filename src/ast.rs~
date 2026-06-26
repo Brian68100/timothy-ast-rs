@@ -1,0 +1,167 @@
+use std::vec::Vec;
+use crate::value::Value;
+use crate::function_core::{FunctionType};
+use crate::closure::{Closure};
+use std::fmt::{Display, Formatter, Error};
+
+#[derive(Clone, Debug)]
+pub enum Ast {
+    FunDecl {
+        fun_ty: FunctionType,
+	    name: String,
+	    params: Vec<Box<Ast>>,
+	    listing: Vec<Box<Ast>>,
+        closure: Closure,
+    },
+    NativeFunDecl {
+        name: String,
+        params: Vec<Box<Ast>>,
+        native: NativeFun,
+    },
+    ClassDecl {
+        name: String,
+        superclass: String,
+        methods: Vec<Box<MethodDecl>>,
+    },
+    NativeClassDecl {
+        name: String,
+        superclass: String,
+        native_class: NativeClass,
+    },
+    MethodDecl {
+        name: String,
+        params: Vec<Box<Ast>>,
+        listing: Vec<Box<Ast>>,
+    },
+    LetDecl {
+	    name: String, 
+	    expr: Box<Ast>, 
+    },
+    ReturnStmt{
+        expr: Option<Box<Ast>>,
+    },
+    ExprStmt {
+        expr: Box<Ast>, 
+    },
+    IfStmt {
+        expr: Box<Ast>,
+        true_branch: Box<Ast>,
+        false_branch: Option<Box<Ast>>,
+    },
+    WhileStmt {
+        expr: Box<Ast>,
+        body: Box<Ast>,
+    },
+    DoWhileStmt {
+        body: Box<Ast>,
+        expr: Box<Ast>,
+    },
+    ForStmt {
+        init: Option<Box<Ast>>,
+        cond: Option<Box<Ast>>,
+        inc_expr: Option<Box<Ast>>,
+        body: Box<Ast>,
+    },
+    Block {
+        listing: Vec<Box<Ast>>
+    },
+    ClassDecl {
+        name: String, 
+        superclass: Option<String>,
+        //methods: HashMap<String, Method>
+    },
+    Value {
+        val: Value,
+    },
+    ModuleDot {
+	l: Box<Ast>, 
+	r: Box<Ast>,
+    },
+    Variable {
+        name: String,
+	arity: Option<usize>,
+    },
+    //Instance Field
+    Field {
+        name: String
+    },
+    // Class Static Field
+    StaticField { 
+        name: String
+    },
+    LNot(Option<Box<Ast>>),
+    Not(Option<Box<Ast>>),
+    Negate(Option<Box<Ast>>),
+    Add(Option<Box<Ast>>, Option<Box<Ast>>),
+    Subtract(Option<Box<Ast>>, Option<Box<Ast>>),
+    Multiply(Option<Box<Ast>>, Option<Box<Ast>>),
+    Divide(Option<Box<Ast>>, Option<Box<Ast>>),
+    Modulo(Option<Box<Ast>>, Option<Box<Ast>>),
+    Power(Option<Box<Ast>>, Option<Box<Ast>>),
+    LAnd(Option<Box<Ast>>, Option<Box<Ast>>),
+    LOr(Option<Box<Ast>>, Option<Box<Ast>>),
+    And(Option<Box<Ast>>, Option<Box<Ast>>),
+    Or(Option<Box<Ast>>, Option<Box<Ast>>),
+    XOr(Option<Box<Ast>>, Option<Box<Ast>>),
+    LShift(Option<Box<Ast>>, Option<Box<Ast>>),
+    RShift(Option<Box<Ast>>, Option<Box<Ast>>), 
+
+    Assign(Option<Box<Ast>>, Option<Box<Ast>>),
+    AddAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    SubtractAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    MultiplyAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    DivideAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    ModuloAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    PowerAssign(Option<Box<Ast>>, Option<Box<Ast>>), 
+    AndAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    OrAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    XOrAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    LShiftAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+    RShiftAssign(Option<Box<Ast>>, Option<Box<Ast>>),
+
+    Call(Option<Box<Ast>>, Vec<Box<Ast>>),
+    MemberDot(Option<Box<Ast>>, Option<Box<Ast>>),
+    NSDot(Option<Box<Ast>>, Option<Box<Ast>>),
+}
+
+impl Display for Ast {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        match self {
+            Ast::FunDecl {..} => {write!(f, "Fun Decl")},
+            Ast::LetDecl {..} => {write!(f, "Let Stmt")},
+            Ast::ReturnStmt {..} => {write!(f, "Return Stmt")},
+            Ast::Block {..} => {write!(f, "Block")},
+            Ast::LNot(..) => {write!(f, "Logical NOT")},
+            Ast::Not(..) => {write!(f, "Bitwise NOT")},
+            Ast::Negate(..) => {write!(f, "Negate")},
+            Ast::Add(..) => {write!(f, "Add")},
+            Ast::Subtract(..) => {write!(f, "Subtract")},
+            Ast::Multiply(..) => {write!(f, "Multiply")},
+            Ast::Divide(..) => {write!(f, "Divide")},
+            Ast::Modulo(..) => {write!(f, "Modulo")},
+            Ast::Power(..) => {write!(f, "Power")},
+            Ast::LAnd(..) => {write!(f, "Logical AND")}
+            Ast::LOr(..) => {write!(f, "Logical OR")},
+            Ast::And(..) => {write!(f, "Bitwise AND")},
+            Ast::Or(..) => {write!(f, "Bitwise OR")},
+            Ast::LShift(..) => {write!(f, "L-Shift")},
+            Ast::RShift(..) => {write!(f, "R-Shift")},
+            Ast::Assign(..) => {write!(f, "Assignment")},
+            Ast::AddAssign(..) => {write!(f, "Compound Add")},
+            Ast::SubtractAssign(..) => {write!(f, "Compound Subtract")},
+            Ast::MultiplyAssign(..) => {write!(f, "Compound Multiply")},
+            Ast::DivideAssign(..) => {write!(f, "Compound Divide")},
+            Ast::ModuloAssign(..) => {write!(f, "Compound Modulo")},
+            Ast::PowerAssign(..) => {write!(f, "Compound Power")},
+            Ast::AndAssign(..) => {write!(f, "Compound Bitwise AND")},
+            Ast::OrAssign(..) => {write!(f, "Compound Bitwise OR")},
+            Ast::LShiftAssign(..) => {write!(f, "Compound L-Shift")},
+            Ast::RShiftAssign(..) => {write!(f, "Compound R-Shift")},
+            Ast::ExprStmt {..} => {write!(f, "Expr Stmt")},
+            Ast::Value {..} => {write!(f, "Value")},
+            Ast::Variable {..} => {write!(f, "Variable")},
+            Ast::Call(..) => {write!(f, "Call")},
+            _ => {write!(f, "<error>")},
+        }
+    }
+}

@@ -1,0 +1,240 @@
+#![allow(unused_assignments)]
+#![allow(unused_variables)]
+
+mod upvalue;
+mod utils;
+mod value;
+mod opcode;
+mod function_core;
+mod closure;
+mod natives;
+mod native_fun;
+mod vm;
+mod managed;
+mod gc;
+//mod object;
+mod token;
+mod lexer;
+mod ast;
+mod parser;
+
+pub mod prelude {
+    pub use crate::upvalue::*;
+    pub use crate::value::*;
+    pub use crate::opcode::*;
+    pub use crate::vm::*;
+    pub use crate::managed::*;
+    pub use crate::function_core::*;
+    pub use crate::closure::*;
+    pub use crate::token::*;
+    pub use crate::lexer::*;
+}
+
+use crate::natives::*;
+use crate::parser::{interpret_string,
+                      interpret_file,
+                      InterpretErrorType};
+use crate::prelude::VM;
+use std::io;
+use std::io::Write;
+use std::env;
+use crate::gc::Gc;
+use std::process;
+//use crate::object::*;
+
+fn main() -> Result<(), String> { 
+    
+    let mut gc = Gc::new();
+    let mut vm = VM::new();
+    
+    let args: Vec<String> = env::args().collect();
+    let mut iter = args.iter();
+    let mut arg = iter.next();
+    arg = iter.next();
+ 
+    let mut print_ast = false;
+    let mut compile = false;
+    let mut debug = false;
+    loop {
+        if arg == None { break; }
+
+        if let Some(a) = arg {
+            if a.starts_with("--") {
+                break;
+            }
+            if a.starts_with("-") {
+                match a {
+                    separator if *separator == "--".to_string() => {
+                        arg = iter.next();
+                        if arg.is_none() {
+                            eprintln!("'--' ignored");
+                            break;
+                        } else {
+                            continue;
+                        }
+                    },
+                    _ => {
+                        let mut iter2 = a.chars();
+                        let mut ch = iter2.next();
+                        ch = iter2.next();
+                        loop {
+                            match ch {
+                                Some('a') => {
+                                    print_ast = true;
+                                    ch = iter2.next();
+                                    continue;
+                                },
+                                Some('C') => {
+                                    compile = true;
+                                    ch = iter2.next();
+                                    continue;
+                                },
+                                Some('d') => {
+                                    debug = true;
+                                    ch = iter2.next();
+                                    continue;
+                                },
+                                None => {
+                                    arg = iter.next();
+                                    break;
+                                },
+                                _ => { 
+                                    eprintln!("invalid option '{}'", a);
+                                    usage();
+                                },
+                            }
+                        }
+                    },
+                } 
+            }
+        }
+    }
+    loop {
+        if arg == None { break; }
+
+        if let Some(a) = arg {
+            if a.starts_with("--") {
+                match a {
+                    separator if *separator == "--".to_string() => {
+                        arg = iter.next();
+                        if arg.is_none() {
+                            eprintln!("'--' ignored");
+                            break;
+                        } else {
+                            continue;
+                        }
+                    },
+                    option if *option == "--ast".to_string() => {
+                        print_ast = true;
+                        arg = iter.next();
+                        continue;
+                    },
+                    option if *option == "--compile".to_string() => {
+                        compile = true;
+                        arg = iter.next();
+                        continue;
+                    },
+                    option if *option == "--debug".to_string() => {
+                        debug = true;
+                        arg = iter.next();
+                        continue;
+                    },
+                    _ => {
+                        eprintln!("invalid long option '{}'", a);
+                        usage();
+                    },
+                } 
+            } else {
+                break;
+            }
+        }
+    }
+   
+    let mut filename = String::from("");
+    if let Some(a) = arg { 
+        filename = a.clone(); 
+    } else {
+        return repl(Some(&mut natives), &mut vm, &mut gc, print_ast, compile, debug);
+    }
+    
+
+    let mut rest: Vec<String> = vec![];
+
+    if iter.next() == Some(&"--".to_string()) {
+        loop {
+            let elem = iter.next();
+            if let Some(e) = elem {
+                rest.push(e.clone());
+                continue;
+            }
+            break;
+        }
+    }
+
+    let result = interpret_file(filename, Some(&mut natives), &mut vm, &mut gc, print_ast, compile, debug);
+    match result {
+        Ok(_) => { println!(""); process::exit(0); },
+        Err(e) => {
+            match e {
+                InterpretErrorType::ParseError => { println!(""); process::exit(2); },
+                InterpretErrorType::CompileTimeError => { println!(""); process::exit(3); },
+                InterpretErrorType::RuntimeError => { println!(""); process::exit(4); },
+                InterpretErrorType::OtherError => { println!(""); process::exit(5); },
+            }
+        },
+    }
+}
+
+fn repl
+(
+    natives: Option<&mut NativeMap>,
+	vm: &mut VM,
+	gc: &mut Gc,
+	print_ast: bool,
+	compile: bool,
+	debug: bool,
+) -> Result<(), String>
+{
+    let mut buf = String::new();
+    let mut input = String::new();
+    loop {
+        print!("TimLang> ");
+        io::stdout().flush().unwrap();
+        match io::stdin().read_line(&mut input) {
+            Ok(num) => {
+                if num == 2 && input.starts_with('.') {
+                    input.clear();
+                    let result = interpret_string(&mut buf, natives, vm, gc, print_ast, compile, debug);
+                    match result {
+                        Ok(value) => { 
+                            println!("{}", value);
+                        }, 
+                        _ => {}
+                    }
+                    buf.clear();
+                } else if num > 0 {
+                    buf += &mut input;
+                    input.clear();
+                    continue;
+                } else {
+                    println!("");
+                    return Ok(());
+                }
+            },
+            Err(e) => {
+                println!("i/o error: {}", e);
+                continue;
+            },
+        }
+    } 
+}
+
+fn usage() {
+    println!(
+    "\nusage: tim [-acd] [program-name] [--] [script-arguments]\n
+     -a    --ast           prints ast output and exits
+     -c    --compile       compiles the program
+     -d    --debug         runs the debugger");
+    process::exit(1);
+}
+

@@ -1,0 +1,22 @@
+[package]
+name = "timothy-ast-rs"
+version = "0.1.0"
+authors = ["Brian Robeck <robeckb26@gmail.com"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clone_dyn = "0.29"
+ordered-float = "5.0.0"
+
+[features]
+debug_stress_gc = []
+debug_gc = []
+debug_opcode = []
+debug_vars = []
+debug_stack = []
+reg_mach = []
+#default = []
+#default = ["debug_gc", "debug_opcode"]
+default = ["debug_opcode", "debug_vars", "debug_stack"]
