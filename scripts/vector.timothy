@@ -1,0 +1,97 @@
+// 2d vector class
+
+class Vector2D {
+  fun constructor(x, y) {
+    #x = x;
+    #y = y;
+  }
+  fun x() {
+    return #x;
+  }
+  fun x(val) { 
+    #x = val;
+  }
+  fun y() {
+    return #y;
+  }
+  fun y(val) { 
+    #y = val;
+  }
+
+  fun get() {
+    return [#x, #y];
+  }
+
+  fun set(x, y) {
+    #x = x;
+    #y = y;
+  }
+
+  fun add(other) {
+    #x = #x + other.#x;
+    #y = #y + other.#y;
+  }
+
+  fun sub(other) {
+    #x = #x - other.#x;
+    #y = #y - other.#y;
+  }
+
+  fun mul(other) {
+    #x = #x * other.#x;
+    #y = #y * other.#y;
+  }
+
+  fun mulScalar(val) {
+    #x = #x * val;
+    #y = #y * val;
+  }
+
+  fun div(other) {
+    #x = #x / other.#x;
+    #y = #y / other.#y;
+  }
+
+  fun divScalar(val) {
+    #x = #x / val;
+    #y = #y / val;
+  }
+
+  fun dotProduct(other) {
+    return #x * other.#x + #y * other.#y;
+  }
+
+  fun crossProduct(other) {
+    return #x * other.#y - #y * other.#x;
+  }
+
+  fun length() {
+    return sqrt(#x * #x + #y * #y);
+  }
+
+  fun squaredLength() {
+    return #x * #x + #y * #y;
+  }
+
+  fun unit() {
+    vl = length(); // vector length
+    return new Vector2D(x_ / vl, y_ / vl);
+  }
+
+  fun left() {
+    return new Vector2D(#y, -#x);
+  }
+
+  fun right() {
+    return new Vector2D(-#y, #x);
+  }
+
+  fun rotate(angle) {
+    #x *= cos(angle) - #y * sin(angle);
+    #y = #x * sin(angle) + #y * cos(angle);
+  }
+
+  fun angle() {
+    return atan2(#y, #x);
+  }
+}

@@ -1,0 +1,19 @@
+fun counter(action) {
+  var count = 0;
+  var actions =
+    { "next" => 
+       fun() {
+         count = count + 1;
+         return count;
+       },
+      "count" => 
+        fun() {
+          return count;
+        },
+      "new" => 
+				fun() {
+					return counter(#1);
+				}	
+    };
+  return actions[action]();  
+}
