@@ -1,3 +1,5 @@
+/scripts
+/test_scripts
 /target
 **/*.rs.bk
 **/*.rs~
