@@ -27,13 +27,28 @@ type in a text editor:
     use timothy_ast_rs::parser::Parser;
         
     fn main() {
-        parser = Parser::new();
+        let parser = Parser::new();
         let result = parser.parse_text("println(\"Hello, world!\"");
         switch result {
             Err(_) => println!("Error occurred!");
             _ => return;
         }
     }
+
+To run a script embedded within another program from within Rust,
+type in a text editor
+
+    use timothy_ast_rs::parser::Parser;
+
+    fn main() {
+        let parser = Parser::new();
+        let result = parser.parse_file("my_script.timothy");
+        switch result {
+            Err(_) => println!(Error occurred!");
+            _ => return;
+        }
+    }
+
 
 
 
