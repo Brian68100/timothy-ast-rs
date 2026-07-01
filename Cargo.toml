@@ -1,5 +1,5 @@
 [package]
-name = "timothy-ast-rs"
+name = "timothy-ast"
 version = "0.1.0"
 authors = ["Brian Robeck <robeckb26@gmail.com"]
 edition = "2018"
