@@ -2,29 +2,29 @@ A simple, fully featured virtual machine (VM) written in Rust
 
 To run it as a shell, on the command line, type:
 
-    $ timothy-ast-rs
+    $ timothy
 
 To run a script, on the command line, type:
 
-    $ timothy-ast-rs script-name.timothy
+    $ timothy script-name.timothy
 
 To run with command line args, type:
 
-    $ timothy-ast-rs -- [arg ...]
+    $ timothy -- [arg ...]
 
         or
 
-    $ timothy-ast-rs script-name.timothy [arg ...]
+    $ timothy script-name.timothy [arg ...]
 
         or
 
-    $ timothy-ast-rs script-name.timothy -- [arg ...]
+    $ timothy script-name.timothy -- [arg ...]
 
 
 To run it embedded within another program from within Rust,
 type in a text editor:
 
-    use timothy_ast_rs::parser::Parser;
+    use timothy::parser::Parser;
         
     fn main() {
         let parser = Parser::new();
@@ -38,7 +38,7 @@ type in a text editor:
 To run a script embedded within another program from within Rust,
 type in a text editor
 
-    use timothy_ast_rs::parser::Parser;
+    use timothy::parser::Parser;
 
     fn main() {
         let parser = Parser::new();
