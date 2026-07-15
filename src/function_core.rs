@@ -6,7 +6,7 @@ use std::fmt::{Display, Formatter, Error};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum FunctionType {
-    Program, 
+    TopLevel, 
     NamedClosure,
     AnonClosure,
     Constructor,
@@ -16,8 +16,8 @@ pub enum FunctionType {
 impl Display for FunctionType {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            FunctionType::Program => {
-                write!(f, "Program")
+            FunctionType::TopLevel => {
+                write!(f, "Top Level")
             }, 
             FunctionType::NamedClosure => {
                 write!(f, "Named Closure")

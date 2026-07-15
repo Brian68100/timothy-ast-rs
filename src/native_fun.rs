@@ -79,10 +79,10 @@ impl Manage for NativeFun {
 
 
 pub(crate) fn add_default_fn_natives(parser: &mut Parser, gc: &Gc,) {
-    parser.load(Value::NativeFun(gc.manage(NativeFun::new("print".to_string(), 1, builtin_fun_print_1), &NO_GC)));
-    parser.load(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 0, builtin_fun_println_0), &NO_GC)));
-    parser.load(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 1, builtin_fun_println_1), &NO_GC)));
-    parser.load(Value::NativeFun(gc.manage(NativeFun::new("input".to_string(), 0, builtin_fun_input_0), &NO_GC))); 
+    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("print".to_string(), 1, builtin_fun_print_1), &NO_GC)));
+    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 0, builtin_fun_println_0), &NO_GC)));
+    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 1, builtin_fun_println_1), &NO_GC)));
+    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("input".to_string(), 0, builtin_fun_input_0), &NO_GC))); 
 }
 
 fn builtin_fun_print_1(gc: &Gc, args: &[Value]) -> FunResult {

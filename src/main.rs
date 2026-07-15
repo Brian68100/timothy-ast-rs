@@ -9,7 +9,6 @@ mod function_core;
 mod closure;
 mod natives;
 mod native_fun;
-mod vm;
 mod managed;
 mod gc;
 //mod object;
@@ -22,7 +21,6 @@ pub mod prelude {
     pub use crate::upvalue::*;
     pub use crate::value::*;
     pub use crate::opcode::*;
-    pub use crate::vm::*;
     pub use crate::managed::*;
     pub use crate::function_core::*;
     pub use crate::closure::*;
@@ -31,10 +29,7 @@ pub mod prelude {
 }
 
 use crate::natives::*;
-use crate::parser::{interpret_string,
-                      interpret_file,
-                      InterpretErrorType};
-use crate::prelude::VM;
+use crate::parser::{Parser, InterpretErrorType};
 use std::io;
 use std::io::Write;
 use std::env;
@@ -154,7 +149,7 @@ fn main() -> Result<(), String> {
     if let Some(a) = arg { 
         filename = a.clone(); 
     } else {
-        return repl(Some(&mut natives), &mut vm, &mut gc, print_ast, compile, debug);
+        return repl(print_ast, compile, debug);
     }
     
 
@@ -171,7 +166,7 @@ fn main() -> Result<(), String> {
         }
     }
 
-    let result = interpret_file(filename, Some(&mut natives), &mut vm, &mut gc, print_ast, compile, debug);
+    let result = parser.parse_file(filename, print_ast, compile, debug);
     match result {
         Ok(_) => { println!(""); process::exit(0); },
         Err(e) => {
@@ -187,24 +182,21 @@ fn main() -> Result<(), String> {
 
 fn repl
 (
-    natives: Option<&mut NativeMap>,
-	vm: &mut VM,
-	gc: &mut Gc,
-	print_ast: bool,
-	compile: bool,
-	debug: bool,
+    print_ast: bool,
+    compile: bool,
+    debug: bool,
 ) -> Result<(), String>
 {
     let mut buf = String::new();
     let mut input = String::new();
     loop {
-        print!("TimLang> ");
+        print!("Ready: ");
         io::stdout().flush().unwrap();
         match io::stdin().read_line(&mut input) {
             Ok(num) => {
                 if num == 2 && input.starts_with('.') {
                     input.clear();
-                    let result = interpret_string(&mut buf, natives, vm, gc, print_ast, compile, debug);
+                    let result = parser.parse_text(&mut buf, print_ast, compile, debug);
                     match result {
                         Ok(value) => { 
                             println!("{}", value);

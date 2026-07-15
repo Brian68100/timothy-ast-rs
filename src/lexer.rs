@@ -62,7 +62,7 @@ fn get_keywords() -> HashMap<String, TokenKind> {
 
 
 impl Lexer {
-    pub fn new_from_string(input: &mut String) -> Self {
+    pub fn new_from_text(input: &mut String) -> Self {
         Self {
             fname: "<buf>".to_string(),
             is_string_input: true,
