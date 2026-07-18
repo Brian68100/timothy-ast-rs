@@ -37,11 +37,7 @@ use crate::gc::Gc;
 use std::process;
 //use crate::object::*;
 
-fn main() -> Result<(), String> { 
-    
-    let mut gc = Gc::new();
-    let mut vm = VM::new();
-    
+fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
     let mut iter = args.iter();
     let mut arg = iter.next();
@@ -165,8 +161,12 @@ fn main() -> Result<(), String> {
             break;
         }
     }
-
-    let result = parser.parse_file(filename, print_ast, compile, debug);
+    let parser = Parser::new(
+        print_ast,
+        compile,
+        debug,
+    );
+    let result = parser.parse_file(filename);
     match result {
         Ok(_) => { println!(""); process::exit(0); },
         Err(e) => {
@@ -187,6 +187,11 @@ fn repl
     debug: bool,
 ) -> Result<(), String>
 {
+    let parser = Parser::new(
+        print_ast,
+        compile,
+        debug
+    );
     let mut buf = String::new();
     let mut input = String::new();
     loop {
@@ -196,7 +201,7 @@ fn repl
             Ok(num) => {
                 if num == 2 && input.starts_with('.') {
                     input.clear();
-                    let result = parser.parse_text(&mut buf, print_ast, compile, debug);
+                    let result = parser.parse_text(&mut buf);
                     match result {
                         Ok(value) => { 
                             println!("{}", value);

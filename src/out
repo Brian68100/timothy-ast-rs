@@ -1,870 +1,1326 @@
-   Compiling tim v0.1.0 (/home/brobeck/Documents/rust/tim)
-warning: unused import: `std::io`
-  --> src/vm.rs:13:5
-   |
-13 | use std::io;
-   |     ^^^^^^^
-   |
-   = note: `#[warn(unused_imports)]` on by default
-
-warning: unused import: `std::ptr`
- --> src/parser.rs:9:5
-  |
-9 | use std::ptr;
-  |     ^^^^^^^^
-
-error[E0063]: missing field `arity` in initializer of `ast::Ast`
-    --> src/parser.rs:1084:23
+   Compiling timothy v0.1.0 (/home/brobeck/Downloads/timothy-ast-rs-main)
+error[E0425]: cannot find value `compiler` in this scope
+    --> src/parser.rs:2384:21
      |
-1084 |         Some(Box::new(Ast::Variable {
-     |                       ^^^^^^^^^^^^^ missing `arity`
+2384 | ...   compiler.symbols.calls.last_mut().unwrap().closure.clone()
+     |       ^^^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:1206:13
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2449:41
      |
-1203 |         Some(Box::new(Ast::Call(
-     |                       --------- arguments to this enum variant are incorrect
+2449 |                 unsafe{push_main(self, &node, gc)};
+     |                                         ^^^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2449:47
+     |
+2449 |                 unsafe{push_main(self, &node, gc)};
+     |                                               ^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2450:24
+     |
+2450 | ...   unsafe{fc_vec.last_mut().unwrap().closure = Some(closure.clone())};
+     |              ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2453:46
+     |
+2453 |                 unsafe {push_function(self, &node, gc)};
+     |                                              ^^^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2453:52
+     |
+2453 |                 unsafe {push_function(self, &node, gc)};
+     |                                                    ^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2454:25
+     |
+2454 | ...   unsafe {fc_vec.last_mut().unwrap().closure = Some(closure.clone(...
+     |               ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2458:9
+     |
+2458 |         result = unsafe{fc_vec.last_mut().unwrap().closure.clone()};
+     |         ^^^^^^
+     |
+help: you might have meant to introduce a new binding
+     |
+2458 |         let result = unsafe{fc_vec.last_mut().unwrap().closure.clone()};
+     |         +++
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2458:25
+     |
+2458 |         result = unsafe{fc_vec.last_mut().unwrap().closure.clone()};
+     |                         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2465:55
+     |
+2465 |             let ret = self.code_gen_param(&i.clone(), vm, gc);
+     |                                                       ^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2465:59
+     |
+2465 |             let ret = self.code_gen_param(&i.clone(), vm, gc);
+     |                                                           ^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2467:17
+     |
+2467 |                 result = None;
+     |                 ^^^^^^
+     |
+help: you might have meant to introduce a new binding
+     |
+2467 |                 let result = None;
+     |                 +++
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2474:59
+     |
+2474 |             let ret = self.code_gen(&mut Some(i.clone()), vm, gc);
+     |                                                           ^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2474:63
+     |
+2474 |             let ret = self.code_gen(&mut Some(i.clone()), vm, gc);
+     |                                                               ^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2477:17
+     |
+2477 |                 result = None;
+     |                 ^^^^^^
+     |
+help: you might have meant to introduce a new binding
+     |
+2477 |                 let result = None;
+     |                 +++
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2491:30
+     |
+2491 |                         &mut fc_vec.last_mut().unwrap()
+     |                              ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `mutfc_vec` in this scope
+    --> src/parser.rs:2496:32
+     |
+2496 |                         &mut (&mutfc_vec)[fc_vec.len() - 2]
+     |                                ^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2496:43
+     |
+2496 |                         &mut (&mutfc_vec)[fc_vec.len() - 2]
+     |                                           ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2507:25
+     |
+2507 |                         fc_vec.last_mut().unwrap()
+     |                         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2519:29
+     |
+2519 | ...   vm, self, &node, gc, name, Some(params.len()), true)
+     |       ^^ not found in this scope
+
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2519:40
+     |
+2519 | ...   vm, self, &node, gc, name, Some(params.len()), true)
+     |                  ^^^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2519:46
+     |
+2519 | ...   vm, self, &node, gc, name, Some(params.len()), true)
+     |                        ^^
+     |
+help: a local variable with a similar name exists
+     |
+2519 -                             vm, self, &node, gc, name, Some(params.len()), true)
+2519 +                             vm, self, &node, fc, name, Some(params.len()), true)
+     |
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2526:44
+     |
+2526 | ...                   define_var(vm, prev_fc, var_info.index)
+     |                                  ^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2533:16
+     |
+2533 |             if result.is_some() { 
+     |                ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2534:17
+     |
+2534 |                 result = self.code_gen_return(ast, vm, gc);
+     |                 ^^^^^^
+     |
+help: you might have meant to introduce a new binding
+     |
+2534 |                 let result = self.code_gen_return(ast, vm, gc);
+     |                 +++
+
+error[E0425]: cannot find value `ast` in this scope
+    --> src/parser.rs:2534:47
+     |
+2534 |                 result = self.code_gen_return(ast, vm, gc);
+     |                                               ^^^ not found in this scope
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2534:52
+     |
+2534 |                 result = self.code_gen_return(ast, vm, gc);
+     |                                                    ^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2534:56
+     |
+2534 |                 result = self.code_gen_return(ast, vm, gc);
+     |                                                        ^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2536:20
+     |
+2536 |             unsafe{fc_vec.pop()};
+     |                    ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2537:48
+     |
+2537 |             if ty == FunctionType::TopLevel && result.is_none() {
+     |                                                ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `result` in this scope
+    --> src/parser.rs:2546:20
+     |
+2546 |             return result;
+     |                    ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2568:13
+     |
+2568 |             fc_vec.last_mut().unwrap()
+     |             ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2594:31
+     |
+2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+     |                               ^^ not found in this scope
+
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2594:42
+     |
+2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+     |                                          ^^^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2594:48
+     |
+2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+     |                                                ^^ not found in this scope
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2595:51
+     |
+2595 |         if self.code_gen(&mut Some(expr.clone()), vm, gc).is_none() {
+     |                                                   ^^ not found in this scope
+
+error[E0425]: cannot find value `gc` in this scope
+    --> src/parser.rs:2595:55
+     |
+2595 |         if self.code_gen(&mut Some(expr.clone()), vm, gc).is_none() {
+     |                                                       ^^ not found in this scope
+
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2601:35
+     |
+2601 |                 unsafe{define_var(vm, last, var_info.index)};
+     |                                   ^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2611:36
+     |
+2611 |         if let Some(last) = unsafe{fc_vec.last_mut()} {
+     |                                    ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2628:28
+     |
+2628 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone();
+     |                            ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2633:28
+     |
+2633 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
+     |                            ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2641:28
+     |
+2641 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
+     |                            ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2645:28
+     |
+2645 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
+     |                            ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2650:28
+     |
+2650 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
+     |                            ^^^^^^ not found in this scope
+
+error[E0424]: expected value, found module `self`
+    --> src/parser.rs:2653:21
+     |
+2610 |     fn code_gen_value(val: Value) {
+     |        -------------- this function doesn't have a `self` parameter
 ...
-1206 |             Some(arg_list.clone()),
-     |             ^^^^^^^^^^^^^^^^^^^^^^ expected `Vec<Box<Ast>>`, found `Option<Option<Vec<Box<Ast>>>>`
+2653 |                     self.error(&node, "value is not a valid constant"....
+     |                     ^^^^ `self` value is a keyword only available in methods with a `self` parameter
      |
-     = note: expected struct `Vec<Box<ast::Ast>>`
-                  found enum `Option<Option<Vec<Box<ast::Ast>>>>`
-note: tuple variant defined here
-    --> src/ast.rs:117:5
+help: add a `self` receiver parameter to make the associated `fn` a method
      |
-117  |     Call(Option<*mut Ast>, Option<Box<Ast>>, Vec<Box<Ast>>),
-     |     ^^^^
+2610 |     fn code_gen_value(&self, val: Value) {
+     |                       ++++++
 
-error[E0027]: pattern does not mention field `arity`
-    --> src/parser.rs:2222:21
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2653:33
      |
-2222 |                     Ast::Variable {ref mut parent, ref mut name} => {
-     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing field `arity`
-     |
-help: include the missing field in the pattern
-     |
-2222 |                     Ast::Variable {ref mut parent, ref mut name, arity } => {
-     |                                                                +++++++
-help: if you don't care about this missing field, you can explicitly ignore it
-     |
-2222 |                     Ast::Variable {ref mut parent, ref mut name, arity: _ } => {
-     |                                                                ++++++++++
-help: or always ignore missing fields here
-     |
-2222 |                     Ast::Variable {ref mut parent, ref mut name, .. } => {
-     |                                                                ++++
+2653 | ...   self.error(&node, "value is not a valid constant".to_string());
+     |                   ^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2056:46
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2673:31
      |
-2056 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2056:41
-     |
-2056 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2056 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2673 |             resolve_var(self, vm, &node, gc, name, None, true)
+     |                               ^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2059:46
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2673:36
      |
-2059 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2059:41
-     |
-2059 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2059 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2673 |             resolve_var(self, vm, &node, gc, name, None, true)
+     |                                    ^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2068:46
+error[E0425]: cannot find value `node` in this scope
+    --> src/parser.rs:2678:33
      |
-2068 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2068:41
-     |
-2068 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2068 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2678 | ...   self.error(&node, format!("variable {} is undefined", e.name));
+     |                   ^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2071:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2684:29
      |
-2071 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2071:41
-     |
-2071 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2071 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2684 |                     unsafe {fc_vec.last_mut()}
+     |                             ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2080:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2691:17
      |
-2080 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2080:41
-     |
-2080 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2080 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2691 |         unsafe {fc_vec.last_mut().unwrap().closure}
+     |                 ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2083:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2704:36
      |
-2083 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2083:41
-     |
-2083 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2083 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2704 |         if let Some(last) = unsafe{fc_vec.last_mut()} {
+     |                                    ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2092:46
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2710:57
      |
-2092 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2092:41
-     |
-2092 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2092 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2710 | ... {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
+     |                        ^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2095:46
+error[E0425]: cannot find value `vm` in this scope
+    --> src/parser.rs:2726:56
      |
-2095 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2095:41
-     |
-2095 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2095 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2726 | ...ut Some(i.clone()), vm, gc).is_none() {
+     |                        ^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2104:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2736:21
      |
-2104 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2104:41
-     |
-2104 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2104 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2736 |             unsafe {fc_vec.last_mut().unwrap().closure.clone()}
+     |                     ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2107:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2762:52
      |
-2107 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2107:41
-     |
-2107 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2107 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2762 |                         if let Some(last) = unsafe{fc_vec.last_mut()} {
+     |                                                    ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2116:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2785:41
      |
-2116 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2116:41
-     |
-2116 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2116 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2785 | ...   let c = unsafe {fc_vec.last_mut().unwrap().closure};
+     |                       ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2119:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2788:41
      |
-2119 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2119:41
-     |
-2119 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2119 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2788 | ...   unsafe {fc_vec.last_mut().unwrap().constant_arr.clone()},
+     |               ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2128:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2789:41
      |
-2128 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2128:41
-     |
-2128 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2128 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2789 | ...                   unsafe {fc_vec.last_mut().unwrap().code.clone()}
+     |                               ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2131:46
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:2833:40
      |
-2131 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2131:41
-     |
-2131 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2131 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2833 |             if let Some(last) = unsafe{fc_vec.last_mut()} {
+     |                                        ^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2140:46
+error[E0425]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3297:11
      |
-2140 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+3297 |     mods: HashMap<String, Module>,
+     |           ^^^^^^^ not found in this scope
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2140:41
+help: consider importing this struct
      |
-2140 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+   1 + use std::collections::HashMap;
      |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2140 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2143:46
+error[E0433]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3304:19
      |
-2143 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+3304 |             mods: HashMap::<String, Module>::new(),
+     |                   ^^^^^^^ use of undeclared type `HashMap`
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2143:41
+help: consider importing this struct
      |
-2143 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+   1 + use std::collections::HashMap;
      |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
+
+error[E0425]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3322:15
      |
-2143 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+3322 |     mod_vars: HashMap<String, VarEntry>,
+     |               ^^^^^^^ not found in this scope
+     |
+help: consider importing this struct
+     |
+   1 + use std::collections::HashMap;
+     |
+
+error[E0425]: cannot find type `Environment` in this scope
+    --> src/parser.rs:3323:14
+     |
+3323 |     mod_env: Environment,
+     |              ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `var_index` in this scope
+    --> src/parser.rs:3337:13
+     |
+3329 |     var_index: usize,
+     |     --------- a field by that name exists in `Self`
+...
+3337 |             var_index,
+     |             ^^^^^^^^^
+
+error[E0425]: cannot find value `name` in this scope
+    --> src/parser.rs:3342:9
+     |
+3327 |     name: String,
+     |     ---- a field by that name exists in `Self`
+...
+3342 |         name
+     |         ^^^^
+
+error[E0425]: cannot find value `var_type` in this scope
+    --> src/parser.rs:3346:9
+     |
+3328 |     var_type: VarType,
+     |     -------- a field by that name exists in `Self`
+...
+3346 |         var_type
+     |         ^^^^^^^^
+
+error[E0425]: cannot find value `var_index` in this scope
+    --> src/parser.rs:3350:9
+     |
+3329 |     var_index: usize,
+     |     --------- a field by that name exists in `Self`
+...
+3350 |         var_index
+     |         ^^^^^^^^^
+
+error[E0425]: cannot find value `var_value` in this scope
+    --> src/parser.rs:3354:9
+     |
+3354 |         var_value
+     |         ^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3370:16
+     |
+3370 |     constants: HashMap<Value, usize>,
+     |                ^^^^^^^ not found in this scope
+     |
+help: consider importing this struct
+     |
+   1 + use std::collections::HashMap;
+     |
+
+error[E0425]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3372:23
+     |
+3372 |     local_fun_symtab: HashMap<String, VarInfo>,
+     |                       ^^^^^^^ not found in this scope
+     |
+help: consider importing this struct
+     |
+   1 + use std::collections::HashMap;
+     |
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3384:30
+     |
+3384 | ...   Self::function_setup(parser, ast, gc, "<main>", 0, 0, FunctionTy...
+     |                            ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3398:30
+     |
+3398 | ...   Self::function_setup(parser, ast, gc, name, arity, scope, Functi...
+     |                            ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3410:30
+     |
+3410 | ...   Self::function_setup(parser, ast, gc, "", arity, scope, Function...
+     |                            ^^^^^^ not found in this scope
+
+error[E0433]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3458:24
+     |
+3458 |             constants: HashMap::new(),
+     |                        ^^^^^^^ use of undeclared type `HashMap`
+     |
+help: consider importing this struct
+     |
+   1 + use std::collections::HashMap;
+     |
+
+error[E0433]: cannot find type `HashMap` in this scope
+    --> src/parser.rs:3460:31
+     |
+3460 |             local_fun_symtab: HashMap::new(),
+     |                               ^^^^^^^ use of undeclared type `HashMap`
+     |
+help: consider importing this struct
+     |
+   1 + use std::collections::HashMap;
+     |
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3466:17
+     |
+3466 |                 parser, ast, gc, "this".to_string(), 
+     |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3471:17
+     |
+3471 |                 parser, ast, gc, "".to_string(), 
+     |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3493:27
+     |
+3493 | ...   (*parser).error(ast, "self-initialization of local variable '".t...
+     |         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Rev` in this scope
+    --> src/parser.rs:3529:23
+     |
+3529 |             mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
+     |                       ^^^ not found in this scope
+     |
+help: consider importing this struct
+     |
+   1 + use std::iter::Rev;
+     |
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3535:61
+     |
+3535 | ...ve_local_internal(parser, ast, gc, name, arity, true);
+     |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3540:57
+     |
+3540 | ...piler.add_upvalue(parser, ast, gc, &name, arity, var_info.upvalue_l...
+     |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3549:73
+     |
+3549 | ..._upvalue_internal(parser, vm, ast, gc, name, arity, false, iter);
+     |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `fc_vec` in this scope
+    --> src/parser.rs:3553:49
+     |
+3553 | ...                   if let Some(last) = fc_vec.last_mut() {
+     |                                           ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3554:57
+     |
+3554 | ...   return last.add_upvalue(parser, ast, gc, name, arity, var_info.u...
+     |                               ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3596:23
+     |
+3596 | ...   unsafe {(*parser).error(ast, "too many upvalues".to_string())};
+     |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3629:23
+     |
+3629 | ...   unsafe {(*parser).error(ast, "too many locals in function".to_st...
+     |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3665:31
+     |
+3665 | ...                   (*parser).error(
+     |                         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3682:25
+     |
+3682 | ...   self.push_local(parser, ast, gc, actual_name.clone(), scope, fal...
+     |                       ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `parser` in this scope
+    --> src/parser.rs:3708:23
+     |
+3708 | ...   unsafe {(*parser).error(ast, "local function '".to_string() + &f...
+     |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `AstParser` in this scope
+    --> src/parser.rs:4179:24
+     |
+ 103 | pub struct Parser {
+     | ----------------- similarly named struct `Parser` defined here
+...
+4179 |     ast_parser: Option<AstParser>,
+     |                        ^^^^^^^^^
+     |
+help: a struct with a similar name exists
+     |
+4179 -     ast_parser: Option<AstParser>,
+4179 +     ast_parser: Option<Parser>,
+     |
+help: you might be missing a type parameter
+     |
+4176 | struct VM<AstParser> {
+     |          +++++++++++
+
+warning: unused import: `NativeFun`
+ --> src/natives.rs:3:49
+  |
+3 | use crate::native_fun::{add_default_fn_natives, NativeFun};
+  |                                                 ^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `crate::parser::MAX_MODULES`
+ --> src/natives.rs:4:5
+  |
+4 | use crate::parser::MAX_MODULES;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::value::Value`
+ --> src/natives.rs:5:5
+  |
+5 | use crate::value::Value;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::cell::RefCell`
+ --> src/natives.rs:6:5
+  |
+6 | use std::cell::RefCell;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src/natives.rs:7:5
+  |
+7 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::rc::Rc`
+ --> src/natives.rs:8:5
+  |
+8 | use std::rc::Rc;
+  |     ^^^^^^^^^^^
+
+warning: unused import: `NativeFun`
+ --> src/ast.rs:5:25
+  |
+5 | use crate::native_fun::{NativeFun};
+  |                         ^^^^^^^^^
+
+warning: unused import: `crate::natives::*`
+  --> src/parser.rs:10:5
+   |
+10 | use crate::natives::*;
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::natives::*`
+  --> src/main.rs:31:5
+   |
+31 | use crate::natives::*;
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::gc::Gc`
+  --> src/main.rs:36:5
+   |
+36 | use crate::gc::Gc;
+   |     ^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `ast::Ast: managed::Manage` is not satisfied
+    --> src/parser.rs:2443:25
+     |
+2443 |         closure: Option<Managed<Ast>>
+     |                         ^^^^^^^^^^^^ unsatisfied trait bound
+     |
+help: the trait `managed::Manage` is not implemented for `ast::Ast`
+    --> src/ast.rs:10:1
+     |
+  10 | pub enum Ast {
+     | ^^^^^^^^^^^^
+     = help: the following other types implement trait `managed::Manage`:
+               String
+               Vec<value::Value>
+               closure::Closure
+               function_core::FunctionCore
+               managed::Managed<(dyn managed::Manage + 'static)>
+               managed::Managed<T>
+               native_fun::NativeFun
+               upvalue::Upvalue
+note: required by a bound in `managed::Managed`
+    --> src/managed.rs:74:33
+     |
+  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
+     |                                 ^^^^^^ required by this bound in `Managed`
+
+error[E0061]: this function takes 1 argument but 0 arguments were supplied
+    --> src/parser.rs:132:23
+     |
+ 132 |             compiler: Compiler::new(),
+     |                       ^^^^^^^^^^^^^-- argument #1 of type `bool` is missing
+     |
+note: associated function defined here
+    --> src/parser.rs:2208:8
+     |
+2208 |     fn new(compile: bool) -> Self {
+     |        ^^^ -------------
+help: provide the argument
+     |
+ 132 |             compiler: Compiler::new(/* bool */),
+     |                                     ++++++++++
+
+error[E0063]: missing field `vm` in initializer of `Parser`
+   --> src/parser.rs:123:21
+    |
+123 |         let mut s = Self {
+    |                     ^^^^ missing `vm`
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2152:46
+    --> src/parser.rs:291:25
      |
-2152 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+ 291 |             self.vm.run(&self.compiler, &self.gc, 
+     |                     --- ^^^^^^^^^^^^^^ expected `&Option<Box<Ast>>`, found `&Compiler`
+     |                     |
+     |                     arguments to this method are incorrect
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2152:41
+     = note: expected reference `&Option<Box<ast::Ast>>`
+                found reference `&Compiler`
+note: method defined here
+    --> src/parser.rs:5752:19
      |
-2152 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2152 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+5752 |     pub(crate) fn run
+     |                   ^^^
+...
+5755 |         root: &Option<Box<Ast>>,
+     |         -----------------------
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2155:46
+    --> src/parser.rs:339:25
      |
-2155 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+ 339 |             self.vm.run(&self.compiler, &self.gc, 
+     |                     --- ^^^^^^^^^^^^^^ expected `&Option<Box<Ast>>`, found `&Compiler`
+     |                     |
+     |                     arguments to this method are incorrect
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2155:41
+     = note: expected reference `&Option<Box<ast::Ast>>`
+                found reference `&Compiler`
+note: method defined here
+    --> src/parser.rs:5752:19
      |
-2155 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2155 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+5752 |     pub(crate) fn run
+     |                   ^^^
+...
+5755 |         root: &Option<Box<Ast>>,
+     |         -----------------------
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2164:46
+error[E0560]: struct `Compiler` has no field named `compile_flag`
+    --> src/parser.rs:2210:13
      |
-2164 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+2210 |             compile_flag: compile,
+     |             ^^^^^^^^^^^^ `Compiler` does not have this field
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2164:41
-     |
-2164 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2164 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+     = note: available fields are: `symbols`
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2167:46
+error[E0609]: no field `compile_flag` on type `&mut Compiler`
+    --> src/parser.rs:2228:11
      |
-2167 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+2228 |     if !self.compile_flag {
+     |              ^^^^^^^^^^^^ unknown field
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2167:41
-     |
-2167 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2167 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+     = note: available fields are: `symbols`, `error_count`, `in_panic_mode`, `in_panic_lock_mode`
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2176:46
+error[E0425]: cannot find function `add_local_var` in this scope
+    --> src/parser.rs:2291:29
      |
-2176 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2176:41
-     |
-2176 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2176 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+2291 | ...                   add_local_var(self, ast, gc, name, None, true)
+     |                       ^^^^^^^^^^^^^---------------------------------
+     |                       |
+     |                       help: try calling `add_local_var` as a method: `self.add_local_var(ast, gc, name, None, true)`
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2179:46
+error[E0425]: cannot find function `define_var` in this scope
+    --> src/parser.rs:2296:33
      |
-2179 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2179:41
-     |
-2179 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2179 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
+2296 | ...                   define_var(vm, last, 0)
+     |                       ^^^^^^^^^^ not found in this scope
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2188:46
+error[E0277]: the trait bound `ast::Ast: managed::Manage` is not satisfied
+    --> src/parser.rs:2334:26
      |
-2188 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
+2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
+     |            ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
      |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2188:41
+help: the trait `managed::Manage` is not implemented for `ast::Ast`
+    --> src/ast.rs:10:1
      |
-2188 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
+  10 | pub enum Ast {
+     | ^^^^^^^^^^^^
+     = help: the following other types implement trait `managed::Manage`:
+               String
+               Vec<value::Value>
+               closure::Closure
+               function_core::FunctionCore
+               managed::Managed<(dyn managed::Manage + 'static)>
+               managed::Managed<T>
+               native_fun::NativeFun
+               upvalue::Upvalue
+note: required by a bound in `managed::Managed`
+    --> src/managed.rs:74:33
      |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2188 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
+  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
+     |                                 ^^^^^^ required by this bound in `Managed`
 
-error[E0308]: mismatched types
-    --> src/parser.rs:2191:46
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2334:26
      |
-2191 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2191:41
-     |
-2191 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2191 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2200:46
-     |
-2200 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2200:41
-     |
-2200 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2200 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2203:46
-     |
-2203 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2203:41
-     |
-2203 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2203 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2213:46
-     |
-2213 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2213:41
-     |
-2213 |                         self.print(&mut Some(left.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2213 |                         self.print(&mut Some(left.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2216:46
-     |
-2216 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2216:41
-     |
-2216 |                         self.print(&mut Some(right.clone()), level + 1);
-     |                                         ^^^^^-------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2216 |                         self.print(&mut Some(right.clone().expect("REASON")), level + 1);
-     |                                                           +++++++++++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2229:46
-     |
-2229 |                         self.print(&mut Some(recv.clone()), level + 1);
-     |                                         ---- ^^^^^^^^^^^^ expected `Box<Ast>`, found `Option<Box<Ast>>`
-     |                                         |
-     |                                         arguments to this enum variant are incorrect
-     |
-     = note: expected struct `Box<_>`
-                  found enum `Option<Box<_>>`
-help: the type constructed contains `Option<Box<ast::Ast>>` due to the type of the argument passed
-    --> src/parser.rs:2229:41
-     |
-2229 |                         self.print(&mut Some(recv.clone()), level + 1);
-     |                                         ^^^^^------------^
-     |                                              |
-     |                                              this argument influences the type of `Some`
-note: tuple variant defined here
-    --> /home/brobeck/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:599:5
-     |
-599  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-     |     ^^^^
-help: consider using `Option::expect` to unwrap the `Option<Box<ast::Ast>>` value, panicking if the value is an `Option::None`
-     |
-2229 |                         self.print(&mut Some(recv.clone().expect("REASON")), level + 1);
-     |                                                          +++++++++++++++++
-
-warning: variable does not need to be mutable
-    --> src/vm.rs:2056:37
-     |
-2056 | ...                   let mut var: Result<VarInfo, VarError> = 
-     |                           ----^^^
-     |                           |
-     |                           help: remove this `mut`
-     |
-     = note: `#[warn(unused_mut)]` on by default
-
-warning: variable does not need to be mutable
-    --> src/vm.rs:2061:25
-     |
-2061 |                                 let mut fun = 
-     |                                     ----^^^
+2334 | ...          self.code_gen_fun_decl(name, fun_ty, params, listing, clo...
+     |                   ^^^^^^^^^^^^^^^^^ ----  ------ expected `FunctionType`, found `&FunctionType`
      |                                     |
-     |                                     help: remove this `mut`
+     |                                     expected `String`, found `&String`
+     |
+note: expected `Vec<Ast>`, found `&Vec<Box<Ast>>`
+    --> src/parser.rs:2334:58
+     |
+2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
+     |                                            ^^^^^^
+     = note: expected struct `Vec<ast::Ast>`
+             found reference `&Vec<Box<ast::Ast>>`
+note: expected `Vec<Box<Ast>>`, found `&Vec<Box<Ast>>`
+    --> src/parser.rs:2334:66
+     |
+2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
+     |                                                    ^^^^^^^
+     = note: expected struct `Vec<_>`
+             found reference `&Vec<_>`
+note: expected `Option<Managed<Ast>>`, found `&Option<Closure>`
+    --> src/parser.rs:2334:75
+     |
+2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
+     |                                                             ^^^^^^^
+     = note:   expected enum `Option<managed::Managed<ast::Ast>>`
+             found reference `&Option<closure::Closure>`
+note: method defined here
+    --> src/parser.rs:2437:8
+     |
+2437 |     fn code_gen_fun_decl(
+     |        ^^^^^^^^^^^^^^^^^
+2438 |         &self, 
+2439 |         name: String, 
+     |         ------------
+2440 |         fun_ty: FunctionType, 
+     |         --------------------
+2441 |         params: Vec<Ast>, 
+     |         ----------------
+2442 |         listing: Vec<Box<Ast>>, 
+     |         ----------------------
+2443 |         closure: Option<Managed<Ast>>
+     |         -----------------------------
+help: try using a conversion method
+     |
+2334 |                     self.code_gen_fun_decl(name.to_string(), fun_ty, params, listing, closure)
+     |                                                ++++++++++++
+help: consider using clone here
+     |
+2334 |                     self.code_gen_fun_decl(name, fun_ty.clone(), params, listing, closure)
+     |                                                        ++++++++
+help: try using a conversion method
+     |
+2334 |                     self.code_gen_fun_decl(name, fun_ty, params, listing.to_vec(), closure)
+     |                                                                         +++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2334:21
+     |
+2322 | ...-> Option<Managed<Closure>>
+     |       ------------------------ expected `Option<managed::Managed<closure::Closure>>` because of return type
+...
+2334 | ...              self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<Managed<Closure>>`, found `Option<Closure>`
+     |
+     = note: expected enum `Option<managed::Managed<closure::Closure>>`
+                found enum `Option<closure::Closure>`
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2340:26
+     |
+2340 |                     self.code_gen_let_decl(name, expr);
+     |                          ^^^^^^^^^^^^^^^^^ ---- expected `String`, found `&String`
+     |
+note: expected `Box<Ast>`, found `&Box<Ast>`
+    --> src/parser.rs:2340:50
+     |
+2340 |                     self.code_gen_let_decl(name, expr);
+     |                                                  ^^^^
+     = note: expected struct `Box<_>`
+             found reference `&Box<_>`
+note: method defined here
+    --> src/parser.rs:2561:8
+     |
+2561 |     fn code_gen_let_decl(
+     |        ^^^^^^^^^^^^^^^^^
+2562 |         &self, 
+2563 |         name: String, 
+     |         ------------
+2564 |         expr: Box<Ast>
+     |         --------------
+help: try using a conversion method
+     |
+2340 |                     self.code_gen_let_decl(name.to_string(), expr);
+     |                                                ++++++++++++
+help: consider using clone here
+     |
+2340 |                     self.code_gen_let_decl(name, expr.clone());
+     |                                                      ++++++++
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2339:10
+     |
+2339 |                   } => {
+     |  ______________________^
+2340 | |                     self.code_gen_let_decl(name, expr);
+2341 | |                 },
+     | |_________________^ expected `Option<Managed<Closure>>`, found `()`
+     |
+     = note:   expected enum `Option<managed::Managed<closure::Closure>>`
+             found unit type `()`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2353:26
+     |
+2353 | ...elf.code_gen_call(vm, &*ast.clone().unwrap(), gc, &recv, args)
+     |        ------------- ^^ expected `&mut Compiler`, found `*mut VM`
+     |        |
+     |        arguments to this method are incorrect
+     |
+     = note: expected mutable reference `&mut Compiler`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2694:8
+     |
+2694 |     fn code_gen_call
+     |        ^^^^^^^^^^^^^
+...
+2697 |         compiler: &mut Compiler,
+     |         -----------------------
+
+error[E0599]: no method named `code_gen_value` found for mutable reference `&mut Compiler` in the current scope
+    --> src/parser.rs:2369:26
+     |
+2369 |                     self.code_gen_value(val)
+     |                          ^^^^^^^^^^^^^^ this is an associated function, not a method
+     |
+     = note: found the following associated functions; to be used as methods, functions must have a `self` parameter
+note: the candidate is defined in an impl for the type `Compiler`
+    --> src/parser.rs:2610:5
+     |
+2610 |     fn code_gen_value(val: Value) {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is a method `code_gen` with a similar name, but with different arguments
+    --> src/parser.rs:2316:5
+     |
+2316 | /     fn code_gen<'a>
+2317 | |     (
+2318 | |         &mut self,
+2319 | |         ast: &Option<Box<Ast>>,
+2320 | |         vm: *mut VM,
+2321 | |         gc: &Gc,
+2322 | |     ) -> Option<Managed<Closure>>
+     | |_________________________________^
+help: use associated function syntax instead
+     |
+2369 -                     self.code_gen_value(val)
+2369 +                     Compiler::code_gen_value(val)
+     |
+
+error[E0061]: this method takes 4 arguments but 2 arguments were supplied
+    --> src/parser.rs:2375:26
+     |
+2375 |                     self.code_gen_var(name, arity) 
+     |                          ^^^^^^^^^^^^-------------
+     |                                      ||
+     |                                      |types differ in mutability
+     |                                      two arguments of type `String` and `usize` are missing
+     |
+     = note: expected mutable reference `&mut Compiler`
+                        found reference `&String`
+note: expected `&Gc`, found `&Option<usize>`
+    --> src/parser.rs:2375:45
+     |
+2375 |                     self.code_gen_var(name, arity) 
+     |                                             ^^^^^
+     = note: expected reference `&Gc`
+                found reference `&Option<usize>`
+note: method defined here
+    --> src/parser.rs:2663:8
+     |
+2663 |     fn code_gen_var
+     |        ^^^^^^^^^^^^
+...
+2666 |         compiler: &mut Compiler,
+     |         -----------------------
+2667 |         gc: &Gc,
+     |         -------
+2668 |         name: String,
+     |         ------------
+2669 |         arity: usize,
+     |         ------------
+help: provide the arguments
+     |
+2375 -                     self.code_gen_var(name, arity) 
+2375 +                     self.code_gen_var(/* &mut Compiler */, /* &Gc */, /* String */, /* usize */) 
+     |
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2375:21
+     |
+2322 |     ) -> Option<Managed<Closure>>
+     |          ------------------------ expected `Option<managed::Managed<closure::Closure>>` because of return type
+...
+2375 |                     self.code_gen_var(name, arity) 
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<Managed<Closure>>`, found `()`
+     |
+     = note:   expected enum `Option<managed::Managed<closure::Closure>>`
+             found unit type `()`
+note: method `code_gen_var` modifies its receiver in-place
+    --> src/parser.rs:2375:26
+     |
+2375 |                     self.code_gen_var(name, arity) 
+     |                          ^^^^^^^^^^^^ this call modifies `self` in-place
+help: try adding an expression at the end of the block
+     |
+2375 ~                     self.code_gen_var(name, arity);
+2376 ~                     None 
+     |
+2375 ~                     self.code_gen_var(name, arity);
+2376 ~                     Some(()) 
+     |
+
+error[E0425]: cannot find function `resolve_var` in this scope
+    --> src/parser.rs:2398:37
+     |
+2398 | ...       resolve_var(self, vm, &**l, gc, name, *arity, true);
+     |           ^^^^^^^^^^^----------------------------------------
+     |           |
+     |           help: try calling `resolve_var` as a method: `self.resolve_var(vm, &**l, gc, name, *arity, true)`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2401:37
+     |
+2400 | ...                   match var {
+     |                             --- this expression has type `()`
+2401 | ...                       Ok(v) => {
+     |                           ^^^^^ expected `()`, found `Result<_, _>`
+     |
+     = note: expected unit type `()`
+                     found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2410:37
+     |
+2400 | ...                   match var {
+     |                             --- this expression has type `()`
+...
+2410 | ...                       Err(e) => {
+     |                           ^^^^^^ expected `()`, found `Result<_, _>`
+     |
+     = note: expected unit type `()`
+                     found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2405:45
+     |
+2402 | /                                         if let Some(last) = self.sym...
+2403 | |                                         {
+2404 | |                                             last.emit_word_op(OpCode...
+2405 | |                                             last.closure
+     | |                                             ^^^^^^^^^^^^ expected `()`, found `Option<Managed<Closure>>`
+2406 | |                                         } else {
+2407 | |                                             panic!("function compile...
+2408 | |                                         }
+     | |_________________________________________- expected this to be `()`
+     |
+     = note: expected unit type `()`
+                     found enum `Option<managed::Managed<closure::Closure>>`
+help: you might have meant to return this value
+     |
+2405 |                                             return last.closure;
+     |                                             ++++++             +
+
+error[E0425]: cannot find function `push_main` in this scope
+    --> src/parser.rs:2449:24
+     |
+2449 |                 unsafe{push_main(self, &node, gc)};
+     |                        ^^^^^^^^^-----------------
+     |                        |
+     |                        help: try calling `push_main` as a method: `self.push_main(&node, gc)`
+
+error[E0599]: the method `clone` exists for enum `Option<managed::Managed<ast::Ast>>`, but its trait bounds were not satisfied
+    --> src/parser.rs:2450:74
+     |
+2450 | ...).closure = Some(closure.clone())};
+     |                             ^^^^^ method cannot be called on `Option<managed::Managed<ast::Ast>>` due to unsatisfied trait bounds
+     |
+    ::: src/managed.rs:74:1
+     |
+  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
+     | ------------------------------------------------ doesn't satisfy `managed::Managed<ast::Ast>: Clone`
+     |
+     = note: the following trait bounds were not satisfied:
+             `managed::Managed<ast::Ast>: Clone`
+             which is required by `Option<managed::Managed<ast::Ast>>: Clone`
+note: the trait `Clone` must be implemented
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/clone.rs:194:0
+
+error[E0425]: cannot find function `push_function` in this scope
+    --> src/parser.rs:2453:25
+     |
+2453 |                 unsafe {push_function(self, &node, gc)};
+     |                         ^^^^^^^^^^^^^-----------------
+     |                         |
+     |                         help: try calling `push_function` as a method: `self.push_function(&node, gc)`
+
+error[E0599]: the method `clone` exists for enum `Option<managed::Managed<ast::Ast>>`, but its trait bounds were not satisfied
+    --> src/parser.rs:2454:75
+     |
+2454 | ...).closure = Some(closure.clone())};
+     |                             ^^^^^ method cannot be called on `Option<managed::Managed<ast::Ast>>` due to unsatisfied trait bounds
+     |
+    ::: src/managed.rs:74:1
+     |
+  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
+     | ------------------------------------------------ doesn't satisfy `managed::Managed<ast::Ast>: Clone`
+     |
+     = note: the following trait bounds were not satisfied:
+             `managed::Managed<ast::Ast>: Clone`
+             which is required by `Option<managed::Managed<ast::Ast>>: Clone`
+note: the trait `Clone` must be implemented
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/clone.rs:194:0
+
+error[E0425]: cannot find function `begin_scope` in this scope
+    --> src/parser.rs:2461:21
+     |
+2461 |             unsafe {begin_scope()};
+     |                     ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `end_scope` in this scope
+    --> src/parser.rs:2482:21
+     |
+2482 |             unsafe {end_scope()};
+     |                     ^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `get_scope_depth` in this scope
+    --> src/parser.rs:2510:25
+     |
+2510 |                         get_scope_depth()
+     |                         ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `add_var` in this scope
+    --> src/parser.rs:2518:25
+     |
+2518 |                         add_var(
+     |                         ^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `define_var` in this scope
+    --> src/parser.rs:2526:33
+     |
+2526 | ...                   define_var(vm, prev_fc, var_info.index)
+     |                       ^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `get_scope_depth` in this scope
+    --> src/parser.rs:2571:13
+     |
+2571 |             get_scope_depth()
+     |             ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0614]: type `ast::Ast` cannot be dereferenced
+    --> src/parser.rs:2580:34
+     |
+2580 |         let is_function = match &**expr {
+     |                                  ^^^^^^ can't be dereferenced
+
+error[E0425]: cannot find function `add_var` in this scope
+    --> src/parser.rs:2594:23
+     |
+2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+     |                       ^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `define_var` in this scope
+    --> src/parser.rs:2601:24
+     |
+2601 |                 unsafe{define_var(vm, last, var_info.index)};
+     |                        ^^^^^^^^^^ not found in this scope
+
+error[E0614]: type `i64` cannot be dereferenced
+    --> src/parser.rs:2615:24
+     |
+2615 |                     if *i >= 0 && *i <= 10 {
+     |                        ^^ can't be dereferenced
+
+error[E0614]: type `i64` cannot be dereferenced
+    --> src/parser.rs:2615:35
+     |
+2615 |                     if *i >= 0 && *i <= 10 {
+     |                                   ^^ can't be dereferenced
+
+error[E0614]: type `i64` cannot be dereferenced
+    --> src/parser.rs:2616:78
+     |
+2616 | ...om(OpCode::Load0) + (*i as u8)));
+     |                         ^^ can't be dereferenced
+
+error[E0614]: type `bool` cannot be dereferenced
+    --> src/parser.rs:2636:24
+     |
+2636 |                     if *b == true {
+     |                        ^^ can't be dereferenced
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2654:21
+     |
+2610 |     fn code_gen_value(val: Value) {
+     |                                  - help: a return type might be missing here: `-> _`
+...
+2654 |                     None
+     |                     ^^^^ expected `()`, found `Option<_>`
+     |
+     = note: expected unit type `()`
+                     found enum `Option<_>`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2659:13
+     |
+2610 |     fn code_gen_value(val: Value) {
+     |                                  - help: a return type might be missing here: `-> _`
+...
+2659 |             None
+     |             ^^^^ expected `()`, found `Option<_>`
+     |
+     = note: expected unit type `()`
+                     found enum `Option<_>`
+
+error[E0425]: cannot find function `resolve_var` in this scope
+    --> src/parser.rs:2673:13
+     |
+2673 |             resolve_var(self, vm, &node, gc, name, None, true)
+     |             ^^^^^^^^^^^---------------------------------------
+     |             |
+     |             help: try calling `resolve_var` as a method: `self.resolve_var(vm, &node, gc, name, None, true)`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2680:24
+     |
+2670 |     )
+     |      - help: a return type might be missing here: `-> _`
+...
+2680 |                 return None;
+     |                        ^^^^ expected `()`, found `Option<_>`
+     |
+     = note: expected unit type `()`
+                     found enum `Option<_>`
+
+error[E0425]: cannot find function `resolve_var` in this scope
+    --> src/parser.rs:2710:39
+     |
+2710 | ...e {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
+     |       ^^^^^^^^^^^--------------------------------------------------
+     |       |
+     |       help: try calling `resolve_var` as a method: `self.resolve_var(vm, ast, gc, name, Some(args.len()), false)`
+
+error[E0599]: no method named `parse_ast` found for mutable reference `&mut VM` in the current scope
+    --> src/parser.rs:5723:28
+     |
+5723 |         let closure = self.parse_ast(root, gc, compile);
+     |                            ^^^^^^^^^ method not found in `&mut VM`
 
 warning: variable does not need to be mutable
-    --> src/vm.rs:2103:25
-     |
-2103 |                     let mut is_function = match &**expr {
-     |                         ----^^^^^^^^^^^
-     |                         |
-     |                         help: remove this `mut`
+   --> src/parser.rs:344:30
+    |
+344 |     pub fn load_value(&self, mut value: Value) -> Result<(), String> {
+    |                              ----^^^^^
+    |                              |
+    |                              help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
 
-Some errors have detailed explanations: E0027, E0063, E0308.
-For more information about an error, try `rustc --explain E0027`.
-warning: `tim` (bin "tim") generated 5 warnings
-error: could not compile `tim` (bin "tim") due to 32 previous errors; 5 warnings emitted
+Some errors have detailed explanations: E0061, E0063, E0277, E0308, E0424, E0425, E0433, E0560, E0599...
+For more information about an error, try `rustc --explain E0061`.
+warning: `timothy` (bin "timothy") generated 11 warnings
+error: could not compile `timothy` (bin "timothy") due to 136 previous errors; 11 warnings emitted
