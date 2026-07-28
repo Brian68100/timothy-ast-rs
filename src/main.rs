@@ -161,7 +161,7 @@ fn main() -> Result<(), String> {
             break;
         }
     }
-    let parser = Parser::new(
+    let mut parser = Parser::new(
         print_ast,
         compile,
         debug,
@@ -187,7 +187,7 @@ fn repl
     debug: bool,
 ) -> Result<(), String>
 {
-    let parser = Parser::new(
+    let mut parser = Parser::new(
         print_ast,
         compile,
         debug

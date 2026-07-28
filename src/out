@@ -1,648 +1,226 @@
-   Compiling timothy v0.1.0 (/home/brobeck/Downloads/timothy-ast-rs-main)
-error[E0425]: cannot find value `compiler` in this scope
-    --> src/parser.rs:2384:21
+   Compiling timothy v0.1.0 (/home/brobeck/Documents/rust/timothy-ast-rs-main)
+error[E0106]: missing lifetime specifier
+    --> src/parser.rs:2208:14
      |
-2384 | ...   compiler.symbols.calls.last_mut().unwrap().closure.clone()
-     |       ^^^^^^^^ not found in this scope
+2208 |     symbols: SymbolTables,
+     |              ^^^^^^^^^^^^ expected named lifetime parameter
+     |
+help: consider introducing a named lifetime parameter
+     |
+2207 ~ struct Compiler<'a> {
+2208 ~     symbols: SymbolTables<'a>,
+     |
 
-error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2449:41
+error[E0425]: cannot find value `symbols` in this scope
+    --> src/parser.rs:2235:24
      |
-2449 |                 unsafe{push_main(self, &node, gc)};
-     |                                         ^^^^ not found in this scope
+2235 |                 if let Some(res) = symbols.mods.get_mut(name) {
+     |                                    ^^^^^^^
+     |
+help: you might have meant to use the available field
+     |
+2235 |                 if let Some(res) = self.symbols.mods.get_mut(name) {
+     |                                    +++++
 
-error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2449:47
+error[E0425]: cannot find value `symbols` in this scope
+    --> src/parser.rs:2245:23
      |
-2449 |                 unsafe{push_main(self, &node, gc)};
-     |                                               ^^ not found in this scope
+2245 |             if let Some(res) = symbols.mods.get_mut(name) {
+     |                                ^^^^^^^
+     |
+help: you might have meant to use the available field
+     |
+2245 |             if let Some(res) = self.symbols.mods.get_mut(name) {
+     |                                +++++
 
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2450:24
+error[E0425]: cannot find value `value` in this scope
+    --> src/parser.rs:2256:11
      |
-2450 | ...   unsafe{fc_vec.last_mut().unwrap().closure = Some(closure.clone())};
-     |              ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2453:46
-     |
-2453 |                 unsafe {push_function(self, &node, gc)};
-     |                                              ^^^^ not found in this scope
-
-error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2453:52
-     |
-2453 |                 unsafe {push_function(self, &node, gc)};
-     |                                                    ^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2454:25
-     |
-2454 | ...   unsafe {fc_vec.last_mut().unwrap().closure = Some(closure.clone(...
-     |               ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2458:9
-     |
-2458 |         result = unsafe{fc_vec.last_mut().unwrap().closure.clone()};
-     |         ^^^^^^
-     |
-help: you might have meant to introduce a new binding
-     |
-2458 |         let result = unsafe{fc_vec.last_mut().unwrap().closure.clone()};
-     |         +++
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2458:25
-     |
-2458 |         result = unsafe{fc_vec.last_mut().unwrap().closure.clone()};
-     |                         ^^^^^^ not found in this scope
+2256 |             (name, value) = res;
+     |                    ^^^^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2465:55
+    --> src/parser.rs:2560:55
      |
-2465 |             let ret = self.code_gen_param(&i.clone(), vm, gc);
+2560 |             let ret = self.code_gen_param(&i.clone(), vm, gc);
      |                                                       ^^ not found in this scope
 
 error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2465:59
+    --> src/parser.rs:2560:59
      |
-2465 |             let ret = self.code_gen_param(&i.clone(), vm, gc);
+2560 |             let ret = self.code_gen_param(&i.clone(), vm, gc);
      |                                                           ^^ not found in this scope
-
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2467:17
-     |
-2467 |                 result = None;
-     |                 ^^^^^^
-     |
-help: you might have meant to introduce a new binding
-     |
-2467 |                 let result = None;
-     |                 +++
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2474:59
+    --> src/parser.rs:2569:54
      |
-2474 |             let ret = self.code_gen(&mut Some(i.clone()), vm, gc);
-     |                                                           ^^ not found in this scope
+2569 |             let ret = self.code_gen(Some(i.clone()), vm, gc);
+     |                                                      ^^ not found in this scope
 
 error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2474:63
+    --> src/parser.rs:2569:58
      |
-2474 |             let ret = self.code_gen(&mut Some(i.clone()), vm, gc);
-     |                                                               ^^ not found in this scope
+2569 |             let ret = self.code_gen(Some(i.clone()), vm, gc);
+     |                                                          ^^ not found in this scope
 
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2477:17
+error[E0425]: cannot find value `mutself` in this scope
+    --> src/parser.rs:2591:32
      |
-2477 |                 result = None;
-     |                 ^^^^^^
-     |
-help: you might have meant to introduce a new binding
-     |
-2477 |                 let result = None;
-     |                 +++
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2491:30
-     |
-2491 |                         &mut fc_vec.last_mut().unwrap()
-     |                              ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `mutfc_vec` in this scope
-    --> src/parser.rs:2496:32
-     |
-2496 |                         &mut (&mutfc_vec)[fc_vec.len() - 2]
-     |                                ^^^^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2496:43
-     |
-2496 |                         &mut (&mutfc_vec)[fc_vec.len() - 2]
-     |                                           ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2507:25
-     |
-2507 |                         fc_vec.last_mut().unwrap()
-     |                         ^^^^^^ not found in this scope
+2591 | ...   &mut (&mutself.symbols.calls)[self.symbols.calls.len() - 2]
+     |              ^^^^^^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2519:29
+    --> src/parser.rs:2614:29
      |
-2519 | ...   vm, self, &node, gc, name, Some(params.len()), true)
+2614 | ...   vm, self, &node, gc, name, Some(params.len()), true)
      |       ^^ not found in this scope
 
 error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2519:40
+    --> src/parser.rs:2614:40
      |
-2519 | ...   vm, self, &node, gc, name, Some(params.len()), true)
+2614 | ...   vm, self, &node, gc, name, Some(params.len()), true)
      |                  ^^^^ not found in this scope
 
 error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2519:46
+    --> src/parser.rs:2614:46
      |
-2519 | ...   vm, self, &node, gc, name, Some(params.len()), true)
+2614 | ...   vm, self, &node, gc, name, Some(params.len()), true)
      |                        ^^
      |
 help: a local variable with a similar name exists
      |
-2519 -                             vm, self, &node, gc, name, Some(params.len()), true)
-2519 +                             vm, self, &node, fc, name, Some(params.len()), true)
+2614 -                             vm, self, &node, gc, name, Some(params.len()), true)
+2614 +                             vm, self, &node, fc, name, Some(params.len()), true)
      |
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2526:44
+    --> src/parser.rs:2621:44
      |
-2526 | ...                   define_var(vm, prev_fc, var_info.index)
+2621 | ...                   define_var(vm, prev_fc, var_info.index)
      |                                  ^^ not found in this scope
 
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2533:16
-     |
-2533 |             if result.is_some() { 
-     |                ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2534:17
-     |
-2534 |                 result = self.code_gen_return(ast, vm, gc);
-     |                 ^^^^^^
-     |
-help: you might have meant to introduce a new binding
-     |
-2534 |                 let result = self.code_gen_return(ast, vm, gc);
-     |                 +++
-
 error[E0425]: cannot find value `ast` in this scope
-    --> src/parser.rs:2534:47
+    --> src/parser.rs:2629:47
      |
-2534 |                 result = self.code_gen_return(ast, vm, gc);
+2629 |                 result = self.code_gen_return(ast, vm, gc);
      |                                               ^^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2534:52
+    --> src/parser.rs:2629:52
      |
-2534 |                 result = self.code_gen_return(ast, vm, gc);
+2629 |                 result = self.code_gen_return(ast, vm, gc);
      |                                                    ^^ not found in this scope
 
 error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2534:56
+    --> src/parser.rs:2629:56
      |
-2534 |                 result = self.code_gen_return(ast, vm, gc);
+2629 |                 result = self.code_gen_return(ast, vm, gc);
      |                                                        ^^ not found in this scope
 
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2536:20
-     |
-2536 |             unsafe{fc_vec.pop()};
-     |                    ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2537:48
-     |
-2537 |             if ty == FunctionType::TopLevel && result.is_none() {
-     |                                                ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `result` in this scope
-    --> src/parser.rs:2546:20
-     |
-2546 |             return result;
-     |                    ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2568:13
-     |
-2568 |             fc_vec.last_mut().unwrap()
-     |             ^^^^^^ not found in this scope
-
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2594:31
+    --> src/parser.rs:2689:31
      |
-2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+2689 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
      |                               ^^ not found in this scope
 
 error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2594:42
+    --> src/parser.rs:2689:42
      |
-2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+2689 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
      |                                          ^^^^ not found in this scope
 
 error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2594:48
+    --> src/parser.rs:2689:48
      |
-2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+2689 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
      |                                                ^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2595:51
+    --> src/parser.rs:2690:46
      |
-2595 |         if self.code_gen(&mut Some(expr.clone()), vm, gc).is_none() {
-     |                                                   ^^ not found in this scope
+2690 |         if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
+     |                                              ^^ not found in this scope
 
 error[E0425]: cannot find value `gc` in this scope
-    --> src/parser.rs:2595:55
+    --> src/parser.rs:2690:50
      |
-2595 |         if self.code_gen(&mut Some(expr.clone()), vm, gc).is_none() {
-     |                                                       ^^ not found in this scope
+2690 |         if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
+     |                                                  ^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2601:35
+    --> src/parser.rs:2696:35
      |
-2601 |                 unsafe{define_var(vm, last, var_info.index)};
+2696 |                 unsafe{define_var(vm, last, var_info.index)};
      |                                   ^^ not found in this scope
 
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2611:36
-     |
-2611 |         if let Some(last) = unsafe{fc_vec.last_mut()} {
-     |                                    ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2628:28
-     |
-2628 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone();
-     |                            ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2633:28
-     |
-2633 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
-     |                            ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2641:28
-     |
-2641 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
-     |                            ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2645:28
-     |
-2645 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
-     |                            ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2650:28
-     |
-2650 |                     unsafe{fc_vec.last_mut()}.unwrap().closure.clone(); 
-     |                            ^^^^^^ not found in this scope
-
-error[E0424]: expected value, found module `self`
-    --> src/parser.rs:2653:21
-     |
-2610 |     fn code_gen_value(val: Value) {
-     |        -------------- this function doesn't have a `self` parameter
-...
-2653 |                     self.error(&node, "value is not a valid constant"....
-     |                     ^^^^ `self` value is a keyword only available in methods with a `self` parameter
-     |
-help: add a `self` receiver parameter to make the associated `fn` a method
-     |
-2610 |     fn code_gen_value(&self, val: Value) {
-     |                       ++++++
-
 error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2653:33
+    --> src/parser.rs:2752:33
      |
-2653 | ...   self.error(&node, "value is not a valid constant".to_string());
+2752 | ...   self.error(&node, "value is not a valid constant".to_string());
      |                   ^^^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2673:31
+    --> src/parser.rs:2771:34
      |
-2673 |             resolve_var(self, vm, &node, gc, name, None, true)
-     |                               ^^ not found in this scope
+2771 |             self.resolve_mod_var(vm, &node, gc, name, None, true)
+     |                                  ^^ not found in this scope
 
 error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2673:36
+    --> src/parser.rs:2771:39
      |
-2673 |             resolve_var(self, vm, &node, gc, name, None, true)
-     |                                    ^^^^ not found in this scope
+2771 |             self.resolve_mod_var(vm, &node, gc, name, None, true)
+     |                                       ^^^^ not found in this scope
 
 error[E0425]: cannot find value `node` in this scope
-    --> src/parser.rs:2678:33
+    --> src/parser.rs:2776:33
      |
-2678 | ...   self.error(&node, format!("variable {} is undefined", e.name));
+2776 | ...   self.error(&node, format!("variable {} is undefined", e.name));
      |                   ^^^^ not found in this scope
 
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2684:29
-     |
-2684 |                     unsafe {fc_vec.last_mut()}
-     |                             ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2691:17
-     |
-2691 |         unsafe {fc_vec.last_mut().unwrap().closure}
-     |                 ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2704:36
-     |
-2704 |         if let Some(last) = unsafe{fc_vec.last_mut()} {
-     |                                    ^^^^^^ not found in this scope
-
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2710:57
+    --> src/parser.rs:2807:57
      |
-2710 | ... {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
+2807 | ... {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
      |                        ^^ not found in this scope
 
 error[E0425]: cannot find value `vm` in this scope
-    --> src/parser.rs:2726:56
+    --> src/parser.rs:2823:56
      |
-2726 | ...ut Some(i.clone()), vm, gc).is_none() {
+2823 | ...ut Some(i.clone()), vm, gc).is_none() {
      |                        ^^ not found in this scope
 
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2736:21
+error[E0425]: cannot find value `access_type` in this scope
+    --> src/parser.rs:3446:13
      |
-2736 |             unsafe {fc_vec.last_mut().unwrap().closure.clone()}
-     |                     ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2762:52
-     |
-2762 |                         if let Some(last) = unsafe{fc_vec.last_mut()} {
-     |                                                    ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2785:41
-     |
-2785 | ...   let c = unsafe {fc_vec.last_mut().unwrap().closure};
-     |                       ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2788:41
-     |
-2788 | ...   unsafe {fc_vec.last_mut().unwrap().constant_arr.clone()},
-     |               ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2789:41
-     |
-2789 | ...                   unsafe {fc_vec.last_mut().unwrap().code.clone()}
-     |                               ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:2833:40
-     |
-2833 |             if let Some(last) = unsafe{fc_vec.last_mut()} {
-     |                                        ^^^^^^ not found in this scope
-
-error[E0425]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3297:11
-     |
-3297 |     mods: HashMap<String, Module>,
-     |           ^^^^^^^ not found in this scope
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
-     |
-
-error[E0433]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3304:19
-     |
-3304 |             mods: HashMap::<String, Module>::new(),
-     |                   ^^^^^^^ use of undeclared type `HashMap`
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
-     |
-
-error[E0425]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3322:15
-     |
-3322 |     mod_vars: HashMap<String, VarEntry>,
-     |               ^^^^^^^ not found in this scope
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
-     |
-
-error[E0425]: cannot find type `Environment` in this scope
-    --> src/parser.rs:3323:14
-     |
-3323 |     mod_env: Environment,
-     |              ^^^^^^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `var_index` in this scope
-    --> src/parser.rs:3337:13
-     |
-3329 |     var_index: usize,
-     |     --------- a field by that name exists in `Self`
+3430 |     access_type: AccessType,
+     |     ----------- a field by that name exists in `Self`
 ...
-3337 |             var_index,
-     |             ^^^^^^^^^
-
-error[E0425]: cannot find value `name` in this scope
-    --> src/parser.rs:3342:9
+3446 |             access_type,
+     |             ^^^^^^^^^^^
      |
-3327 |     name: String,
-     |     ---- a field by that name exists in `Self`
-...
-3342 |         name
-     |         ^^^^
-
-error[E0425]: cannot find value `var_type` in this scope
-    --> src/parser.rs:3346:9
+help: a local variable with a similar name exists
      |
-3328 |     var_type: VarType,
-     |     -------- a field by that name exists in `Self`
-...
-3346 |         var_type
-     |         ^^^^^^^^
-
-error[E0425]: cannot find value `var_index` in this scope
-    --> src/parser.rs:3350:9
-     |
-3329 |     var_index: usize,
-     |     --------- a field by that name exists in `Self`
-...
-3350 |         var_index
-     |         ^^^^^^^^^
-
-error[E0425]: cannot find value `var_value` in this scope
-    --> src/parser.rs:3354:9
-     |
-3354 |         var_value
-     |         ^^^^^^^^^ not found in this scope
-
-error[E0425]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3370:16
-     |
-3370 |     constants: HashMap<Value, usize>,
-     |                ^^^^^^^ not found in this scope
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
-     |
-
-error[E0425]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3372:23
-     |
-3372 |     local_fun_symtab: HashMap<String, VarInfo>,
-     |                       ^^^^^^^ not found in this scope
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
+3446 -             access_type,
+3446 +             accessType,
      |
 
 error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3384:30
+    --> src/parser.rs:3513:30
      |
-3384 | ...   Self::function_setup(parser, ast, gc, "<main>", 0, 0, FunctionTy...
+3513 | ...   Self::function_setup(parser, ast, gc, name, arity, scope, Functi...
      |                            ^^^^^^ not found in this scope
 
 error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3398:30
+    --> src/parser.rs:3525:30
      |
-3398 | ...   Self::function_setup(parser, ast, gc, name, arity, scope, Functi...
+3525 | ...   Self::function_setup(parser, ast, gc, "", arity, scope, Function...
      |                            ^^^^^^ not found in this scope
 
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3410:30
+error[E0425]: cannot find value `root` in this scope
+    --> src/parser.rs:5853:40
      |
-3410 | ...   Self::function_setup(parser, ast, gc, "", arity, scope, Function...
-     |                            ^^^^^^ not found in this scope
-
-error[E0433]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3458:24
-     |
-3458 |             constants: HashMap::new(),
-     |                        ^^^^^^^ use of undeclared type `HashMap`
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
-     |
-
-error[E0433]: cannot find type `HashMap` in this scope
-    --> src/parser.rs:3460:31
-     |
-3460 |             local_fun_symtab: HashMap::new(),
-     |                               ^^^^^^^ use of undeclared type `HashMap`
-     |
-help: consider importing this struct
-     |
-   1 + use std::collections::HashMap;
-     |
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3466:17
-     |
-3466 |                 parser, ast, gc, "this".to_string(), 
-     |                 ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3471:17
-     |
-3471 |                 parser, ast, gc, "".to_string(), 
-     |                 ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3493:27
-     |
-3493 | ...   (*parser).error(ast, "self-initialization of local variable '".t...
-     |         ^^^^^^ not found in this scope
-
-error[E0425]: cannot find type `Rev` in this scope
-    --> src/parser.rs:3529:23
-     |
-3529 |             mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
-     |                       ^^^ not found in this scope
-     |
-help: consider importing this struct
-     |
-   1 + use std::iter::Rev;
-     |
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3535:61
-     |
-3535 | ...ve_local_internal(parser, ast, gc, name, arity, true);
-     |                      ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3540:57
-     |
-3540 | ...piler.add_upvalue(parser, ast, gc, &name, arity, var_info.upvalue_l...
-     |                      ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3549:73
-     |
-3549 | ..._upvalue_internal(parser, vm, ast, gc, name, arity, false, iter);
-     |                      ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `fc_vec` in this scope
-    --> src/parser.rs:3553:49
-     |
-3553 | ...                   if let Some(last) = fc_vec.last_mut() {
-     |                                           ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3554:57
-     |
-3554 | ...   return last.add_upvalue(parser, ast, gc, name, arity, var_info.u...
-     |                               ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3596:23
-     |
-3596 | ...   unsafe {(*parser).error(ast, "too many upvalues".to_string())};
-     |                 ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3629:23
-     |
-3629 | ...   unsafe {(*parser).error(ast, "too many locals in function".to_st...
-     |                 ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3665:31
-     |
-3665 | ...                   (*parser).error(
-     |                         ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3682:25
-     |
-3682 | ...   self.push_local(parser, ast, gc, actual_name.clone(), scope, fal...
-     |                       ^^^^^^ not found in this scope
-
-error[E0425]: cannot find value `parser` in this scope
-    --> src/parser.rs:3708:23
-     |
-3708 | ...   unsafe {(*parser).error(ast, "local function '".to_string() + &f...
-     |                 ^^^^^^ not found in this scope
-
-error[E0425]: cannot find type `AstParser` in this scope
-    --> src/parser.rs:4179:24
-     |
- 103 | pub struct Parser {
-     | ----------------- similarly named struct `Parser` defined here
-...
-4179 |     ast_parser: Option<AstParser>,
-     |                        ^^^^^^^^^
-     |
-help: a struct with a similar name exists
-     |
-4179 -     ast_parser: Option<AstParser>,
-4179 +     ast_parser: Option<Parser>,
-     |
-help: you might be missing a type parameter
-     |
-4176 | struct VM<AstParser> {
-     |          +++++++++++
+5853 |         let closure = compiler.compile(root, gc, compile);
+     |                                        ^^^^ not found in this scope
 
 warning: unused import: `NativeFun`
  --> src/natives.rs:3:49
@@ -688,10 +266,22 @@ warning: unused import: `NativeFun`
 5 | use crate::native_fun::{NativeFun};
   |                         ^^^^^^^^^
 
-warning: unused import: `crate::natives::*`
+warning: unused import: `std::rc::Rc`
+ --> src/parser.rs:9:5
+  |
+9 | use std::rc::Rc;
+  |     ^^^^^^^^^^^
+
+warning: unused import: `std::cell::RefCell`
   --> src/parser.rs:10:5
    |
-10 | use crate::natives::*;
+10 | use std::cell::RefCell;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::natives::*`
+  --> src/parser.rs:12:5
+   |
+12 | use crate::natives::*;
    |     ^^^^^^^^^^^^^^^^^
 
 warning: unused import: `crate::natives::*`
@@ -706,621 +296,1538 @@ warning: unused import: `crate::gc::Gc`
 36 | use crate::gc::Gc;
    |     ^^^^^^^^^^^^^
 
-error[E0277]: the trait bound `ast::Ast: managed::Manage` is not satisfied
-    --> src/parser.rs:2443:25
-     |
-2443 |         closure: Option<Managed<Ast>>
-     |                         ^^^^^^^^^^^^ unsatisfied trait bound
-     |
-help: the trait `managed::Manage` is not implemented for `ast::Ast`
-    --> src/ast.rs:10:1
-     |
-  10 | pub enum Ast {
-     | ^^^^^^^^^^^^
-     = help: the following other types implement trait `managed::Manage`:
-               String
-               Vec<value::Value>
-               closure::Closure
-               function_core::FunctionCore
-               managed::Managed<(dyn managed::Manage + 'static)>
-               managed::Managed<T>
-               native_fun::NativeFun
-               upvalue::Upvalue
-note: required by a bound in `managed::Managed`
-    --> src/managed.rs:74:33
-     |
-  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
-     |                                 ^^^^^^ required by this bound in `Managed`
-
-error[E0061]: this function takes 1 argument but 0 arguments were supplied
-    --> src/parser.rs:132:23
-     |
- 132 |             compiler: Compiler::new(),
-     |                       ^^^^^^^^^^^^^-- argument #1 of type `bool` is missing
-     |
-note: associated function defined here
-    --> src/parser.rs:2208:8
-     |
-2208 |     fn new(compile: bool) -> Self {
-     |        ^^^ -------------
-help: provide the argument
-     |
- 132 |             compiler: Compiler::new(/* bool */),
-     |                                     ++++++++++
-
-error[E0063]: missing field `vm` in initializer of `Parser`
-   --> src/parser.rs:123:21
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src/native_fun.rs:82:12
     |
-123 |         let mut s = Self {
-    |                     ^^^^ missing `vm`
+ 82 | ...er.load_value(Value::NativeFun(gc.manage(NativeFun::new("print".to_string(), 1, builtin_fun_print_1), &NO_GC)));
+    |       ^^^^^^^^^^-------------------------------------------------------------------------------------------------- two arguments of type `String` and `String` are missing
+    |
+note: method defined here
+   --> src/parser.rs:347:12
+    |
+347 |     pub fn load_value(
+    |            ^^^^^^^^^^
+348 |         &mut self, 
+349 |         mut mod_name: String, 
+    |         --------------------
+350 |         mut name: String, 
+    |         ----------------
+help: provide the arguments
+    |
+ 82 |     parser.load_value(/* String */, /* String */, Value::NativeFun(gc.manage(NativeFun::new("print".to_string(), 1, builtin_fun_print_1), &NO_GC)));
+    |                       +++++++++++++++++++++++++++
+
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src/native_fun.rs:83:12
+    |
+ 83 | ...er.load_value(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 0, builtin_fun_println_0), &NO_GC)));
+    |       ^^^^^^^^^^------------------------------------------------------------------------------------------------------ two arguments of type `String` and `String` are missing
+    |
+note: method defined here
+   --> src/parser.rs:347:12
+    |
+347 |     pub fn load_value(
+    |            ^^^^^^^^^^
+348 |         &mut self, 
+349 |         mut mod_name: String, 
+    |         --------------------
+350 |         mut name: String, 
+    |         ----------------
+help: provide the arguments
+    |
+ 83 |     parser.load_value(/* String */, /* String */, Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 0, builtin_fun_println_0), &NO_GC)));
+    |                       +++++++++++++++++++++++++++
+
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src/native_fun.rs:84:12
+    |
+ 84 | ...er.load_value(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 1, builtin_fun_println_1), &NO_GC)));
+    |       ^^^^^^^^^^------------------------------------------------------------------------------------------------------ two arguments of type `String` and `String` are missing
+    |
+note: method defined here
+   --> src/parser.rs:347:12
+    |
+347 |     pub fn load_value(
+    |            ^^^^^^^^^^
+348 |         &mut self, 
+349 |         mut mod_name: String, 
+    |         --------------------
+350 |         mut name: String, 
+    |         ----------------
+help: provide the arguments
+    |
+ 84 |     parser.load_value(/* String */, /* String */, Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 1, builtin_fun_println_1), &NO_GC)));
+    |                       +++++++++++++++++++++++++++
+
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src/native_fun.rs:85:12
+    |
+ 85 | ...er.load_value(Value::NativeFun(gc.manage(NativeFun::new("input".to_string(), 0, builtin_fun_input_0), &NO_GC))); 
+    |       ^^^^^^^^^^-------------------------------------------------------------------------------------------------- two arguments of type `String` and `String` are missing
+    |
+note: method defined here
+   --> src/parser.rs:347:12
+    |
+347 |     pub fn load_value(
+    |            ^^^^^^^^^^
+348 |         &mut self, 
+349 |         mut mod_name: String, 
+    |         --------------------
+350 |         mut name: String, 
+    |         ----------------
+help: provide the arguments
+    |
+ 85 |     parser.load_value(/* String */, /* String */, Value::NativeFun(gc.manage(NativeFun::new("input".to_string(), 0, builtin_fun_input_0), &NO_GC))); 
+    |                       +++++++++++++++++++++++++++
+
+error[E0599]: no associated function or constant named `new` found for struct `Module` in the current scope
+    --> src/parser.rs:2233:48
+     |
+2233 |                 self.symbols.mods.insert("global", Module::new("global...
+     |                                                            ^^^ associated function or constant not found in `Module`
+...
+3420 | struct Module {
+     | ------------- associated function or constant `new` not found for this struct
 
 error[E0308]: mismatched types
-    --> src/parser.rs:291:25
+    --> src/parser.rs:2233:30
      |
- 291 |             self.vm.run(&self.compiler, &self.gc, 
-     |                     --- ^^^^^^^^^^^^^^ expected `&Option<Box<Ast>>`, found `&Compiler`
-     |                     |
-     |                     arguments to this method are incorrect
+2233 | ...bols.mods.insert("global", Module::new("global", None));
+     |              ------ ^^^^^^^^ expected `String`, found `&str`
+     |              |
+     |              arguments to this method are incorrect
      |
-     = note: expected reference `&Option<Box<ast::Ast>>`
-                found reference `&Compiler`
 note: method defined here
-    --> src/parser.rs:5752:19
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/std/src/collections/hash/map.rs:1328:11
+help: try using a conversion method
      |
-5752 |     pub(crate) fn run
-     |                   ^^^
-...
-5755 |         root: &Option<Box<Ast>>,
-     |         -----------------------
+2233 |                 self.symbols.mods.insert("global".to_string(), Module::new("global", None));
+     |                                                  ++++++++++++
 
 error[E0308]: mismatched types
-    --> src/parser.rs:339:25
+    --> src/parser.rs:2238:5
      |
- 339 |             self.vm.run(&self.compiler, &self.gc, 
-     |                     --- ^^^^^^^^^^^^^^ expected `&Option<Box<Ast>>`, found `&Compiler`
-     |                     |
-     |                     arguments to this method are incorrect
+2232 | /             if name == "global" {
+2233 | |                 self.symbols.mods.insert("global", Module::new("glob...
+2234 | |
+2235 | |                 if let Some(res) = symbols.mods.get_mut(name) {
+...    |
+2238 | |                 Ok(())
+     | |                 ^^^^^^ expected `()`, found `Result<(), _>`
+2239 | |             }
+     | |_____________- `if` expressions without `else` arms expect their inner expression to be `()`
      |
-     = note: expected reference `&Option<Box<ast::Ast>>`
-                found reference `&Compiler`
-note: method defined here
-    --> src/parser.rs:5752:19
+     = note: expected unit type `()`
+                     found enum `Result<(), _>`
+help: you might have meant to return this value
      |
-5752 |     pub(crate) fn run
-     |                   ^^^
+2238 |                 return Ok(());
+     |                 ++++++       +
+
+error[E0599]: no method named `get` found for enum `Option<T>` in the current scope
+    --> src/parser.rs:2241:29
+     |
+2241 |         if let Some(res) = parent.get("global") {
+     |                                   ^^^ method not found in `Option<&Module>`
+
+error[E0599]: no associated function or constant named `new` found for struct `Module` in the current scope
+    --> src/parser.rs:2244:43
+     |
+2244 |             self.symbols.mods.insert(name, Module::new(name, parent));
+     |                                                    ^^^ associated function or constant not found in `Module`
 ...
-5755 |         root: &Option<Box<Ast>>,
-     |         -----------------------
+3420 | struct Module {
+     | ------------- associated function or constant `new` not found for this struct
 
-error[E0560]: struct `Compiler` has no field named `compile_flag`
-    --> src/parser.rs:2210:13
+error[E0308]: mismatched types
+    --> src/parser.rs:2245:50
      |
-2210 |             compile_flag: compile,
-     |             ^^^^^^^^^^^^ `Compiler` does not have this field
+2245 |               if let Some(res) = symbols.mods.get_mut(name) {
+     |  ___________________________________________________________^
+2246 | |                 self.set_curr_mod(&res.1);
+     | |                                          - help: remove this semicolon to return this value
+2247 | |             }
+     | |_____________^ expected `Result<(), String>`, found `()`
      |
-     = note: available fields are: `symbols`
+     = note:   expected enum `Result<(), String>`
+             found unit type `()`
 
-error[E0609]: no field `compile_flag` on type `&mut Compiler`
-    --> src/parser.rs:2228:11
+error[E0308]: mismatched types
+    --> src/parser.rs:2255:52
      |
-2228 |     if !self.compile_flag {
-     |              ^^^^^^^^^^^^ unknown field
+2255 |         if let Some(mut res) = self.symbols.mods.get_mut(name) {
+     |                                                  ------- ^^^^ expected `&_`, found `String`
+     |                                                  |
+     |                                                  arguments to this method are incorrect
      |
-     = note: available fields are: `symbols`, `error_count`, `in_panic_mode`, `in_panic_lock_mode`
+     = note: expected reference `&_`
+                   found struct `String`
+note: method defined here
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/std/src/collections/hash/map.rs:1292:11
+help: consider borrowing here
+     |
+2255 |         if let Some(mut res) = self.symbols.mods.get_mut(&name) {
+     |                                                          +
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2256:4
+     |
+2256 |             (name, value) = res;
+     |             ^^^^^^^^^^^^^   --- this expression has type `&mut Module`
+     |             |
+     |             expected `&mut Module`, found `(_, _)`
+     |
+     = note: expected mutable reference `&mut Module`
+                            found tuple `(_, _)`
+
+error[E0609]: no field `1` on type `&mut Module`
+    --> src/parser.rs:2257:33
+     |
+2257 |             self.symbols.curr_mod = &res.1;
+     |                                          ^ unknown field
+     |
+     = note: available fields are: `mod_name`, `mod_index`, `mod_vars`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2260:8
+     |
+2260 |             Err("cannot set current module to one which is invalid")
+     |             --- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `&str`
+     |             |
+     |             arguments to this enum variant are incorrect
+     |
+help: the type constructed contains `&'static str` due to the type of the argument passed
+    --> src/parser.rs:2260:4
+     |
+2260 |             Err("cannot set current module to one which is invalid")
+     |             ^^^^---------------------------------------------------^
+     |                 |
+     |                 this argument influences the type of `Err`
+note: tuple variant defined here
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/result.rs:566:4
+help: try using a conversion method
+     |
+2260 |             Err("cannot set current module to one which is invalid".to_string())
+     |                                                                    ++++++++++++
+
+error[E0614]: type `Option<char>` cannot be dereferenced
+    --> src/parser.rs:2289:7
+     |
+2289 |             if *name.chars().nth(0) == '_' {
+     |                ^^^^^^^^^^^^^^^^^^^^ can't be dereferenced
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2287:10
+     |
+2287 |           } else {
+     |  ________________^
+2288 | |             let mut access_type = AccessType::Public;
+2289 | |             if *name.chars().nth(0) == '_' {
+2290 | |                 access_type = AccessType::Private;
+...    |
+2298 | |             );
+2299 | |         }
+     | |_________^ expected `Result<VarEntry, VarError>`, found `()`
+     |
+     = note:   expected enum `Result<VarEntry, parser::VarError>`
+             found unit type `()`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2304:10
+     |
+2302 |     fn get_scope_depth(
+     |        --------------- implicitly returns `()` as its body has no tail or `return` expression
+2303 |         &self
+2304 |     ) -> usize {
+     |          ^^^^^ expected `usize`, found `()`
+2305 |         self.symbols.calls.len() - 1;
+     |                                     - help: remove this semicolon to return this value
 
 error[E0425]: cannot find function `add_local_var` in this scope
-    --> src/parser.rs:2291:29
+    --> src/parser.rs:2382:29
      |
-2291 | ...                   add_local_var(self, ast, gc, name, None, true)
+2382 | ...                   add_local_var(self, ast, gc, name, None, true)
      |                       ^^^^^^^^^^^^^---------------------------------
      |                       |
      |                       help: try calling `add_local_var` as a method: `self.add_local_var(ast, gc, name, None, true)`
 
 error[E0425]: cannot find function `define_var` in this scope
-    --> src/parser.rs:2296:33
+    --> src/parser.rs:2387:33
      |
-2296 | ...                   define_var(vm, last, 0)
+2387 | ...                   define_var(vm, last, 0)
      |                       ^^^^^^^^^^ not found in this scope
 
-error[E0277]: the trait bound `ast::Ast: managed::Manage` is not satisfied
-    --> src/parser.rs:2334:26
-     |
-2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
-     |            ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
-     |
-help: the trait `managed::Manage` is not implemented for `ast::Ast`
-    --> src/ast.rs:10:1
-     |
-  10 | pub enum Ast {
-     | ^^^^^^^^^^^^
-     = help: the following other types implement trait `managed::Manage`:
-               String
-               Vec<value::Value>
-               closure::Closure
-               function_core::FunctionCore
-               managed::Managed<(dyn managed::Manage + 'static)>
-               managed::Managed<T>
-               native_fun::NativeFun
-               upvalue::Upvalue
-note: required by a bound in `managed::Managed`
-    --> src/managed.rs:74:33
-     |
-  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
-     |                                 ^^^^^^ required by this bound in `Managed`
-
 error[E0308]: arguments to this method are incorrect
-    --> src/parser.rs:2334:26
+    --> src/parser.rs:2426:26
      |
-2334 | ...          self.code_gen_fun_decl(name, fun_ty, params, listing, clo...
-     |                   ^^^^^^^^^^^^^^^^^ ----  ------ expected `FunctionType`, found `&FunctionType`
-     |                                     |
-     |                                     expected `String`, found `&String`
+2426 | ...   self.code_gen_fun_decl(name.to_string(), fun_ty.clone(), params,...
+     |            ^^^^^^^^^^^^^^^^^
      |
 note: expected `Vec<Ast>`, found `&Vec<Box<Ast>>`
-    --> src/parser.rs:2334:58
+    --> src/parser.rs:2426:78
      |
-2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
-     |                                            ^^^^^^
+2426 | ....to_string(), fun_ty.clone(), params, listing.to_vec(), closure)
+     |                                  ^^^^^^
      = note: expected struct `Vec<ast::Ast>`
              found reference `&Vec<Box<ast::Ast>>`
-note: expected `Vec<Box<Ast>>`, found `&Vec<Box<Ast>>`
-    --> src/parser.rs:2334:66
+note: expected `Option<Managed<Closure>>`, found `&Option<Closure>`
+    --> src/parser.rs:2426:104
      |
-2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
-     |                                                    ^^^^^^^
-     = note: expected struct `Vec<_>`
-             found reference `&Vec<_>`
-note: expected `Option<Managed<Ast>>`, found `&Option<Closure>`
-    --> src/parser.rs:2334:75
-     |
-2334 | ...   self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
-     |                                                             ^^^^^^^
-     = note:   expected enum `Option<managed::Managed<ast::Ast>>`
+2426 | ...(), params, listing.to_vec(), closure)
+     |                                  ^^^^^^^
+     = note:   expected enum `Option<managed::Managed<closure::Closure>>`
              found reference `&Option<closure::Closure>`
 note: method defined here
-    --> src/parser.rs:2437:8
+    --> src/parser.rs:2530:8
      |
-2437 |     fn code_gen_fun_decl(
+2530 |     fn code_gen_fun_decl(
      |        ^^^^^^^^^^^^^^^^^
-2438 |         &self, 
-2439 |         name: String, 
-     |         ------------
-2440 |         fun_ty: FunctionType, 
-     |         --------------------
-2441 |         params: Vec<Ast>, 
-     |         ----------------
-2442 |         listing: Vec<Box<Ast>>, 
-     |         ----------------------
-2443 |         closure: Option<Managed<Ast>>
-     |         -----------------------------
-help: try using a conversion method
-     |
-2334 |                     self.code_gen_fun_decl(name.to_string(), fun_ty, params, listing, closure)
-     |                                                ++++++++++++
-help: consider using clone here
-     |
-2334 |                     self.code_gen_fun_decl(name, fun_ty.clone(), params, listing, closure)
-     |                                                        ++++++++
-help: try using a conversion method
-     |
-2334 |                     self.code_gen_fun_decl(name, fun_ty, params, listing.to_vec(), closure)
-     |                                                                         +++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2334:21
-     |
-2322 | ...-> Option<Managed<Closure>>
-     |       ------------------------ expected `Option<managed::Managed<closure::Closure>>` because of return type
 ...
-2334 | ...              self.code_gen_fun_decl(name, fun_ty, params, listing, closure)
-     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<Managed<Closure>>`, found `Option<Closure>`
-     |
-     = note: expected enum `Option<managed::Managed<closure::Closure>>`
-                found enum `Option<closure::Closure>`
+2534 |         params: Vec<Ast>, 
+     |         ----------------
+2535 |         listing: Vec<Box<Ast>>, 
+2536 |         closure: Option<Managed<Closure>>
+     |         ---------------------------------
 
-error[E0308]: arguments to this method are incorrect
-    --> src/parser.rs:2340:26
+error[E0061]: this method takes 5 arguments but 4 arguments were supplied
+    --> src/parser.rs:2445:26
      |
-2340 |                     self.code_gen_let_decl(name, expr);
-     |                          ^^^^^^^^^^^^^^^^^ ---- expected `String`, found `&String`
+2445 | ...        self.code_gen_call(&*ast.clone().unwrap(), gc, &recv, args)
+     |                 ^^^^^^^^^^^^^ ---------------------- argument #1 of type `&mut Compiler` is missing
      |
-note: expected `Box<Ast>`, found `&Box<Ast>`
-    --> src/parser.rs:2340:50
+note: expected `Option<Box<Ast>>`, found `&&Option<Box<Ast>>`
+    --> src/parser.rs:2445:68
      |
-2340 |                     self.code_gen_let_decl(name, expr);
-     |                                                  ^^^^
-     = note: expected struct `Box<_>`
-             found reference `&Box<_>`
+2445 | ...   self.code_gen_call(&*ast.clone().unwrap(), gc, &recv, args)
+     |                                                      ^^^^^
+     = note:   expected enum `Option<_>`
+             found reference `&&Option<_>`
 note: method defined here
-    --> src/parser.rs:2561:8
+    --> src/parser.rs:2791:8
      |
-2561 |     fn code_gen_let_decl(
-     |        ^^^^^^^^^^^^^^^^^
-2562 |         &self, 
-2563 |         name: String, 
-     |         ------------
-2564 |         expr: Box<Ast>
-     |         --------------
-help: try using a conversion method
-     |
-2340 |                     self.code_gen_let_decl(name.to_string(), expr);
-     |                                                ++++++++++++
-help: consider using clone here
-     |
-2340 |                     self.code_gen_let_decl(name, expr.clone());
-     |                                                      ++++++++
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2339:10
-     |
-2339 |                   } => {
-     |  ______________________^
-2340 | |                     self.code_gen_let_decl(name, expr);
-2341 | |                 },
-     | |_________________^ expected `Option<Managed<Closure>>`, found `()`
-     |
-     = note:   expected enum `Option<managed::Managed<closure::Closure>>`
-             found unit type `()`
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2353:26
-     |
-2353 | ...elf.code_gen_call(vm, &*ast.clone().unwrap(), gc, &recv, args)
-     |        ------------- ^^ expected `&mut Compiler`, found `*mut VM`
-     |        |
-     |        arguments to this method are incorrect
-     |
-     = note: expected mutable reference `&mut Compiler`
-                      found raw pointer `*mut VM`
-note: method defined here
-    --> src/parser.rs:2694:8
-     |
-2694 |     fn code_gen_call
+2791 |     fn code_gen_call
      |        ^^^^^^^^^^^^^
 ...
-2697 |         compiler: &mut Compiler,
+2794 |         compiler: &mut Compiler,
      |         -----------------------
-
-error[E0599]: no method named `code_gen_value` found for mutable reference `&mut Compiler` in the current scope
-    --> src/parser.rs:2369:26
-     |
-2369 |                     self.code_gen_value(val)
-     |                          ^^^^^^^^^^^^^^ this is an associated function, not a method
-     |
-     = note: found the following associated functions; to be used as methods, functions must have a `self` parameter
-note: the candidate is defined in an impl for the type `Compiler`
-    --> src/parser.rs:2610:5
-     |
-2610 |     fn code_gen_value(val: Value) {
-     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-help: there is a method `code_gen` with a similar name, but with different arguments
-    --> src/parser.rs:2316:5
-     |
-2316 | /     fn code_gen<'a>
-2317 | |     (
-2318 | |         &mut self,
-2319 | |         ast: &Option<Box<Ast>>,
-2320 | |         vm: *mut VM,
-2321 | |         gc: &Gc,
-2322 | |     ) -> Option<Managed<Closure>>
-     | |_________________________________^
-help: use associated function syntax instead
-     |
-2369 -                     self.code_gen_value(val)
-2369 +                     Compiler::code_gen_value(val)
-     |
-
-error[E0061]: this method takes 4 arguments but 2 arguments were supplied
-    --> src/parser.rs:2375:26
-     |
-2375 |                     self.code_gen_var(name, arity) 
-     |                          ^^^^^^^^^^^^-------------
-     |                                      ||
-     |                                      |types differ in mutability
-     |                                      two arguments of type `String` and `usize` are missing
-     |
-     = note: expected mutable reference `&mut Compiler`
-                        found reference `&String`
-note: expected `&Gc`, found `&Option<usize>`
-    --> src/parser.rs:2375:45
-     |
-2375 |                     self.code_gen_var(name, arity) 
-     |                                             ^^^^^
-     = note: expected reference `&Gc`
-                found reference `&Option<usize>`
-note: method defined here
-    --> src/parser.rs:2663:8
-     |
-2663 |     fn code_gen_var
-     |        ^^^^^^^^^^^^
 ...
-2666 |         compiler: &mut Compiler,
-     |         -----------------------
-2667 |         gc: &Gc,
-     |         -------
-2668 |         name: String,
-     |         ------------
-2669 |         arity: usize,
-     |         ------------
-help: provide the arguments
+2797 |         recv: Option<Box<Ast>>,
+     |         ----------------------
+help: provide the argument
      |
-2375 -                     self.code_gen_var(name, arity) 
-2375 +                     self.code_gen_var(/* &mut Compiler */, /* &Gc */, /* String */, /* usize */) 
+2445 -                     self.code_gen_call(&*ast.clone().unwrap(), gc, &recv, args)
+2445 +                     self.code_gen_call(/* &mut Compiler */, &*ast.clone().unwrap(), gc, /* Option<Box<ast::Ast>> */, args)
      |
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2375:21
+    --> src/parser.rs:2452:39
      |
-2322 |     ) -> Option<Managed<Closure>>
-     |          ------------------------ expected `Option<managed::Managed<closure::Closure>>` because of return type
+2452 |                         self.code_gen(&mut Some(i.clone()), vm, gc);
+     |                              -------- ^^^^^^^^^^^^^^^^^^^^ expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+     |                              |
+     |                              arguments to this method are incorrect
+     |
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
 ...
-2375 |                     self.code_gen_var(name, arity) 
-     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<Managed<Closure>>`, found `()`
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+help: consider removing the borrow
+     |
+2452 -                         self.code_gen(&mut Some(i.clone()), vm, gc);
+2452 +                         self.code_gen(Some(i.clone()), vm, gc);
+     |
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2459:35
+     |
+2459 |                     self.code_gen(&mut Some(expr.clone()), vm, gc)
+     |                          -------- ^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+     |                          |
+     |                          arguments to this method are incorrect
+     |
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+help: consider removing the borrow
+     |
+2459 -                     self.code_gen(&mut Some(expr.clone()), vm, gc)
+2459 +                     self.code_gen(Some(expr.clone()), vm, gc)
+     |
+
+error[E0609]: no field `gc` on type `&mut Compiler`
+    --> src/parser.rs:2468:44
+     |
+2468 | ...   self.code_gen_var(self.gc, name.to_string(), arity.clone())
+     |                              ^^ unknown field
+     |
+     = note: available fields are: `symbols`, `compile_flag`, `error_count`, `in_panic_mode`, `in_panic_lock_mode`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2468:66
+     |
+2468 | ...self.code_gen_var(self.gc, name.to_string(), arity.clone())
+     |         ------------                            ^^^^^^^^^^^^^ expected `usize`, found `Option<usize>`
+     |         |
+     |         arguments to this method are incorrect
+     |
+     = note: expected type `usize`
+                found enum `Option<usize>`
+note: method defined here
+    --> src/parser.rs:2762:8
+     |
+2762 |     fn code_gen_var
+     |        ^^^^^^^^^^^^
+...
+2767 |         arity: usize,
+     |         ------------
+help: use the `?` operator to extract the `Option<usize>` value, propagating an `Option::None` value to the caller
+     |
+2468 |                     self.code_gen_var(self.gc, name.to_string(), arity.clone()?)
+     |                                                                               +
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2468:21
+     |
+2413 | ...-> Option<Managed<Closure>>
+     |       ------------------------ expected `Option<managed::Managed<closure::Closure>>` because of return type
+...
+2468 | ...              self.code_gen_var(self.gc, name.to_string(), arity.clone())
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<Managed<Closure>>`, found `()`
      |
      = note:   expected enum `Option<managed::Managed<closure::Closure>>`
              found unit type `()`
 note: method `code_gen_var` modifies its receiver in-place
-    --> src/parser.rs:2375:26
+    --> src/parser.rs:2468:26
      |
-2375 |                     self.code_gen_var(name, arity) 
-     |                          ^^^^^^^^^^^^ this call modifies `self` in-place
+2468 | ...   self.code_gen_var(self.gc, name.to_string(), arity.clone())
+     |            ^^^^^^^^^^^^ this call modifies `self` in-place
 help: try adding an expression at the end of the block
      |
-2375 ~                     self.code_gen_var(name, arity);
-2376 ~                     None 
+2468 ~                     self.code_gen_var(self.gc, name.to_string(), arity.clone());
+2469 +                     None
      |
-2375 ~                     self.code_gen_var(name, arity);
-2376 ~                     Some(()) 
+2468 ~                     self.code_gen_var(self.gc, name.to_string(), arity.clone());
+2469 +                     Some(())
      |
 
-error[E0425]: cannot find function `resolve_var` in this scope
-    --> src/parser.rs:2398:37
+error[E0308]: mismatched types
+    --> src/parser.rs:2483:35
      |
-2398 | ...       resolve_var(self, vm, &**l, gc, name, *arity, true);
+2483 |                     self.code_gen(right, vm, gc);
+     |                          -------- ^^^^^ expected `Option<Box<Ast>>`, found `&Option<Box<Ast>>`
+     |                          |
+     |                          arguments to this method are incorrect
+     |
+     = note:   expected enum `Option<_>`
+             found reference `&Option<_>`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+help: consider using clone here
+     |
+2483 |                     self.code_gen(right.clone(), vm, gc);
+     |                                        ++++++++
+
+error[E0425]: cannot find function `resolve_var` in this scope
+    --> src/parser.rs:2491:37
+     |
+2491 | ...       resolve_var(self, vm, &**l, gc, name, *arity, true);
      |           ^^^^^^^^^^^----------------------------------------
      |           |
      |           help: try calling `resolve_var` as a method: `self.resolve_var(vm, &**l, gc, name, *arity, true)`
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2401:37
+    --> src/parser.rs:2494:37
      |
-2400 | ...                   match var {
+2493 | ...                   match var {
      |                             --- this expression has type `()`
-2401 | ...                       Ok(v) => {
+2494 | ...                       Ok(v) => {
      |                           ^^^^^ expected `()`, found `Result<_, _>`
      |
      = note: expected unit type `()`
                      found enum `Result<_, _>`
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2410:37
+    --> src/parser.rs:2503:37
      |
-2400 | ...                   match var {
+2493 | ...                   match var {
      |                             --- this expression has type `()`
 ...
-2410 | ...                       Err(e) => {
+2503 | ...                       Err(e) => {
      |                           ^^^^^^ expected `()`, found `Result<_, _>`
      |
      = note: expected unit type `()`
                      found enum `Result<_, _>`
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2405:45
+    --> src/parser.rs:2498:45
      |
-2402 | /                                         if let Some(last) = self.sym...
-2403 | |                                         {
-2404 | |                                             last.emit_word_op(OpCode...
-2405 | |                                             last.closure
+2495 | /                                         if let Some(last) = self.sym...
+2496 | |                                         {
+2497 | |                                             last.emit_word_op(OpCode...
+2498 | |                                             last.closure
      | |                                             ^^^^^^^^^^^^ expected `()`, found `Option<Managed<Closure>>`
-2406 | |                                         } else {
-2407 | |                                             panic!("function compile...
-2408 | |                                         }
+2499 | |                                         } else {
+2500 | |                                             panic!("function compile...
+2501 | |                                         }
      | |_________________________________________- expected this to be `()`
      |
      = note: expected unit type `()`
                      found enum `Option<managed::Managed<closure::Closure>>`
 help: you might have meant to return this value
      |
-2405 |                                             return last.closure;
+2498 |                                             return last.closure;
      |                                             ++++++             +
 
 error[E0425]: cannot find function `push_main` in this scope
-    --> src/parser.rs:2449:24
+    --> src/parser.rs:2544:24
      |
-2449 |                 unsafe{push_main(self, &node, gc)};
-     |                        ^^^^^^^^^-----------------
+2544 |                 unsafe{push_main(self)};
+     |                        ^^^^^^^^^------
      |                        |
-     |                        help: try calling `push_main` as a method: `self.push_main(&node, gc)`
+     |                        help: try calling `push_main` as a method: `self.push_main()`
 
-error[E0599]: the method `clone` exists for enum `Option<managed::Managed<ast::Ast>>`, but its trait bounds were not satisfied
-    --> src/parser.rs:2450:74
+error[E0308]: mismatched types
+    --> src/parser.rs:2545:78
      |
-2450 | ...).closure = Some(closure.clone())};
-     |                             ^^^^^ method cannot be called on `Option<managed::Managed<ast::Ast>>` due to unsatisfied trait bounds
+2545 | ...unwrap().closure = Some(closure.clone())};
+     |                       ---- ^^^^^^^^^^^^^^^ expected `Managed<Closure>`, found `Option<Managed<Closure>>`
+     |                       |
+     |                       arguments to this enum variant are incorrect
      |
-    ::: src/managed.rs:74:1
+     = note: expected struct `managed::Managed<_>`
+                  found enum `Option<managed::Managed<_>>`
+help: the type constructed contains `Option<managed::Managed<closure::Closure>>` due to the type of the argument passed
+    --> src/parser.rs:2545:73
      |
-  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
-     | ------------------------------------------------ doesn't satisfy `managed::Managed<ast::Ast>: Clone`
+2545 | ...unwrap().closure = Some(closure.clone())};
+     |                       ^^^^^---------------^
+     |                            |
+     |                            this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/option.rs:608:4
+help: use the `?` operator to extract the `Option<managed::Managed<closure::Closure>>` value, propagating an `Option::None` value to the caller
      |
-     = note: the following trait bounds were not satisfied:
-             `managed::Managed<ast::Ast>: Clone`
-             which is required by `Option<managed::Managed<ast::Ast>>: Clone`
-note: the trait `Clone` must be implemented
-    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/clone.rs:194:0
+2545 |                 unsafe{self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone()?)};
+     |                                                                                             +
 
 error[E0425]: cannot find function `push_function` in this scope
-    --> src/parser.rs:2453:25
+    --> src/parser.rs:2548:25
      |
-2453 |                 unsafe {push_function(self, &node, gc)};
-     |                         ^^^^^^^^^^^^^-----------------
+2548 |                 unsafe {push_function(self)};
+     |                         ^^^^^^^^^^^^^------
      |                         |
-     |                         help: try calling `push_function` as a method: `self.push_function(&node, gc)`
+     |                         help: try calling `push_function` as a method: `self.push_function()`
 
-error[E0599]: the method `clone` exists for enum `Option<managed::Managed<ast::Ast>>`, but its trait bounds were not satisfied
-    --> src/parser.rs:2454:75
+error[E0308]: mismatched types
+    --> src/parser.rs:2549:79
      |
-2454 | ...).closure = Some(closure.clone())};
-     |                             ^^^^^ method cannot be called on `Option<managed::Managed<ast::Ast>>` due to unsatisfied trait bounds
+2549 | ...unwrap().closure = Some(closure.clone())};
+     |                       ---- ^^^^^^^^^^^^^^^ expected `Managed<Closure>`, found `Option<Managed<Closure>>`
+     |                       |
+     |                       arguments to this enum variant are incorrect
      |
-    ::: src/managed.rs:74:1
+     = note: expected struct `managed::Managed<_>`
+                  found enum `Option<managed::Managed<_>>`
+help: the type constructed contains `Option<managed::Managed<closure::Closure>>` due to the type of the argument passed
+    --> src/parser.rs:2549:74
      |
-  74 | pub struct Managed<T: 'static + Manage + ?Sized> {
-     | ------------------------------------------------ doesn't satisfy `managed::Managed<ast::Ast>: Clone`
+2549 | ...unwrap().closure = Some(closure.clone())};
+     |                       ^^^^^---------------^
+     |                            |
+     |                            this argument influences the type of `Some`
+note: tuple variant defined here
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/option.rs:608:4
+help: use the `?` operator to extract the `Option<managed::Managed<closure::Closure>>` value, propagating an `Option::None` value to the caller
      |
-     = note: the following trait bounds were not satisfied:
-             `managed::Managed<ast::Ast>: Clone`
-             which is required by `Option<managed::Managed<ast::Ast>>: Clone`
-note: the trait `Clone` must be implemented
-    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/core/src/clone.rs:194:0
+2549 |                 unsafe {self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone()?)};
+     |                                                                                              +
 
-error[E0425]: cannot find function `begin_scope` in this scope
-    --> src/parser.rs:2461:21
+error[E0599]: no method named `begin_scope` found for mutable reference `&mut Compiler` in the current scope
+    --> src/parser.rs:2556:26
      |
-2461 |             unsafe {begin_scope()};
-     |                     ^^^^^^^^^^^ not found in this scope
+2556 |             unsafe {self.begin_scope()};
+     |                          ^^^^^^^^^^^ method not found in `&mut Compiler`
 
-error[E0425]: cannot find function `end_scope` in this scope
-    --> src/parser.rs:2482:21
+error[E0599]: no method named `end_scope` found for mutable reference `&mut Compiler` in the current scope
+    --> src/parser.rs:2577:26
      |
-2482 |             unsafe {end_scope()};
-     |                     ^^^^^^^^^ not found in this scope
-
-error[E0425]: cannot find function `get_scope_depth` in this scope
-    --> src/parser.rs:2510:25
-     |
-2510 |                         get_scope_depth()
-     |                         ^^^^^^^^^^^^^^^ not found in this scope
+2577 |             unsafe {self.end_scope()};
+     |                          ^^^^^^^^^ method not found in `&mut Compiler`
 
 error[E0425]: cannot find function `add_var` in this scope
-    --> src/parser.rs:2518:25
+    --> src/parser.rs:2613:25
      |
-2518 |                         add_var(
+2613 |                         add_var(
      |                         ^^^^^^^ not found in this scope
 
 error[E0425]: cannot find function `define_var` in this scope
-    --> src/parser.rs:2526:33
+    --> src/parser.rs:2621:33
      |
-2526 | ...                   define_var(vm, prev_fc, var_info.index)
+2621 | ...                   define_var(vm, prev_fc, var_info.index)
      |                       ^^^^^^^^^^ not found in this scope
 
-error[E0425]: cannot find function `get_scope_depth` in this scope
-    --> src/parser.rs:2571:13
-     |
-2571 |             get_scope_depth()
-     |             ^^^^^^^^^^^^^^^ not found in this scope
-
-error[E0614]: type `ast::Ast` cannot be dereferenced
-    --> src/parser.rs:2580:34
-     |
-2580 |         let is_function = match &**expr {
-     |                                  ^^^^^^ can't be dereferenced
-
 error[E0425]: cannot find function `add_var` in this scope
-    --> src/parser.rs:2594:23
+    --> src/parser.rs:2689:23
      |
-2594 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
+2689 |         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
      |                       ^^^^^^^ not found in this scope
 
 error[E0425]: cannot find function `define_var` in this scope
-    --> src/parser.rs:2601:24
+    --> src/parser.rs:2696:24
      |
-2601 |                 unsafe{define_var(vm, last, var_info.index)};
+2696 |                 unsafe{define_var(vm, last, var_info.index)};
      |                        ^^^^^^^^^^ not found in this scope
 
-error[E0614]: type `i64` cannot be dereferenced
-    --> src/parser.rs:2615:24
+error[E0599]: no method named `resolve_mod_var` found for mutable reference `&mut Compiler` in the current scope
+    --> src/parser.rs:2771:18
      |
-2615 |                     if *i >= 0 && *i <= 10 {
-     |                        ^^ can't be dereferenced
-
-error[E0614]: type `i64` cannot be dereferenced
-    --> src/parser.rs:2615:35
-     |
-2615 |                     if *i >= 0 && *i <= 10 {
-     |                                   ^^ can't be dereferenced
-
-error[E0614]: type `i64` cannot be dereferenced
-    --> src/parser.rs:2616:78
-     |
-2616 | ...om(OpCode::Load0) + (*i as u8)));
-     |                         ^^ can't be dereferenced
-
-error[E0614]: type `bool` cannot be dereferenced
-    --> src/parser.rs:2636:24
-     |
-2636 |                     if *b == true {
-     |                        ^^ can't be dereferenced
+2771 |             self.resolve_mod_var(vm, &node, gc, name, None, true)
+     |                  ^^^^^^^^^^^^^^^ method not found in `&mut Compiler`
 
 error[E0308]: mismatched types
-    --> src/parser.rs:2654:21
+    --> src/parser.rs:2778:24
      |
-2610 |     fn code_gen_value(val: Value) {
-     |                                  - help: a return type might be missing here: `-> _`
-...
-2654 |                     None
-     |                     ^^^^ expected `()`, found `Option<_>`
-     |
-     = note: expected unit type `()`
-                     found enum `Option<_>`
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2659:13
-     |
-2610 |     fn code_gen_value(val: Value) {
-     |                                  - help: a return type might be missing here: `-> _`
-...
-2659 |             None
-     |             ^^^^ expected `()`, found `Option<_>`
-     |
-     = note: expected unit type `()`
-                     found enum `Option<_>`
-
-error[E0425]: cannot find function `resolve_var` in this scope
-    --> src/parser.rs:2673:13
-     |
-2673 |             resolve_var(self, vm, &node, gc, name, None, true)
-     |             ^^^^^^^^^^^---------------------------------------
-     |             |
-     |             help: try calling `resolve_var` as a method: `self.resolve_var(vm, &node, gc, name, None, true)`
-
-error[E0308]: mismatched types
-    --> src/parser.rs:2680:24
-     |
-2670 |     )
+2768 |     )
      |      - help: a return type might be missing here: `-> _`
 ...
-2680 |                 return None;
+2778 |                 return None;
      |                        ^^^^ expected `()`, found `Option<_>`
      |
      = note: expected unit type `()`
                      found enum `Option<_>`
 
 error[E0425]: cannot find function `resolve_var` in this scope
-    --> src/parser.rs:2710:39
+    --> src/parser.rs:2807:39
      |
-2710 | ...e {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
+2807 | ...e {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
      |       ^^^^^^^^^^^--------------------------------------------------
      |       |
      |       help: try calling `resolve_var` as a method: `self.resolve_var(vm, ast, gc, name, Some(args.len()), false)`
 
-error[E0599]: no method named `parse_ast` found for mutable reference `&mut VM` in the current scope
-    --> src/parser.rs:5723:28
+error[E0308]: mismatched types
+    --> src/parser.rs:2823:34
      |
-5723 |         let closure = self.parse_ast(root, gc, compile);
-     |                            ^^^^^^^^^ method not found in `&mut VM`
+2823 | ...       if self.code_gen(&mut Some(i.clone()), vm, gc).is_none() {
+     |                   -------- ^^^^^^^^^^^^^^^^^^^^ expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+     |                   |
+     |                   arguments to this method are incorrect
+     |
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+help: consider removing the borrow
+     |
+2823 -                 if self.code_gen(&mut Some(i.clone()), vm, gc).is_none() {
+2823 +                 if self.code_gen(Some(i.clone()), vm, gc).is_none() {
+     |
+
+error[E0308]: mismatched types
+    --> src/parser.rs:2871:92
+     |
+2871 | ...                   self.code_gen(Some::<Box<Ast>>(e.clone()), vm, gc);
+     |                            --------                              ^^ expected `&mut VM`, found `*mut VM`
+     |                            |
+     |                            arguments to this method are incorrect
+     |
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2411 |         vm: &mut VM,
+     |         -----------
+
+error[E0599]: no variant, associated function, or constant named `Ns` found for enum `ScopeType` in the current scope
+    --> src/parser.rs:2905:24
+     |
+2905 |             ScopeType::Ns => {
+     |                        ^^ variant, associated function, or constant not found in `ScopeType`
+...
+3967 | enum ScopeType {
+     | -------------- variant, associated function, or constant `Ns` not found for this enum
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2933:30
+     |
+2933 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2933:39
+     |
+2933 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2933:58
+     |
+2933 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                                          ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2933 -                         self.code_gen(&mut left.clone(), vm, gc);
+2933 +                         self.code_gen(left.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2934:30
+     |
+2934 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2934:39
+     |
+2934 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2934:59
+     |
+2934 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                                           ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2934 -                         self.code_gen(&mut right.clone(), vm, gc);
+2934 +                         self.code_gen(right.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2939:30
+     |
+2939 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2939:39
+     |
+2939 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2939:58
+     |
+2939 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                                          ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2939 -                         self.code_gen(&mut left.clone(), vm, gc);
+2939 +                         self.code_gen(left.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2940:30
+     |
+2940 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2940:39
+     |
+2940 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2940:59
+     |
+2940 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                                           ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2940 -                         self.code_gen(&mut right.clone(), vm, gc);
+2940 +                         self.code_gen(right.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2945:30
+     |
+2945 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2945:39
+     |
+2945 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2945:58
+     |
+2945 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                                          ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2945 -                         self.code_gen(&mut left.clone(), vm, gc);
+2945 +                         self.code_gen(left.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2946:30
+     |
+2946 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2946:39
+     |
+2946 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2946:59
+     |
+2946 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                                           ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2946 -                         self.code_gen(&mut right.clone(), vm, gc);
+2946 +                         self.code_gen(right.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2951:30
+     |
+2951 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2951:39
+     |
+2951 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2951:58
+     |
+2951 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                                          ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2951 -                         self.code_gen(&mut left.clone(), vm, gc);
+2951 +                         self.code_gen(left.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2952:30
+     |
+2952 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2952:39
+     |
+2952 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2952:59
+     |
+2952 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                                           ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2952 -                         self.code_gen(&mut right.clone(), vm, gc);
+2952 +                         self.code_gen(right.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2957:30
+     |
+2957 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2957:39
+     |
+2957 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2957:58
+     |
+2957 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                                          ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2957 -                         self.code_gen(&mut left.clone(), vm, gc);
+2957 +                         self.code_gen(left.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2958:30
+     |
+2958 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2958:39
+     |
+2958 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2958:59
+     |
+2958 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                                           ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2958 -                         self.code_gen(&mut right.clone(), vm, gc);
+2958 +                         self.code_gen(right.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2963:30
+     |
+2963 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2963:39
+     |
+2963 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2963:58
+     |
+2963 |                         self.code_gen(&mut left.clone(), vm, gc);
+     |                                                          ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2963 -                         self.code_gen(&mut left.clone(), vm, gc);
+2963 +                         self.code_gen(left.clone(), vm, gc);
+     |
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:2964:30
+     |
+2964 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                              ^^^^^^^^
+     |
+note: expected `Option<Box<Ast>>`, found `&mut Option<Box<Ast>>`
+    --> src/parser.rs:2964:39
+     |
+2964 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                       ^^^^^^^^^^^^^^^^^^
+     = note:           expected enum `Option<_>`
+             found mutable reference `&mut Option<_>`
+note: expected `&mut VM`, found `*mut VM`
+    --> src/parser.rs:2964:59
+     |
+2964 |                         self.code_gen(&mut right.clone(), vm, gc);
+     |                                                           ^^
+     = note: expected mutable reference `&mut VM`
+                      found raw pointer `*mut VM`
+note: method defined here
+    --> src/parser.rs:2407:8
+     |
+2407 |     fn code_gen<'a>
+     |        ^^^^^^^^
+...
+2410 |         ast: Option<Box<Ast>>,
+     |         ---------------------
+2411 |         vm: &mut VM,
+     |         -----------
+help: consider removing the borrow
+     |
+2964 -                         self.code_gen(&mut right.clone(), vm, gc);
+2964 +                         self.code_gen(right.clone(), vm, gc);
+     |
+
+error[E0277]: the trait bound `Module: Clone` is not satisfied
+    --> src/parser.rs:3397:5
+     |
+3395 | #[derive(Clone)]
+     |          ----- in this derive macro expansion
+3396 | struct SymbolTables<'a> {
+3397 |     mods: HashMap<String, Module>,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |
+help: the trait `Clone` is not implemented for `Module`
+    --> src/parser.rs:3420:1
+     |
+3420 | struct Module {
+     | ^^^^^^^^^^^^^
+     = note: required for `HashMap<String, Module>` to implement `Clone`
+
+error[E0063]: missing field `curr_mod` in initializer of `SymbolTables<'a>`
+    --> src/parser.rs:3404:9
+     |
+3404 |         Self {
+     |         ^^^^ missing `curr_mod`
+
+error[E0308]: mismatched types
+    --> src/parser.rs:3411:33
+     |
+3411 |         let res = self.mods.get(name);
+     |                             --- ^^^^ expected `&_`, found `String`
+     |                             |
+     |                             arguments to this method are incorrect
+     |
+     = note: expected reference `&_`
+                   found struct `String`
+note: method defined here
+    --> /rustc/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/std/src/collections/hash/map.rs:1030:11
+help: consider borrowing here
+     |
+3411 |         let res = self.mods.get(&name);
+     |                                 +
+
+error[E0308]: mismatched types
+    --> src/parser.rs:3499:30
+     |
+3499 |         Self::function_setup(parser, ast, gc, "<main>", 0, 0, Function...
+     |         -------------------- ^^^^^^ expected `&mut Compiler`, found `&mut Parser`
+     |         |
+     |         arguments to this function are incorrect
+     |
+     = note: expected mutable reference `&mut Compiler`
+                found mutable reference `&mut Parser`
+note: associated function defined here
+    --> src/parser.rs:3554:8
+     |
+3554 |     fn function_setup
+     |        ^^^^^^^^^^^^^^
+3555 |     (
+3556 |             compiler: &mut Compiler,
+     |             -----------------------
+
+error[E0599]: no method named `error` found for mutable reference `&mut FunCompiler` in the current scope
+    --> src/parser.rs:3608:30
+     |
+3608 | ...   self.error(ast, "self-initialization of local variable '".to_str...
+     |            ^^^^^ method not found in `&mut FunCompiler`
+
+error[E0308]: arguments to this method are incorrect
+    --> src/parser.rs:3664:48
+     |
+3664 | ...compiler.resolve_upvalue_internal(compiler, parser.vm, ast, gc, nam...
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^ --------  --------- unexpected argument #2 of type `VM`
+     |                                      |
+     |                                      argument #1 of type `&mut Parser` is missing
+     |
+note: method defined here
+    --> src/parser.rs:3634:8
+     |
+3634 |     fn resolve_upvalue_internal
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+3637 |             parser: &mut Parser,
+     |             -------------------
+help: did you mean
+     |
+3664 -                     let upvalue = fun_compiler.resolve_upvalue_internal(compiler, parser.vm, ast, gc, name, arity, false, iter);
+3664 +                     let upvalue = fun_compiler.resolve_upvalue_internal(/* &mut Parser */, compiler, ast, gc, name, arity, false, iter);
+     |
+
+error[E0609]: no field `symbols` on type `&mut FunCompiler`
+    --> src/parser.rs:3668:54
+     |
+3668 | ...                   if let Some(last) = self.symbols.calls.last_mut() {
+     |                                                ^^^^^^^ unknown field
+     |
+     = note: available fields are: `name`, `ty`, `scope`, `arity`, `locals` ... and 6 others
+
+error[E0599]: no method named `error` found for mutable reference `&mut FunCompiler` in the current scope
+    --> src/parser.rs:3711:26
+     |
+3711 |             unsafe {self.error(ast, "too many upvalues".to_string())};
+     |                          ^^^^^ method not found in `&mut FunCompiler`
+
+error[E0599]: no method named `error` found for mutable reference `&mut FunCompiler` in the current scope
+    --> src/parser.rs:3744:26
+     |
+3744 | ...   unsafe {self.error(ast, "too many locals in function".to_string(...
+     |                    ^^^^^ method not found in `&mut FunCompiler`
+
+error[E0599]: no method named `error` found for mutable reference `&mut FunCompiler` in the current scope
+    --> src/parser.rs:3780:34
+     |
+3780 | ...                   self.error(
+     |                       -----^^^^^ method not found in `&mut FunCompiler`
+
+error[E0599]: no method named `error` found for mutable reference `&mut FunCompiler` in the current scope
+    --> src/parser.rs:3823:26
+     |
+3823 | ...   unsafe {self.error(ast, "local function '".to_string() + &fun_na...
+     |                    ^^^^^ method not found in `&mut FunCompiler`
+
+error[E0560]: struct `VM` has no field named `ast_parser`
+    --> src/parser.rs:4324:13
+     |
+4324 |             ast_parser: None,
+     |             ^^^^^^^^^^ `VM` does not have this field
+     |
+     = note: all struct fields are already assigned
+
+error[E0061]: this method takes 5 arguments but 3 arguments were supplied
+    --> src/parser.rs:5853:32
+     |
+5853 |         let closure = compiler.compile(root, gc, compile);
+     |                                ^^^^^^^       ----------- two arguments of type `&mut Parser` and `&mut VM` are missing
+     |
+note: method defined here
+    --> src/parser.rs:2308:8
+     |
+2308 |     fn compile
+     |        ^^^^^^^
+...
+2312 |         parser: &mut Parser,
+     |         -------------------
+2313 |         vm: &mut VM,
+     |         -----------
+help: provide the arguments
+     |
+5853 |         let closure = compiler.compile(root, /* &mut Parser */, /* &mut VM */, gc, compile);
+     |                                              +++++++++++++++++++++++++++++++++
+
+error[E0061]: this method takes 4 arguments but 3 arguments were supplied
+    --> src/parser.rs:5889:14
+     |
+5889 |         self.execute(gc, debug, compile)
+     |              ^^^^^^^ -- argument #1 of type `&mut Compiler` is missing
+     |
+note: method defined here
+    --> src/parser.rs:5842:8
+     |
+5842 |     fn execute
+     |        ^^^^^^^
+...
+5845 |         compiler: &mut Compiler,
+     |         -----------------------
+help: provide the argument
+     |
+5889 -         self.execute(gc, debug, compile)
+5889 +         self.execute(/* &mut Compiler */, gc, compile, debug)
+     |
+
+error[E0499]: cannot borrow `*self` as mutable more than once at a time
+   --> src/parser.rs:280:9
+    |
+280 |         self.advance(&mut self.gc);
+    |         ^^^^^-------^------------^
+    |         |    |       |
+    |         |    |       first mutable borrow occurs here
+    |         |    first borrow later used by call
+    |         second mutable borrow occurs here
+
+error[E0499]: cannot borrow `self.gc` as mutable more than once at a time
+   --> src/parser.rs:280:22
+    |
+280 |         self.advance(&mut self.gc);
+    |         ---- ------- ^^^^^^^^^^^^ second mutable borrow occurs here
+    |         |    |
+    |         |    first borrow later used by call
+    |         first mutable borrow occurs here
+
+error[E0499]: cannot borrow `*self` as mutable more than once at a time
+   --> src/parser.rs:291:13
+    |
+291 |         if !self.parse(root, &mut self.gc) {
+    |             ^^^^^-----^^^^^^^------------^
+    |             |    |           |
+    |             |    |           first mutable borrow occurs here
+    |             |    first borrow later used by call
+    |             second mutable borrow occurs here
+
+error[E0499]: cannot borrow `self.gc` as mutable more than once at a time
+   --> src/parser.rs:291:30
+    |
+291 |         if !self.parse(root, &mut self.gc) {
+    |             ---- -----       ^^^^^^^^^^^^ second mutable borrow occurs here
+    |             |    |
+    |             |    first borrow later used by call
+    |             first mutable borrow occurs here
+
+error[E0499]: cannot borrow `*self` as mutable more than once at a time
+   --> src/parser.rs:328:9
+    |
+328 |         self.advance(&mut self.gc);
+    |         ^^^^^-------^------------^
+    |         |    |       |
+    |         |    |       first mutable borrow occurs here
+    |         |    first borrow later used by call
+    |         second mutable borrow occurs here
+
+error[E0499]: cannot borrow `self.gc` as mutable more than once at a time
+   --> src/parser.rs:328:22
+    |
+328 |         self.advance(&mut self.gc);
+    |         ---- ------- ^^^^^^^^^^^^ second mutable borrow occurs here
+    |         |    |
+    |         |    first borrow later used by call
+    |         first mutable borrow occurs here
+
+error[E0499]: cannot borrow `*self` as mutable more than once at a time
+   --> src/parser.rs:339:13
+    |
+339 |         if !self.parse(root, &mut self.gc) {
+    |             ^^^^^-----^^^^^^^------------^
+    |             |    |           |
+    |             |    |           first mutable borrow occurs here
+    |             |    first borrow later used by call
+    |             second mutable borrow occurs here
+
+error[E0499]: cannot borrow `self.gc` as mutable more than once at a time
+   --> src/parser.rs:339:30
+    |
+339 |         if !self.parse(root, &mut self.gc) {
+    |             ---- -----       ^^^^^^^^^^^^ second mutable borrow occurs here
+    |             |    |
+    |             |    first borrow later used by call
+    |             first mutable borrow occurs here
 
 warning: variable does not need to be mutable
-   --> src/parser.rs:344:30
+   --> src/parser.rs:349:6
     |
-344 |     pub fn load_value(&self, mut value: Value) -> Result<(), String> {
-    |                              ----^^^^^
-    |                              |
-    |                              help: remove this `mut`
+349 |         mut mod_name: String, 
+    |         ----^^^^^^^^
+    |         |
+    |         help: remove this `mut`
     |
     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
 
-Some errors have detailed explanations: E0061, E0063, E0277, E0308, E0424, E0425, E0433, E0560, E0599...
+warning: variable does not need to be mutable
+   --> src/parser.rs:350:6
+    |
+350 |         mut name: String, 
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/parser.rs:351:6
+    |
+351 |         mut value: Value
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+
+error[E0596]: cannot borrow `root.0` as mutable, as `root` is not declared as mutable
+   --> src/parser.rs:451:22
+    |
+451 |                 Some(ref mut val) => {
+    |                      ^^^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+438 |         mut root: Option<Box<Ast>>,
+    |         +++
+
+error[E0507]: cannot move out of `self.name` which is behind a shared reference
+    --> src/parser.rs:3452:9
+     |
+3452 |         self.name
+     |         ^^^^^^^^^ move occurs because `self.name` has type `String`, which does not implement the `Copy` trait
+     |
+help: consider cloning the value if the performance cost is acceptable
+     |
+3452 |         self.name.clone()
+     |                  ++++++++
+
+error[E0507]: cannot move out of `self.var_type` which is behind a shared reference
+    --> src/parser.rs:3456:9
+     |
+3456 |         self.var_type
+     |         ^^^^^^^^^^^^^ move occurs because `self.var_type` has type `VarType`, which does not implement the `Copy` trait
+     |
+help: consider cloning the value if the performance cost is acceptable
+     |
+3456 |         self.var_type.clone()
+     |                      ++++++++
+
+error[E0507]: cannot move out of `self.scope_type` which is behind a shared reference
+    --> src/parser.rs:3460:6
+     |
+3460 |         self.scope_type
+     |         ^^^^^^^^^^^^^^^ move occurs because `self.scope_type` has type `ScopeType`, which does not implement the `Copy` trait
+     |
+help: consider cloning the value if the performance cost is acceptable
+     |
+3460 |         self.scope_type.clone()
+     |                        ++++++++
+
+error[E0507]: cannot move out of `self.access_type` which is behind a shared reference
+    --> src/parser.rs:3464:6
+     |
+3464 |         self.access_type
+     |         ^^^^^^^^^^^^^^^^ move occurs because `self.access_type` has type `AccessType`, which does not implement the `Copy` trait
+     |
+help: consider cloning the value if the performance cost is acceptable
+     |
+3464 |         self.access_type.clone()
+     |                         ++++++++
+
+error[E0499]: cannot borrow `s` as mutable more than once at a time
+    --> src/parser.rs:3582:17
+     |
+3580 |             s.push_local(
+     |             - ---------- first borrow later used by call
+     |             |
+     |             first mutable borrow occurs here
+3581 |                 compiler, ast, gc, "this".to_string(), 
+3582 |                 s.get_scope_depth(), false
+     |                 ^ second mutable borrow occurs here
+     |
+help: try adding a local storing this argument...
+    --> src/parser.rs:3582:17
+     |
+3582 |                 s.get_scope_depth(), false
+     |                 ^^^^^^^^^^^^^^^^^^^
+help: ...and then using that local as the argument to this call
+    --> src/parser.rs:3580:13
+     |
+3580 | /             s.push_local(
+3581 | |                 compiler, ast, gc, "this".to_string(), 
+3582 | |                 s.get_scope_depth(), false
+3583 | |             );
+     | |_____________^
+
+error[E0499]: cannot borrow `s` as mutable more than once at a time
+    --> src/parser.rs:3587:17
+     |
+3585 |             s.push_local(
+     |             - ---------- first borrow later used by call
+     |             |
+     |             first mutable borrow occurs here
+3586 |                 compiler, ast, gc, "".to_string(), 
+3587 |                 s.get_scope_depth(), false
+     |                 ^ second mutable borrow occurs here
+     |
+help: try adding a local storing this argument...
+    --> src/parser.rs:3587:17
+     |
+3587 |                 s.get_scope_depth(), false
+     |                 ^^^^^^^^^^^^^^^^^^^
+help: ...and then using that local as the argument to this call
+    --> src/parser.rs:3585:13
+     |
+3585 | /             s.push_local(
+3586 | |                 compiler, ast, gc, "".to_string(), 
+3587 | |                 s.get_scope_depth(), false
+3588 | |             );
+     | |_____________^
+
+error[E0596]: cannot borrow data in a `&` reference as mutable
+    --> src/parser.rs:4173:9
+     |
+4173 |         self.stack.last().unwrap().get_fp()
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot borrow as mutable
+
+error[E0596]: cannot borrow data in a `&` reference as mutable
+    --> src/parser.rs:4183:9
+     |
+4183 |         self.stack.last().unwrap().get_pc()
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot borrow as mutable
+
+error[E0596]: cannot borrow `frame` as mutable, as it is not declared as mutable
+    --> src/parser.rs:4354:18
+     |
+4354 |             Some(frame.get_pc())
+     |                  ^^^^^ cannot borrow as mutable
+     |
+help: consider changing this to be mutable
+     |
+4353 |         if let Some(mut frame) = self.calls.top() {
+     |                     +++
+
+error[E0499]: cannot borrow `self.stack` as mutable more than once at a time
+    --> src/parser.rs:4476:25
+     |
+4475 | ...   let fun = &mut self.stack[fun_index];
+     |                      ---------- first mutable borrow occurs here
+4476 | ...   let args = &mut self.stack[fun_index..fun_index + (num_args as u...
+     |                       ^^^^^^^^^^ second mutable borrow occurs here
+4477 | ...   match self.check_arity(fun, num_args) {
+     |                              --- first borrow later used here
+     |
+     = help: use `.split_at_mut(position)` to obtain two mutable non-overlapping sub-slices
+
+error[E0499]: cannot borrow `*self` as mutable more than once at a time
+    --> src/parser.rs:4477:15
+     |
+4475 |         let fun = &mut self.stack[fun_index];
+     |                        ---------- first mutable borrow occurs here
+4476 |         let args = &mut self.stack[fun_index...
+4477 |         match self.check_arity(fun, num_args) {
+     |               ^^^^             --- first borrow later used here
+     |               |
+     |               second mutable borrow occurs here
+
+Some errors have detailed explanations: E0061, E0063, E0106, E0277, E0308, E0425, E0499, E0507, E0560...
 For more information about an error, try `rustc --explain E0061`.
-warning: `timothy` (bin "timothy") generated 11 warnings
-error: could not compile `timothy` (bin "timothy") due to 136 previous errors; 11 warnings emitted
+warning: `timothy` (bin "timothy") generated 15 warnings
+error: could not compile `timothy` (bin "timothy") due to 125 previous errors; 15 warnings emitted

@@ -6,6 +6,8 @@ use crate::opcode::*;
 use crate::closure::*;
 use crate::ast::*;
 use crate::value::*;
+use std::rc::Rc;
+use std::cell::RefCell;
 use crate::gc::{Gc, NO_GC};
 use crate::natives::*;
 use std::collections::HashMap;
@@ -54,7 +56,6 @@ impl From<u8> for BindingPower {
         match val {
             0  => BindingPower::NoBp,
             1  => BindingPower::Assignment,     // = += -= *= /= &= |= ^= <<= >>=
-
             2  => BindingPower::Ternary,        // ? :
             3  => BindingPower::LOr,             // ||
             4  => BindingPower::LAnd,            // &&
@@ -78,7 +79,6 @@ impl Into<u8> for BindingPower  {
         match self {
             BindingPower::NoBp => 0,
             BindingPower::Assignment => 1,     // = += -= *= /= &= |= ^= <<= >>=
-
             BindingPower::Ternary => 2,        // ? :
             BindingPower::LOr => 3,             // ||
             BindingPower::LAnd => 4,            // &&
@@ -247,7 +247,7 @@ impl<'a> Parser {
     }
 
     pub fn parse_text(
-        &self, 
+        &mut self, 
         text: &mut String,
     ) -> Result<Value, InterpretErrorType> {
         self.lexer_stack = vec![];
@@ -277,9 +277,9 @@ impl<'a> Parser {
                 value: Value::Nil,
             },
         });
-        self.advance(&self.gc);
+        self.advance(&mut self.gc);
         
-        let mut root: Option<Box<Ast>> = 
+        let root: Option<Box<Ast>> = 
             Some(Box::new(Ast::FunDecl {
                 name: " main".to_string(),
                 fun_ty: FunctionType::TopLevel,
@@ -288,14 +288,14 @@ impl<'a> Parser {
                 closure: None,
             }));
         
-        if !self.parse(root, &self.gc) {
+        if !self.parse(root, &mut self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&self.gc, 
+            self.vm.run(&mut self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
-    pub fn parse_file(&self, fname: String) -> Result<Value, InterpretErrorType> {
+    pub fn parse_file(&mut self, fname: String) -> Result<Value, InterpretErrorType> {
         self.lexer_stack = vec![];
         self.error_count = 0;
         self.in_panic_mode = false;
@@ -325,9 +325,9 @@ impl<'a> Parser {
                 value: Value::Nil,
             },
         });
-        self.advance(&self.gc);
+        self.advance(&mut self.gc);
 
-        let mut root: Option<Box<Ast>> = 
+        let root: Option<Box<Ast>> = 
             Some(Box::new(Ast::FunDecl {
                 name: " main".to_string(),
                 fun_ty: FunctionType::TopLevel,
@@ -336,15 +336,20 @@ impl<'a> Parser {
                 closure: None,
             }));
         
-        if !self.parse(root, &self.gc) {
+        if !self.parse(root, &mut self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&self.gc, 
+            self.vm.run(&mut self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
 
-    pub fn load_value(&self, mut value: Value) -> Result<(), String> {
+    pub fn load_value(
+    	&mut self, 
+    	mut mod_name: String, 
+    	mut name: String, 
+    	mut value: Value
+    ) -> Result<(), String> {
 
         Ok(())
     }
@@ -430,7 +435,7 @@ impl<'a> Parser {
     // Entry point of parser
     fn parse(
 	&mut self,
-        mut root: Option<Box<Ast>>,
+        root: Option<Box<Ast>>,
         gc: &Gc,
     ) -> bool {
         while self.current().kind != TokenKind::Done {
@@ -502,7 +507,7 @@ impl<'a> Parser {
         &mut self, 
         tk: TokenKind, 
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -520,7 +525,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>> 
     {
@@ -548,7 +553,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -632,7 +637,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -661,7 +666,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
         bp:BindingPower,
     ) -> Option<Box<Ast>>
@@ -697,7 +702,7 @@ impl<'a> Parser {
     (
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>> 
     {
@@ -725,7 +730,7 @@ impl<'a> Parser {
     fn parse_const_stmt(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         _gc: &Gc
     ) -> Option<Box<Ast>> 
     {
@@ -734,7 +739,7 @@ impl<'a> Parser {
 
     fn parse_class_decl(&mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         _gc: &Gc
     ) -> Option<Box<Ast>> 
     {
@@ -743,7 +748,7 @@ impl<'a> Parser {
 
     fn parse_macro_def(&mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
     ) -> Option<Box<Ast>> 
     {
         None
@@ -753,7 +758,7 @@ impl<'a> Parser {
     (
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         _gc: &Gc
     ) -> Option<Box<Ast>> {
         None
@@ -762,7 +767,7 @@ impl<'a> Parser {
     fn parse_import_cmd(
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
     ) -> Option<Box<Ast>>
     {
         None
@@ -857,7 +862,7 @@ impl<'a> Parser {
     (
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) ->Option<Box<Ast>>
     {
@@ -940,7 +945,7 @@ impl<'a> Parser {
     fn parse_return_stmt(
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -963,7 +968,7 @@ impl<'a> Parser {
     fn parse_break_stmt(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
     ) -> Option<Box<Ast>>
     {
         None
@@ -972,7 +977,7 @@ impl<'a> Parser {
     fn parse_continue_stmt(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
     ) -> Option<Box<Ast>>
     {
         None
@@ -981,7 +986,7 @@ impl<'a> Parser {
     fn parse_block(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1017,7 +1022,7 @@ impl<'a> Parser {
     fn parse_expr_stmt(
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1044,7 +1049,7 @@ impl<'a> Parser {
     fn parse_int(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>> 
     {
@@ -1058,7 +1063,7 @@ impl<'a> Parser {
     fn parse_float(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1072,7 +1077,7 @@ impl<'a> Parser {
     fn parse_var(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1088,7 +1093,7 @@ impl<'a> Parser {
     fn parse_true(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1102,7 +1107,7 @@ impl<'a> Parser {
     fn parse_false(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1116,7 +1121,7 @@ impl<'a> Parser {
     fn parse_nil(
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1131,7 +1136,7 @@ impl<'a> Parser {
     (
         &mut self,
         _left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -1146,7 +1151,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Vec<Box<Ast>>>
     {
@@ -1183,7 +1188,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -1204,7 +1209,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1216,7 +1221,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1232,7 +1237,7 @@ impl<'a> Parser {
     fn parse_lnot(
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1249,7 +1254,7 @@ impl<'a> Parser {
     (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1265,7 +1270,7 @@ impl<'a> Parser {
     fn parse_addition(
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1291,7 +1296,7 @@ impl<'a> Parser {
     fn parse_subtraction (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1317,7 +1322,7 @@ impl<'a> Parser {
     fn parse_multiplication (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1343,7 +1348,7 @@ impl<'a> Parser {
     fn parse_division (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1369,7 +1374,7 @@ impl<'a> Parser {
     fn parse_modulo (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1395,7 +1400,7 @@ impl<'a> Parser {
     fn parse_power (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1422,7 +1427,7 @@ impl<'a> Parser {
     fn parse_land (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1451,7 +1456,7 @@ impl<'a> Parser {
     fn parse_lor (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1492,7 +1497,7 @@ impl<'a> Parser {
     fn parse_and (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1518,7 +1523,7 @@ impl<'a> Parser {
     fn parse_or (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1544,7 +1549,7 @@ impl<'a> Parser {
     fn parse_xor (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1570,7 +1575,7 @@ impl<'a> Parser {
     fn parse_lshift (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1596,7 +1601,7 @@ impl<'a> Parser {
     fn parse_rshift (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1622,7 +1627,7 @@ impl<'a> Parser {
     fn parse_compound_addition(
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1648,7 +1653,7 @@ impl<'a> Parser {
     fn parse_compound_subtraction (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1674,7 +1679,7 @@ impl<'a> Parser {
     fn parse_compound_multiplication (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1700,7 +1705,7 @@ impl<'a> Parser {
     fn parse_compound_division (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1726,7 +1731,7 @@ impl<'a> Parser {
     fn parse_compound_modulo (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc  
     ) -> Option<Box<Ast>>
     {
@@ -1752,7 +1757,7 @@ impl<'a> Parser {
     fn parse_compound_power (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1778,7 +1783,7 @@ impl<'a> Parser {
     fn parse_compound_and (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1804,7 +1809,7 @@ impl<'a> Parser {
     fn parse_compound_or (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1830,7 +1835,7 @@ impl<'a> Parser {
     fn parse_compound_xor (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc,
     ) -> Option<Box<Ast>>
     {
@@ -1856,7 +1861,7 @@ impl<'a> Parser {
     fn parse_compound_lshift (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,        
+        //: Option<Rc<RefCell<Ast>>>,        
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1882,7 +1887,7 @@ impl<'a> Parser {
     fn parse_compound_rshift (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,        
+        //: Option<Rc<RefCell<Ast>>>,        
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1908,7 +1913,7 @@ impl<'a> Parser {
     fn parse_assignment (
         &mut self,
         left: Option<Box<Ast>>,
-        //: Option<Weak<RefCell<Ast>>>,
+        //: Option<Rc<RefCell<Ast>>>,
         gc: &Gc
     ) -> Option<Box<Ast>>
     {
@@ -1950,7 +1955,7 @@ impl<'a> AstPrinter {
         Self {}
     }
 
-    fn run(&self, root: &mut Option<Box<Ast>>) {
+    fn run(&mut self, root: &mut Option<Box<Ast>>) {
         let ret = self.print(root, 0);
         match ret {
             PrinterState::Done => {},
@@ -1960,7 +1965,7 @@ impl<'a> AstPrinter {
         }
     }
 
-    fn print(&self, node: &mut Option<Box<Ast>>, level: usize) -> PrinterState {
+    fn print(&mut self, node: &mut Option<Box<Ast>>, level: usize) -> PrinterState {
         match node {
             Some(ref mut ast) => {
                 self.indent(level);
@@ -2192,685 +2197,25 @@ impl<'a> AstPrinter {
         }
     }
 
-    fn indent(&self, level: usize) {
+    fn indent(&mut self, level: usize) {
         for _i in 0..level * 2 {
             print!(" ");
         }
     }
 }
 
-
-
-
-#[derive(Clone)]
-struct SymbolTables {
-    mods: HashMap<String, Module>,
-    calls: Vec<FunCompiler>,
-}
-
-impl SymbolTables {
-    fn new() -> Self {
-        Self {
-            mods: HashMap::<String, Module>::new(),
-            calls: vec![],
-        }
-    }
-
-    fn get_mod(&self, name: String) -> Result<&Module, String> {
-        let res = self.mods.get(name);
-        if res.is_some() {
-            Ok(res.unwrap())
-        } else {
-            Err(format!("Module '{}' doesn't exist", name))
-        }
-    }
-}
-
-struct Module {
-    mod_name: String,
-    mod_index: usize,
-    mod_vars: HashMap<String, VarEntry>,
-    mod_env: Environment,
-}
-
-pub struct VarEntry {
-    name: String,
-    var_type: VarType,
-    var_index: usize,
-}
-
-impl VarEntry {
-    fn new(name: String, var_type: VarType, value: Option<Value>) -> Self {
-        Self {
-            name,
-            var_type,
-            var_index,
-        }
-    }
-
-    pub fn get_name() -> String {
-        name
-    }
-
-    pub fn get_type() -> VarType {
-        var_type
-    }
-    
-    pub fn get_index() -> usize {
-        var_index
-    }
-
-    pub fn get_value() -> Value {
-        var_value
-    }
-}
-
-// Begin FunCompiler Stuff
-
-#[derive(Clone)]
-struct FunCompiler {
-    name: String,
-    ty: FunctionType,
-    scope: usize,
-    arity: usize,
-
-    locals: Vec<Local>,
-    upvalues: Vec<Upvalue>,
-    code: Vec<u8>,
-    constants: HashMap<Value, usize>,
-    constant_arr: Vec<Value>,
-    local_fun_symtab: HashMap<String, VarInfo>,
-    closure: Option<Managed<Closure>>,
-}
-
-impl FunCompiler {
-    fn new_main
-	(
-            parser: &mut Parser,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-	) -> Self 
-    {
-        Self::function_setup(parser, ast, gc, "<main>", 0, 0, FunctionType::TopLevel)
-    }
-
-    fn new_named_closure
-	(
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &str, 
-            arity: usize, 
-            scope: usize,
-	) -> Self
-    {
-        
-        Self::function_setup(parser, ast, gc, name, arity, scope, FunctionType::NamedClosure)
-    }
-
-    fn new_anon_closure
-	(
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            arity: usize,
-            scope: usize,
-	) -> Self
-    {
-        Self::function_setup(parser, ast, gc, "", arity, scope, FunctionType::AnonClosure)
-    }
-
-    /*fn new_function
-    (
-    parser: &mut AstParser,
-    name: &str,
-    arity: usize
-) -> Self
-    {
-}
-    
-    fn new_constructor
-    (
-    parser: &mut AstParser,
-    arity: usize
-) -> Self
-    {
-}
-    
-    fn new_method
-    (
-    parser: &mut AstParser,
-    name: &str,
-    arity: usize
-) -> Self 
-    {
-}*/
-    
-    fn function_setup
-	(
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &str,
-            arity: usize,
-            scope: usize,
-            ty: FunctionType,
-	) -> Self
-    {
-        let mut s = Self {
-            name: name.to_string(),
-            ty: ty,
-            scope,
-            arity: arity,
-            locals: vec![],
-            upvalues: vec![],
-            code: vec![],
-            constants: HashMap::new(),
-            constant_arr: vec![],
-            local_fun_symtab: HashMap::new(),
-            closure: None,
-            
-        };
-        if s.ty == FunctionType::Constructor || s.ty == FunctionType::Method {
-            s.push_local(
-                compiler, ast, gc, "this".to_string(), 
-                s.get_scope_depth(), false
-            );
-        } else {
-            s.push_local(
-                compiler, ast, gc, "".to_string(), 
-                s.get_scope_depth(), false
-            );
-        } 
-        s
-    }
-
-    fn resolve_local_internal
-	(
-            &mut self,
-            compiler: *mut Compiler,
-            ast: &Ast,
-            _gc: &Gc,
-            name: &String,
-            arity: Option<usize>,
-            do_print_err: bool,
-	) -> Result<VarInfo, VarError>
-    {
-        for i in (0..self.locals.len()).rev() { 
-            if self.locals[i].name == *name {
-                if !self.locals[i].defined && do_print_err {
-                    unsafe {
-                        self.error(ast, "self-initialization of local variable '".to_string() + &self.locals[i].name)
-                    };
-                    return Err(VarError::new(
-                        self.locals[i].name.clone(),
-                        VarErrorType::SelfInit,
-                    )); 
-                } else {
-                    return Ok(VarInfo::new(
-                        self.locals[i].name.clone(),
-                        arity,
-                        VarType::Var,
-                        ScopeType::Local,
-                        self.locals[i].scope,
-                        i,
-                        0,
-                    ));
-                }
-            }
-        }
-        
-        Err(VarError::new(
-	    name.clone(),
-	    VarErrorType::Undefined,
-	))
-    }
-
-    fn resolve_upvalue_internal
-	(
-            &mut self,
-            parser: &mut Parser,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc, 
-            name: &String,
-            arity: Option<usize>,
-            print_error: bool,
-            mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
-	) -> Result<VarInfo, VarError>
-    {
-        let mut fc = iter.next();
-        if let Some(ref mut fun_compiler) = fc {
-
-            let local = fun_compiler.resolve_local_internal(compiler, ast, gc, name, arity, true);
-            match local {
-                Ok(var_info) => {
-                    if let Some(fun_compiler) = fc {
-                        fun_compiler.locals[var_info.index].upvalue = true;
-                        return fun_compiler.add_upvalue(compiler, ast, gc, &name, arity, var_info.upvalue_local_index, true);
-                    }
-                },
-                _ => {},
-            }
-
-            fc = iter.next();
-            if fc.is_some() {
-                if let Some(fun_compiler) = fc {
-                    let upvalue = fun_compiler.resolve_upvalue_internal(compiler, parser.vm, ast, gc, name, arity, false, iter);
-                    
-                    match upvalue {
-                        Ok(var_info) => {
-                            if let Some(last) = self.symbols.calls.last_mut() {
-                                return last.add_upvalue(compiler, ast, gc, name, arity, var_info.upvalue_local_index, false);
-                            }
-                        },
-                        Err(_) => {},
-                    }
-                }
-            }
-        }
-
-        Err(VarError::new(
-	    name.clone(),
-	    VarErrorType::Undefined,
-	))
-    }
-
-    fn add_upvalue
-	(
-            &mut self, 
-            compiler: *mut Compiler, 
-            ast: &Ast,
-            _gc: &Gc,
-            name: &String,
-            arity: Option<usize>,
-            index: usize, 
-            is_local: bool
-	) -> Result<VarInfo, VarError>
-    {
-        for i in 0..self.locals.len() {
-            if i == index && is_local {
-                return Ok(VarInfo::new(
-                    self.locals[i].name.clone(),
-                    arity,
-                    VarType::Var,
-                    ScopeType::Upvalue,
-                    self.locals[i].scope,
-                    i,
-                    0,
-                ))
-            }
-        }
-
-        if self.upvalues.len() >= MAX_UPVALUES {
-            unsafe {self.error(ast, "too many upvalues".to_string())};
-            return Err(VarError::new(
-                name.clone(),
-                VarErrorType::TooMany,
-            ));
-        }
-
-        let upvalue = Upvalue::new(is_local, index);
-        self.upvalues.push(upvalue);
-
-        Ok(VarInfo::new(
-            self.locals[index].name.clone(),
-            arity,
-            VarType::Var,
-            ScopeType::Upvalue,
-            self.locals[index].scope,
-            self.upvalues.len() - 1,
-            index,
-        ))
-    } 
-
-    fn push_local
-	(
-            &mut self,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            _gc: &Gc,
-            name: String,
-            scope: usize,
-            upvalue: bool
-	) -> Option<&mut Local>
-    {
-        if self.locals.len() == MAX_LOCALS {
-            unsafe {self.error(ast, "too many locals in function".to_string())};
-            return None;
-        }
-        self.locals.push(Local::new(name.to_string(), scope, upvalue));
-
-        self.locals.last_mut()
-    }
-
-    fn declare_local
-	(
-            &mut self, 
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &String,
-            arity: Option<usize>,
-            print_error: bool,
-	) -> Result<VarInfo, VarError>
-    {
-        let mut actual_name = "".to_string();
-        if let Some(a) = arity {
-            actual_name = format!("{}(#{})", name, a);
-        } else {
-            actual_name = name.to_string();
-        }
-        let mut iter = self.locals.iter_mut().rev();
-        let mut scope = 0usize;
-        loop { 
-            if let Some(i) = iter.next() {
-                if i.scope < self.scope {
-                    scope = i.scope;
-                    break;
-                }
-                if i.name == *actual_name {
-                    if print_error {
-                        unsafe {
-                            self.error(
-                                ast, "local variable '".to_string() + &i.name + "' already exists"
-                            )
-                        };
-                    }
-                    return Err(VarError::new(
-                        actual_name.clone(),
-                        VarErrorType::AlreadyExists,
-                    ));
-                }
-            } else {
-                return Err(VarError::new(
-                    actual_name.clone(),
-                    VarErrorType::Undefined,
-                ));
-            }
-        }
-        self.push_local(compiler, ast, gc, actual_name.clone(), scope, false);
-        
-        Ok(VarInfo::new(
-            actual_name.clone(),
-            arity,
-            VarType::Var,
-            ScopeType::Local,
-            scope,
-            self.locals.len() - 1,
-            0,
-        ))
-    } 
-
-    fn declare_local_function
-	(
-            &mut self,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &String,
-            arity: usize,
-	    print_err: bool,
-	) -> Result<VarInfo, VarError>
-    {
-        let fun_name = format!("{}(#{})", name, arity as u32);
-        if self.local_fun_symtab.get(&fun_name).is_some() {
-            unsafe {self.error(ast, "local function '".to_string() + &fun_name + "' already exists")};
-            Err(
-                VarError::new(
-                    fun_name,
-                    VarErrorType::AlreadyExists,
-                )
-            )
-        } else {
-            let closure = self.closure.unwrap();
-            let constant = self.get_constant(&Value::Closure(closure)); 
-            let fun = VarInfo::new(
-                fun_name.clone(),
-                Some(arity),
-                VarType::Var,
-                ScopeType::Local,
-                self.get_scope_depth(),
-                constant,
-                0,
-            );
-            self.local_fun_symtab.insert(
-                fun_name.clone(),
-                fun.clone(),
-            );
-
-            Ok(fun.clone())
-        }
-    }
-
-    fn get_scope_depth(&self) -> usize {
-        self.scope
-    }
-
-    fn begin_scope(&mut self) {
-        self.scope += 1;
-    }
-    
-    fn end_scope(&mut self) {
-        if self.scope > 0 {
-            self.scope -= 1;
-        }
-    }
-    
-    fn get_constant(&mut self, val: &Value) -> usize {
-        let len = self.constants.len();
-
-        let pair = self.constants.get_key_value(val);
-        if pair.is_none() { 
-            self.constants.insert(val.clone(), self.constants.len());
-            self.constant_arr.push(val.clone());
-        } else {
-            return *pair.unwrap().1
-        }
-        return len;
-    }
-
-    fn emit_op(&mut self, opcode: OpCode) {
-        #[cfg(feature = "debug_opcode")]
-        println!("gen: {}: {}", self.closure.unwrap().get_core().get_name(), opcode);
-        self.code.push(u8::from(opcode));
-    }
-
-    fn emit_byte_op(&mut self, opcode: OpCode, byte: u8) {
-        #[cfg(feature = "debug_opcode")]
-        println!("gen: {}: {} byte {}", 
-		 self.closure.unwrap().get_core().get_name(), opcode, byte);
-        self.code.push(u8::from(opcode));
-        self.code.push(byte);
-    }
-
-    fn emit_word_op(&mut self, opcode: OpCode, word: usize) {
-        #[cfg(feature = "debug_opcode")]
-        println!("gen: {}: {} word {}", 
-		 self.closure.unwrap().get_core().get_name(), opcode, word);
-        self.code.push(u8::from(opcode)); 
-        self.code.push(((word >> 8) & 0xff) as u8);
-        self.code.push((word & 0xff) as u8);
-    }
-
-    fn emit_three_byte_op(&mut self, opcode: OpCode, three_byte: u32) {
-        #[cfg(feature = "debug_opcode")]
-        println!("gen: {}: {} three byte {}", 
-		 self.closure.unwrap().get_core().get_name(), opcode, three_byte);
-        self.code.push(u8::from(opcode));
-        self.code.push(((three_byte >> 16) & 0xff) as u8);
-        self.code.push(((three_byte >> 8) & 0xff) as u8);
-        self.code.push((three_byte & 0xff) as u8);
-    }
-
-    fn emit_math_op
-	(
-            &mut self,
-            op: MathOp,
-	)
-    {
-        println!("gen: {} op {}", OpCode::MathOp, op);
-        self.code.push(u8::from(OpCode::MathOp));
-        self.code.push(u8::from(op));
-    }
-}
-
-#[derive(Clone)]
-struct Local {
-    name: String,
-    scope: usize,
-    upvalue: bool,
-    defined: bool,
-}
-
-impl Local {
-    fn new(name: String, scope: usize, upvalue: bool) -> Self {
-        Self {
-            name,
-            scope,
-            upvalue,
-            defined: false,
-        }
-    }
-}
-
-#[derive(Clone)]
-struct Upvalue {
-    local: bool,
-    index: usize,
-}
-
-impl Upvalue {
-    fn new(local: bool, index: usize) -> Self {
-        Self {
-            local,
-            index,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq)]
-enum VarType {
-    Var,
-    Function,
-    Class,
-    Const,
-}
-
-#[derive(Clone, PartialEq)]
-enum ScopeType {
-    Ns,
-    Local,
-    Upvalue,
-}
-
-#[derive(Clone, PartialEq)]
-enum VarErrorType {
-    Undefined,
-    AlreadyExists,
-    TooMany,
-    SelfInit,
-    IsFunction,
-    Other,
-}
-
-#[derive(Clone)]
-struct VarInfo {
-    name: String,
-    arity: Option<usize>,
-    var_type: VarType,
-    scope_type: ScopeType,
-    scope: usize,
-    index: usize,
-    upvalue_local_index: usize,
-}
-
-impl VarInfo {
-    fn new
-	(
-            name: String,
-            arity: Option<usize>,
-            var_type: VarType,
-            scope_type: ScopeType,
-            scope: usize,
-            index: usize,
-            upvalue_local_index: usize,
-	) -> Self
-    {
-        Self {
-            name,
-            arity,
-            var_type,
-            scope_type,
-            scope,
-            index,
-            upvalue_local_index,
-        }
-    }
-
-    fn get_name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn get_arity(&self) -> Option<usize> {
-        self.arity
-    }
-
-    fn get_var_type(&self) -> VarType {
-        self.var_type.clone()
-    }
-
-    fn get_scope_depth(&self) -> usize {
-        self.scope
-    }
-
-    fn get_index(&self) -> usize {
-        self.index
-    }
-}
-
-#[derive(Clone)]
-struct VarError {
-    name: String,
-    error_type: VarErrorType,
-}
-
-impl VarError {
-    fn new(
-        name: String,
-        error_type: VarErrorType,
-    ) -> Self
-    {
-        Self {
-            name,
-            error_type,
-        }
-    }
-
-    fn get_name(&self) -> String{
-        self.name.clone()
-    }
-
-    fn get_error_type(&self) -> VarErrorType {
-        self.error_type.clone()
-    }
-}
-
-// End FunCompiler Stuff
-
-struct Compiler {
-    symbols: SymbolTables,
+struct Compiler<'a> {
+    symbols: SymbolTables<'a>,
     compile_flag: bool,
     error_count: u8,
     in_panic_mode: bool,
     in_panic_lock_mode: bool,
 }
 
-impl Compiler {
+impl<'a> Compiler<'a> {
     fn new(compile: bool) -> Self {
         Self {
-            symbols: SymbolTables::new()
+            symbols: SymbolTables::new(),
             compile_flag: compile,
             error_count: 0u8,
             in_panic_mode: false,
@@ -2878,10 +2223,92 @@ impl Compiler {
         }
     }
 
+	fn declare_mod(
+		&mut self, 
+		name: String, 
+		parent: Option<&Module>
+	) -> Result<(), String> {
+		if self.symbols.mods.is_empty() {
+			if name == "global" {
+				self.symbols.mods.insert("global", Module::new("global", None));
+
+				if let Some(res) = self.symbols.mods.get_mut(name) {
+					self.set_curr_mod(&res.1);
+				}
+				Ok(())
+			}
+		}
+		if let Some(res) = parent.get("global") {
+			Err("global module cannot be a parent of any other module".to_string())
+		} else {
+			self.symbols.mods.insert(name, Module::new(name, parent));
+			if let Some(res) = self.symbols.mods.get_mut(name) {
+				self.set_curr_mod(&res.1);
+			}
+		}
+	}
+		
+	fn set_curr_mod(
+		&mut self, 
+		name: String
+	) -> Result<(), String> {
+		if let Some(mut res) = self.symbols.mods.get_mut(name) {
+			(name, value) = res;
+			self.symbols.curr_mod = &res.1;
+			Ok(())
+		} else {
+			Err("cannot set current module to one which is invalid")
+		}
+	}
+	
+	fn get_curr_mod(
+		&self,
+	) -> Option<&Module> {
+		self.symbols.get_curr_mod()
+	}
+
+	fn get_mod(
+		&mut self,
+		name: String
+	) {
+	}
+	
+	fn declare_curr_mod_var(
+		&mut self,
+		parser: &mut Parser,
+		name: String,
+	) -> Result<VarEntry, VarError> {
+		let curr_mod = self.symbols.get_curr_mod();
+		if let Some(res) = curr_mod.mod_vars.get_mut(name) {
+			Err(VarError::new(
+				name.clone(),
+				VarErrorType::AlreadyExists
+			))
+		} else {
+			let mut access_type = AccessType::Public;
+			if *name.chars().nth(0) == '_' {
+				access_type = AccessType::Private;
+			}
+			let var = VarEntry::new(
+				name.clone(),
+				VarType::Var,
+				ScopeType::Module,
+				access_type.clone(),
+				self.symbols.get_curr_mod().mod_vars.len(),		
+			);
+		}
+	}
+	
+    fn get_scope_depth(
+        &self
+    ) -> usize {
+        self.symbols.calls.len() - 1;
+    }
+
     fn compile
     (
         &mut self,
-        ast: &Option<Box<Ast>>,
+        ast: Option<Box<Ast>>,
         parser: &mut Parser,
         vm: &mut VM,
         gc: &Gc,
@@ -2889,15 +2316,15 @@ impl Compiler {
     ) -> Option<Managed<Closure>>
     {
         //let vm_ptr : *mut VM = ptr::from_mut(vm);
-	if !self.compile_flag {
+		if !self.compile_flag {
             self.code_gen(ast, vm, gc)
-	} else {
-	    //self.code_gen_c(ast, vm, gc)
-	    None
-	} 
+		} else {
+	    	//self.code_gen_c(ast, vm, gc)
+	    	None
+		} 
     }
 
-    fn error
+	    fn error
     (
         &mut self,
         _ast: &Ast,
@@ -2980,16 +2407,17 @@ impl Compiler {
     fn code_gen<'a>
     (
         &mut self,
-        ast: &Option<Box<Ast>>,
+        ast: Option<Box<Ast>>,
         vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         let mut result: Option<Managed<Closure>> = None;
+        
         if let Some(ref node) = ast {
             match **node {
                 Ast::FunDecl {
-		    ref name,
+		            ref name,
                     ref fun_ty,
                     ref params,
                     ref listing,
@@ -3011,31 +2439,32 @@ impl Compiler {
                     last.closure
                 },
                 Ast::Call(
-		    ref recv,
-		    ref args,
-		) => {
-		    self.code_gen_call(compiler, &*ast.clone().unwrap(), gc, &recv, args)
-	        },
+		            ref recv,
+		            ref args,
+                ) => {
+                    self.code_gen_call(&*ast.clone().unwrap(), gc, &recv, args)
+                },
                 Ast::Block {
-		    ref listing
-		} => { 
+                    ref listing,
+                    ..
+                } => { 
                     for i in listing {
                         self.code_gen(&mut Some(i.clone()), vm, gc);
                     }
                     self.symbols.calls.last_mut().unwrap().closure
                 },
                 Ast::ExprStmt{
-		    ref expr
-		} => {
+                    ref expr
+                } => {
                     self.code_gen(&mut Some(expr.clone()), vm, gc)
                 },
                 Ast::Value {ref val, ..} => {
                     self.code_gen_value(val.clone())
                 },
-	        Ast::Variable{
-		    ref name,
-		    ref arity,
-		} => {
+                Ast::Variable{
+                    ref name,
+                    ref arity,
+                } => {
                     self.code_gen_var(self.gc, name.to_string(), arity.clone())
                 },
                 Ast::Add(..) |
@@ -3045,14 +2474,14 @@ impl Compiler {
                 Ast::Modulo(..) |
                 Ast::Power(..) => {
                     self.emit_math_op(&mut Some(node.clone()), vm, gc);
-                    compiler.symbols.calls.last_mut().unwrap().closure.clone()
+                    self.symbols.calls.last_mut().unwrap().closure.clone()
                 },
-		Ast::Assign(
-		    ref left,
-		    ref right,
-		) => {
-		    self.code_gen(right, vm, gc);
-		    if let Some(l) = left {
+                Ast::Assign(
+                    ref left,
+                    ref right,
+                ) => {
+                    self.code_gen(right, vm, gc);
+                    if let Some(l) = left {
                         match **l {
                             Ast::Variable {
                                 ref name,
@@ -3079,18 +2508,18 @@ impl Compiler {
                                                 format!("variable {} is undefined", e.name))
                                         }
                                     },
-				}
-			        None
+				                }
+			                    None
                             },
                             _ => {
-		                self.error(&**l, "only variables and fields can be on left side of assignment".to_string());
-			        None
+		                        self.error(&**l, "only variables and fields can be on left side of assignment".to_string());
+			                    None
                             },
-		        }
+		                }
                     } else {
                         panic!("left node of assignment doesn't exist");
                     }
-		},
+		        },
             }
         } else {
             eprintln!("ast node doesn't exist");
@@ -3099,22 +2528,25 @@ impl Compiler {
     }
     
     fn code_gen_fun_decl(
-        &self, 
+        &mut self, 
         name: String, 
         fun_ty: FunctionType, 
         params: Vec<Ast>, 
         listing: Vec<Box<Ast>>, 
         closure: Option<Managed<Closure>>
+        gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
+        let mut result: Option<Managed<Closure>> = None;
+
         let ty = fun_ty.clone();
         match ty {
             FunctionType::TopLevel => {
-                unsafe{push_main(self, &node, gc)};
+                unsafe{push_main(self)};
                 unsafe{self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone())};
             },
             _ => {
-                unsafe {push_function(self, &node, gc)};
+                unsafe {push_function(self)};
                 unsafe {self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone())};
             },
         }
@@ -3122,11 +2554,11 @@ impl Compiler {
         result = unsafe{self.symbols.calls.last_mut().unwrap().closure.clone()};
         
         if ty != FunctionType::TopLevel {
-            unsafe {begin_scope()};
+            unsafe {self.begin_scope()};
         }
         
         for i in params {
-            let ret = self.code_gen_param(&i.clone(), vm, gc);
+            let ret = self.code_gen_param(&i.clone(), gc);
             if !ret {
                 result = None;
             }
@@ -3135,7 +2567,7 @@ impl Compiler {
         
         for i in listing {
             println!("here");
-            let ret = self.code_gen(&mut Some(i.clone()), vm, gc);
+            let ret = self.code_gen(Some(i.clone()), vm, gc);
             println!("ret = {:#?}", ret);
             if ret.is_none() {
                 result = None;
@@ -3143,7 +2575,7 @@ impl Compiler {
         }
         
         if ty != FunctionType::TopLevel {
-            unsafe {end_scope()};
+            unsafe {self.end_scope()};
         }
 
         if self.error_count == 0 {
@@ -3157,7 +2589,7 @@ impl Compiler {
                 
                 let prev_fc = 
                     unsafe {
-                        &mut (&mutself.symbols.calls)[self.symbols.calls.len() - 2]
+                        &mut (&mut self.symbols.calls)[self.symbols.calls.len() - 2]
                     };
                 if let Some(closure) = fc.closure {
                     let constant = prev_fc.get_constant(&Value::Closure(closure));
@@ -3171,7 +2603,7 @@ impl Compiler {
                         self.symbols.calls.last_mut().unwrap()
                     };
                     let scope = unsafe {
-                        get_scope_depth()
+                        self.get_scope_depth()
                     };
                     let var: Result<VarInfo, VarError> = 
                         Err(VarError::new(
@@ -3180,7 +2612,8 @@ impl Compiler {
                         ));
                     let fun = unsafe {
                         add_var(
-                            vm, self, &node, gc, name, Some(params.len()), true)
+                            name, Some(params.len()), true
+                        )
                     };
                     
                     match fun {
@@ -3223,7 +2656,7 @@ impl Compiler {
     }
 
     fn code_gen_let_decl(
-        &self, 
+        &mut self, 
         name: String, 
         expr: Box<Ast>
     ) -> Option<Managed<Closure>>
@@ -3232,7 +2665,7 @@ impl Compiler {
             self.symbols.calls.last_mut().unwrap()
         };
         let scope = unsafe {
-            get_scope_depth()
+            self.get_scope_depth()
         };
         let mut var: Result<VarInfo, VarError> =
             Err(VarError::new(
@@ -3241,7 +2674,7 @@ impl Compiler {
             ));
             
         let mut arity: Option<usize> = None;
-        let is_function = match &**expr {
+        let is_function = match *expr {
             Ast::FunDecl{
                 ref name,
                 ref fun_ty,
@@ -3256,7 +2689,7 @@ impl Compiler {
         };
 
         var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
-        if self.code_gen(&mut Some(expr.clone()), vm, gc).is_none() {
+        if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
             return None;
         }
             
@@ -3272,7 +2705,7 @@ impl Compiler {
     }
 
     fn code_gen_value(
-        &self,
+        &mut self,
         val: Value
     ) -> Option<Managed<Closure>>
     {
@@ -3280,42 +2713,42 @@ impl Compiler {
             match val {
                 Value::Int(i) => {
                     #[cfg(not(feature = "reg_mach"))]
-                    if *i >= 0 && *i <= 10 {
-                        last.emit_op(OpCode::from(u8::from(OpCode::Load0) + (*i as u8)));
+                    if i >= 0 && i <= 10 {
+                        last.emit_op(OpCode::from(u8::from(OpCode::Load0) + (i as u8)));
                     } else {
-                        let constant = last.get_constant(val);
+                        let constant = last.get_constant(&val);
                         last.emit_word_op(OpCode::LoadValue, constant as usize);
                     }
 
                     #[cfg(feature = "reg_mach")]
-                    if *i >= -32768 && *i <= 32767 {
+                    if i >= -32768 && i <= 32767 {
                         last.emit_op(OpCode::LoadI16(self.curr_reg(), *i as i16));
                     } else {
                         last.emit_op(OpCode::LoadReg(self.curr_reg(), self.next_avail_reg()));
                     }
-                    self.symbols.calls.last_mut().unwrap().closure.clone();
+                    self.symbols.calls.last_mut().unwrap().closure.clone()
                 },
                 Value::Float(_) => {
-                    let constant = last.get_constant(val);
+                    let constant = last.get_constant(&val);
                     last.emit_word_op(OpCode::LoadValue, constant as usize);
-                    self.symbols.calls.last_mut().unwrap().closure.clone(); 
+                    self.symbols.calls.last_mut().unwrap().closure.clone() 
                 },
                 Value::Bool(b) => {
-                    if *b == true {
+                    if b == true {
                         last.emit_op(OpCode::LoadTrue);
                     } else {
                         last.emit_op(OpCode::LoadFalse);
                     }
-                    self.symbols.calls.last_mut().unwrap().closure.clone(); 
+                    self.symbols.calls.last_mut().unwrap().closure.clone()
                 },
                 Value::Nil => {
                     last.emit_op(OpCode::LoadNil);
-                    self.symbols.calls.last_mut().unwrap().closure.clone(); 
+                    self.symbols.calls.last_mut().unwrap().closure.clone() 
                 },
                 Value::String(_) => {
-                    let constant = last.get_constant(val);
+                    let constant = last.get_constant(&val);
                     last.emit_word_op(OpCode::LoadValue, constant as usize);
-                    self.symbols.calls.last_mut().unwrap().closure.clone(); 
+                    self.symbols.calls.last_mut().unwrap().closure.clone() 
                 },
                 _ => {
                     self.error(&node, "value is not a valid constant".to_string());
@@ -3337,7 +2770,7 @@ impl Compiler {
     )
     {
         let var = unsafe {
-            resolve_var(self, vm, &node, gc, name, None, true)
+            self.resolve_mod_var(vm, &node, gc, name, None, true)
         };
         match var {
             Err(e) => {
@@ -3348,14 +2781,13 @@ impl Compiler {
             }
             Ok(v) => {
                 if let Some(last) = 
-                    unsafe {self.symbols.calls.last_mut()}
+                    self.symbols.calls.last_mut()
                 {
                     self.emit_var_load(last, v);
+                    return self.symbols.calls.last_mut().unwrap().closure;
                 };
             },
         };
-        
-        unsafe {self.symbols.calls.last_mut().unwrap().closure}
     }
 
     fn code_gen_call
@@ -3364,7 +2796,7 @@ impl Compiler {
         compiler: &mut Compiler,
         ast: &Ast,
         gc: &Gc,
-        recv: &Option<Box<Ast>>,
+        recv: Option<Box<Ast>>,
         args: &Vec<Box<Ast>>,
     ) -> Option<Managed<Closure>>
     {
@@ -3411,13 +2843,13 @@ impl Compiler {
     fn code_gen_return<'a>
     (
         &mut self,
-        ast: &Option<Box<Ast>>,
+        ast: Option<Box<Ast>>,
         vm: *mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         if let Some(node) = ast {
-            match **node {
+            match *node {
                 Ast::FunDecl {
 		    ref name,
                     ref fun_ty,
@@ -3438,7 +2870,7 @@ impl Compiler {
                                         },
                                         Ast::ReturnStmt{ref expr, ..} => {
                                             if let Some(e) = expr {
-                                                self.code_gen(&Some::<Box<Ast>>(e.clone()), vm, gc);
+                                                self.code_gen(Some::<Box<Ast>>(e.clone()), vm, gc);
                                             } else {
                                                 last.emit_op(OpCode::LoadNil);
                                             }
@@ -3590,7 +3022,7 @@ impl Compiler {
     fn code_gen_c<'a>
     (
         &mut self,
-        ast: &Option<Box<Ast>>,
+        ast: Option<Box<Ast>>,
         vm: *mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
@@ -3896,7 +3328,7 @@ impl Compiler {
     fn code_gen_return_c<'a>
     (
         &mut self,
-        ast: &Option<Box<Ast>>,
+        ast: Option<Box<Ast>>,
         vm: *mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
@@ -3962,6 +3394,694 @@ impl Compiler {
 
 
 
+#[derive(Clone)]
+struct SymbolTables<'a> {
+    mods: HashMap<String, Module>,
+    curr_mod: &'a Module,
+    calls: Vec<FunCompiler>,
+}
+
+impl <'a>SymbolTables<'a> {
+    fn new() -> Self {
+        Self {
+            mods: HashMap::<String, Module>::new(),
+            calls: vec![],
+        }
+    }
+
+    fn get_mod(&mut self, name: String) -> Result<&Module, String> {
+        let res = self.mods.get(name);
+        if res.is_some() {
+            Ok(res.unwrap())
+        } else {
+            Err(format!("Module '{}' doesn't exist", name))
+        }
+    }
+}
+
+struct Module {
+    mod_name: String,
+    mod_index: usize,
+    mod_vars: HashMap<String, VarEntry>,
+}
+
+pub struct VarEntry {
+    name: String,
+    var_type: VarType,
+    scope_type: ScopeType,
+    access_type: AccessType,
+    var_index: usize,
+}
+
+impl VarEntry {
+    fn new(
+    	name: String, 
+    	var_type: VarType, 
+    	scope_type: ScopeType,
+    	accessType: AccessType,
+    	var_index: usize
+    ) -> Self {
+        Self {
+            name,
+            var_type,
+            scope_type,
+            access_type,
+            var_index,
+        }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name
+    }
+
+    pub fn get_var_type(&self) -> VarType {
+        self.var_type
+    }
+    
+    pub fn get_scope_type(&self) -> ScopeType {
+    	self.scope_type
+    }
+    
+    pub fn get_access_type(&self) -> AccessType {
+    	self.access_type
+    }
+    
+    pub fn get_index(&self) -> usize {
+        self.var_index
+    }
+}
+
+// Begin FunCompiler Stuff
+
+#[derive(Clone)]
+struct FunCompiler {
+    name: String,
+    ty: FunctionType,
+    scope: usize,
+    arity: usize,
+
+    locals: Vec<Local>,
+    upvalues: Vec<Upvalue>,
+    code: Vec<u8>,
+    constants: HashMap<Value, usize>,
+    constant_arr: Vec<Value>,
+    local_fun_symtab: HashMap<String, VarInfo>,
+    closure: Option<Managed<Closure>>,
+}
+
+impl FunCompiler {
+    fn new_main
+	(
+            parser: &mut Parser,
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc,
+	) -> Self 
+    {
+        Self::function_setup(parser, ast, gc, "<main>", 0, 0, FunctionType::TopLevel)
+    }
+
+    fn new_named_closure
+	(
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc,
+            name: &str, 
+            arity: usize, 
+            scope: usize,
+	) -> Self
+    {
+        
+        Self::function_setup(parser, ast, gc, name, arity, scope, FunctionType::NamedClosure)
+    }
+
+    fn new_anon_closure
+	(
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc,
+            arity: usize,
+            scope: usize,
+	) -> Self
+    {
+        Self::function_setup(parser, ast, gc, "", arity, scope, FunctionType::AnonClosure)
+    }
+
+    /*fn new_function
+    (
+    parser: &mut AstParser,
+    name: &str,
+    arity: usize
+) -> Self
+    {
+}
+    
+    fn new_constructor
+    (
+    parser: &mut AstParser,
+    arity: usize
+) -> Self
+    {
+}
+    
+    fn new_method
+    (
+    	parser: &mut AstParser,
+    	name: &str,
+    	arity: usize
+	) -> Self 
+    {
+	}*/
+    
+    fn function_setup
+	(
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc,
+            name: &str,
+            arity: usize,
+            scope: usize,
+            ty: FunctionType,
+	) -> Self
+    {
+        let mut s = Self {
+            name: name.to_string(),
+            ty: ty,
+            scope,
+            arity: arity,
+            locals: vec![],
+            upvalues: vec![],
+            code: vec![],
+            constants: HashMap::new(),
+            constant_arr: vec![],
+            local_fun_symtab: HashMap::new(),
+            closure: None,
+            
+        };
+        if s.ty == FunctionType::Constructor || s.ty == FunctionType::Method {
+            s.push_local(
+                compiler, ast, gc, "this".to_string(), 
+                s.get_scope_depth(), false
+            );
+        } else {
+            s.push_local(
+                compiler, ast, gc, "".to_string(), 
+                s.get_scope_depth(), false
+            );
+        } 
+        s
+    }
+
+    fn resolve_local_internal
+	(
+            &mut self,
+            compiler: *mut Compiler,
+            ast: &Ast,
+            _gc: &Gc,
+            name: &String,
+            arity: Option<usize>,
+            do_print_err: bool,
+	) -> Result<VarInfo, VarError>
+    {
+        for i in (0..self.locals.len()).rev() { 
+            if self.locals[i].name == *name {
+                if !self.locals[i].defined && do_print_err {
+                    unsafe {
+                        self.error(ast, "self-initialization of local variable '".to_string() + &mut self.locals[i].name)
+                    };
+                    return Err(VarError::new(
+                        self.locals[i].name.clone(),
+                        VarErrorType::SelfInit,
+                    )); 
+                } else {
+                    return Ok(VarInfo::new(
+                        self.locals[i].name.clone(),
+                        arity,
+                        VarType::Var,
+                        ScopeType::Local,
+                        self.locals[i].scope,
+                        i,
+                        0,
+                    ));
+                }
+            }
+        }
+        
+        Err(VarError::new(
+	    	name.clone(),
+	    	VarErrorType::Undefined,
+		))
+    }
+
+    fn resolve_upvalue_internal
+	(
+            &mut self,
+            parser: &mut Parser,
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc, 
+            name: &String,
+            arity: Option<usize>,
+            print_error: bool,
+            mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
+	) -> Result<VarInfo, VarError>
+    {
+        let mut fc = iter.next();
+        if let Some(ref mut fun_compiler) = fc {
+
+            let local = fun_compiler.resolve_local_internal(compiler, ast, gc, name, arity, true);
+            match local {
+                Ok(var_info) => {
+                    if let Some(fun_compiler) = fc {
+                        fun_compiler.locals[var_info.index].upvalue = true;
+                        return fun_compiler.add_upvalue(compiler, ast, gc, &name, arity, var_info.upvalue_local_index, true);
+                    }
+                },
+                _ => {},
+            }
+
+            fc = iter.next();
+            if fc.is_some() {
+                if let Some(fun_compiler) = fc {
+                    let upvalue = fun_compiler.resolve_upvalue_internal(compiler, parser.vm, ast, gc, name, arity, false, iter);
+                    
+                    match upvalue {
+                        Ok(var_info) => {
+                            if let Some(last) = self.symbols.calls.last_mut() {
+                                return last.add_upvalue(compiler, ast, gc, name, arity, var_info.upvalue_local_index, false);
+                            }
+                        },
+                        Err(_) => {},
+                    }
+                }
+            }
+        }
+
+        Err(VarError::new(
+	    name.clone(),
+	    VarErrorType::Undefined,
+	))
+    }
+
+    fn add_upvalue
+	(
+            &mut self, 
+            compiler: *mut Compiler, 
+            ast: &Ast,
+            _gc: &Gc,
+            name: &String,
+            arity: Option<usize>,
+            index: usize, 
+            is_local: bool
+	) -> Result<VarInfo, VarError>
+    {
+        for i in 0..self.locals.len() {
+            if i == index && is_local {
+                return Ok(VarInfo::new(
+                    self.locals[i].name.clone(),
+                    arity,
+                    VarType::Var,
+                    ScopeType::Upvalue,
+                    self.locals[i].scope,
+                    i,
+                    0,
+                ))
+            }
+        }
+
+        if self.upvalues.len() >= MAX_UPVALUES {
+            unsafe {self.error(ast, "too many upvalues".to_string())};
+            return Err(VarError::new(
+                name.clone(),
+                VarErrorType::TooMany,
+            ));
+        }
+
+        let upvalue = Upvalue::new(is_local, index);
+        self.upvalues.push(upvalue);
+
+        Ok(VarInfo::new(
+            self.locals[index].name.clone(),
+            arity,
+            VarType::Var,
+            ScopeType::Upvalue,
+            self.locals[index].scope,
+            self.upvalues.len() - 1,
+            index,
+        ))
+    } 
+
+    fn push_local
+	(
+            &mut self,
+            compiler: &mut Compiler,
+            ast: &Ast,
+            _gc: &Gc,
+            name: String,
+            scope: usize,
+            upvalue: bool
+	) -> Option<&mut Local>
+    {
+        if self.locals.len() == MAX_LOCALS {
+            unsafe {self.error(ast, "too many locals in function".to_string())};
+            return None;
+        }
+        self.locals.push(Local::new(name.to_string(), scope, upvalue));
+
+        self.locals.last_mut()
+    }
+
+    fn declare_local
+	(
+            &mut self, 
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc,
+            name: &String,
+            arity: Option<usize>,
+            print_error: bool,
+	) -> Result<VarInfo, VarError>
+    {
+        let mut actual_name = "".to_string();
+        if let Some(a) = arity {
+            actual_name = format!("{}(#{})", name, a);
+        } else {
+            actual_name = name.to_string();
+        }
+        let mut iter = self.locals.iter_mut().rev();
+        let mut scope = 0usize;
+        loop { 
+            if let Some(i) = iter.next() {
+                if i.scope < self.scope {
+                    scope = i.scope;
+                    break;
+                }
+                if i.name == *actual_name {
+                    if print_error {
+                        unsafe {
+                            self.error(
+                                ast, "local variable '".to_string() + &i.name + "' already exists"
+                            )
+                        };
+                    }
+                    return Err(VarError::new(
+                        actual_name.clone(),
+                        VarErrorType::AlreadyExists,
+                    ));
+                }
+            } else {
+                return Err(VarError::new(
+                    actual_name.clone(),
+                    VarErrorType::Undefined,
+                ));
+            }
+        }
+        self.push_local(compiler, ast, gc, actual_name.clone(), scope, false);
+        
+        Ok(VarInfo::new(
+            actual_name.clone(),
+            arity,
+            VarType::Var,
+            ScopeType::Local,
+            scope,
+            self.locals.len() - 1,
+            0,
+        ))
+    } 
+
+    fn declare_local_function
+	(
+            &mut self,
+            compiler: &mut Compiler,
+            ast: &Ast,
+            gc: &Gc,
+            name: &String,
+            arity: usize,
+	    print_err: bool,
+	) -> Result<VarInfo, VarError>
+    {
+        let fun_name = format!("{}(#{})", name, arity as u32);
+        if self.local_fun_symtab.get(&fun_name).is_some() {
+            unsafe {self.error(ast, "local function '".to_string() + &fun_name + "' already exists")};
+            Err(
+                VarError::new(
+                    fun_name,
+                    VarErrorType::AlreadyExists,
+                )
+            )
+        } else {
+            let closure = self.closure.unwrap();
+            let constant = self.get_constant(&Value::Closure(closure)); 
+            let fun = VarInfo::new(
+                fun_name.clone(),
+                Some(arity),
+                VarType::Var,
+                ScopeType::Local,
+                self.get_scope_depth(),
+                constant,
+                0,
+            );
+            self.local_fun_symtab.insert(
+                fun_name.clone(),
+                fun.clone(),
+            );
+
+            Ok(fun.clone())
+        }
+    }
+
+    fn get_scope_depth(&mut self) -> usize {
+        self.scope
+    }
+
+    fn begin_scope(&mut self) {
+        self.scope += 1;
+    }
+    
+    fn end_scope(&mut self) {
+        if self.scope > 0 {
+            self.scope -= 1;
+        }
+    }
+    
+    fn get_constant(&mut self, val: &Value) -> usize {
+        let len = self.constants.len();
+
+        let pair = self.constants.get_key_value(val);
+        if pair.is_none() { 
+            self.constants.insert(val.clone(), self.constants.len());
+            self.constant_arr.push(val.clone());
+        } else {
+            return *pair.unwrap().1
+        }
+        return len;
+    }
+
+    fn emit_op(&mut self, opcode: OpCode) {
+        #[cfg(feature = "debug_opcode")]
+        println!("gen: {}: {}", self.closure.unwrap().get_core().get_name(), opcode);
+        self.code.push(u8::from(opcode));
+    }
+
+    fn emit_byte_op(&mut self, opcode: OpCode, byte: u8) {
+        #[cfg(feature = "debug_opcode")]
+        println!("gen: {}: {} byte {}", 
+		 self.closure.unwrap().get_core().get_name(), opcode, byte);
+        self.code.push(u8::from(opcode));
+        self.code.push(byte);
+    }
+
+    fn emit_word_op(&mut self, opcode: OpCode, word: usize) {
+        #[cfg(feature = "debug_opcode")]
+        println!("gen: {}: {} word {}", 
+		 self.closure.unwrap().get_core().get_name(), opcode, word);
+        self.code.push(u8::from(opcode)); 
+        self.code.push(((word >> 8) & 0xff) as u8);
+        self.code.push((word & 0xff) as u8);
+    }
+
+    fn emit_three_byte_op(&mut self, opcode: OpCode, three_byte: u32) {
+        #[cfg(feature = "debug_opcode")]
+        println!("gen: {}: {} three byte {}", 
+		 self.closure.unwrap().get_core().get_name(), opcode, three_byte);
+        self.code.push(u8::from(opcode));
+        self.code.push(((three_byte >> 16) & 0xff) as u8);
+        self.code.push(((three_byte >> 8) & 0xff) as u8);
+        self.code.push((three_byte & 0xff) as u8);
+    }
+
+    fn emit_math_op
+	(
+            &mut self,
+            op: MathOp,
+	)
+    {
+        println!("gen: {} op {}", OpCode::MathOp, op);
+        self.code.push(u8::from(OpCode::MathOp));
+        self.code.push(u8::from(op));
+    }
+}
+
+#[derive(Clone)]
+struct Local {
+    name: String,
+    scope: usize,
+    upvalue: bool,
+    defined: bool,
+}
+
+impl Local {
+    fn new(name: String, scope: usize, upvalue: bool) -> Self {
+        Self {
+            name,
+            scope,
+            upvalue,
+            defined: false,
+        }
+    }
+}
+
+#[derive(Clone)]
+struct Upvalue {
+    local: bool,
+    index: usize,
+}
+
+impl Upvalue {
+    fn new(local: bool, index: usize) -> Self {
+        Self {
+            local,
+            index,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+enum VarType {
+	Unknown,
+    Var,
+    Function,
+    Class,
+    Const,
+}
+
+#[derive(Clone, PartialEq)]
+enum ScopeType {
+    Module,
+    Local,
+    Upvalue,
+    Class,
+}
+
+#[derive(Clone, PartialEq)]
+enum AccessType {
+	Public,
+	Private,
+}
+
+#[derive(Clone, PartialEq)]
+enum VarErrorType {
+    Undefined,
+    AlreadyExists,
+    TooMany,
+    SelfInit,
+    IsFunction,
+    Other,
+}
+
+#[derive(Clone)]
+struct VarInfo {
+    name: String,
+    arity: Option<usize>,
+    var_type: VarType,
+    scope_type: ScopeType,
+    scope: usize,
+    index: usize,
+    upvalue_local_index: usize,
+}
+
+impl VarInfo {
+    fn new
+	(
+            name: String,
+            arity: Option<usize>,
+            var_type: VarType,
+            scope_type: ScopeType,
+            scope: usize,
+            index: usize,
+            upvalue_local_index: usize,
+	) -> Self
+    {
+        Self {
+            name,
+            arity,
+            var_type,
+            scope_type,
+            scope,
+            index,
+            upvalue_local_index,
+        }
+    }
+
+    fn get_name(&mut self) -> String {
+        self.name.clone()
+    }
+
+    fn get_arity(&mut self) -> Option<usize> {
+        self.arity
+    }
+
+    fn get_var_type(&mut self) -> VarType {
+        self.var_type.clone()
+    }
+
+    fn get_scope_depth(&mut self) -> usize {
+        self.scope
+    }
+
+    fn get_index(&mut self) -> usize {
+        self.index
+    }
+}
+
+#[derive(Clone)]
+struct VarError {
+    name: String,
+    error_type: VarErrorType,
+}
+
+impl VarError {
+    fn new(
+        name: String,
+        error_type: VarErrorType,
+    ) -> Self
+    {
+        Self {
+            name,
+            error_type,
+        }
+    }
+
+    fn get_name(&mut self) -> String{
+        self.name.clone()
+    }
+
+    fn get_error_type(&mut self) -> VarErrorType {
+        self.error_type.clone()
+    }
+}
+
+// End FunCompiler Stuff
+
+
+
+
+
+
+
+
+
+
 
 #[derive(Debug, Clone, PartialEq)]
 struct CallFrame {
@@ -3990,19 +4110,19 @@ impl CallFrame {
             _ => { panic!("'{}' got pushed onto the call stack!", fun); }
         }
     }
-    pub fn get_fun(&self) -> &Value {
-        &self.fun
+    pub fn get_fun(&mut self) -> &Value {
+        &mut self.fun
     }
 
-    pub fn get_closure(&self) -> Option<Managed<Closure>> {
+    pub fn get_closure(&mut self) -> Option<Managed<Closure>> {
         self.closure
     }
 
-    fn get_core(&self) -> Option<Managed<FunctionCore>> {
+    fn get_core(&mut self) -> Option<Managed<FunctionCore>> {
         self.core
     }
 
-    fn get_pc(&self) -> usize {
+    fn get_pc(&mut self) -> usize {
         self.pc.clone()
     }
 
@@ -4027,7 +4147,7 @@ impl CallFrame {
     }
 
     #[inline]
-    fn get_fp(&self) -> usize {
+    fn get_fp(&mut self) -> usize {
         self.fp
     }
 
@@ -4051,7 +4171,7 @@ impl CallStack {
     }
 
     #[inline]
-    fn get_fp(&self) -> usize {
+    fn get_fp(&mut self) -> usize {
         self.stack.last().unwrap().get_fp()
     }
     
@@ -4061,7 +4181,7 @@ impl CallStack {
     }
 
     #[inline]
-    fn get_pc(&self) -> usize {
+    fn get_pc(&mut self) -> usize {
         self.stack.last().unwrap().get_pc()
     }
 
@@ -4087,7 +4207,7 @@ impl CallStack {
 	}
     }
 
-    fn top(&self) -> Option<CallFrame> {
+    fn top(&mut self) -> Option<CallFrame> {
         if let Some(last) = self.stack.last() {
 	    return Some(last.clone());
         } else {
@@ -4095,7 +4215,7 @@ impl CallStack {
         }
     }
 
-    fn next_from_top(&self) -> Option<CallFrame> {
+    fn next_from_top(&mut self) -> Option<CallFrame> {
         if self.stack.len() > 1 {
             let tmp = self.stack.len() - 2;
             let nxt = self.stack[tmp].clone();
@@ -4118,7 +4238,7 @@ impl CallStack {
     }
 
     #[allow(unused_assignments)]
-    pub(crate) fn get_backtrace(&self) -> String {
+    pub(crate) fn get_backtrace(&mut self) -> String {
         let mut string = format!("\nBacktrace:\n");
         
         let mut iter = self.stack.iter();
@@ -4212,7 +4332,7 @@ impl VM {
     } 
 
     #[inline]
-    fn get_sp(&self) -> usize {
+    fn get_sp(&mut self) -> usize {
         self.sp
     }
 
@@ -4222,7 +4342,7 @@ impl VM {
     }
 
     #[inline]
-    fn get_fp(&self) -> usize {
+    fn get_fp(&mut self) -> usize {
         self.calls.get_fp()
     }
 
@@ -4303,7 +4423,7 @@ impl VM {
 	)
     {
         let top = self.stack.len(); 
-        let call = &self.stack[top - num_args as usize - 1];
+        let call = &mut self.stack[top - num_args as usize - 1];
         self.calls.push(call.clone());
         self.calls.set_fp(top - num_args as usize - 1);
         self.calls.clear_pc();
@@ -4323,7 +4443,7 @@ impl VM {
 
     fn check_arity
 	(
-            &self,
+            &mut self,
             fun: &Value,
             num_args: usize,
 	) -> Result<usize, String>
@@ -4354,8 +4474,8 @@ impl VM {
 	) -> Result<Value, String>
     {
         let fun_index = self.stack.len() - (num_args as usize) - 1;
-        let fun = &self.stack[fun_index];
-        let args = &self.stack[fun_index..fun_index + (num_args as usize) + 1];
+        let fun = &mut self.stack[fun_index];
+        let args = &mut self.stack[fun_index..fun_index + (num_args as usize) + 1];
         match self.check_arity(fun, num_args) {
             Ok(_) => {},
             Err(e) => {
@@ -5141,14 +5261,14 @@ impl VM {
         }
     }*/
 
-    fn debug_vars(&self) {
+    fn debug_vars(&mut self) {
         print!("NS Vars: [");
         for i in 0..self.vars.len() {
             print!("[{}]", self.vars[i]);
         }
         println!("]");
     }
-    fn debug_stack(&self, fp: usize) {
+    fn debug_stack(&mut self, fp: usize) {
         print!("[");
         for i in 0..self.stack.len() { 
             print!("[");
@@ -5771,7 +5891,7 @@ impl VM {
         self.execute(gc, debug, compile)
     }
     
-    pub fn print_backtrace(&self) {
+    pub fn print_backtrace(&mut self) {
         println!("{}", self.calls.get_backtrace());
     }
 }
