@@ -102,7 +102,7 @@ struct LexerData {
     prev: Token,
 }
 
-pub struct Parser {
+pub struct Parser<'a> {
     lexer_stack: Vec<LexerData>,
     error_count: usize,
     gc: Gc,
@@ -112,11 +112,11 @@ pub struct Parser {
     
     in_panic_mode: bool,
     in_panic_lock_mode: bool,
-    compiler: Compiler,
+    compiler: Compiler<'a>,
     vm: VM,
 }
 
-impl<'a> Parser { 
+impl<'a> Parser<'_> { 
     pub fn new(
         print_ast: bool,
         compile: bool,
@@ -279,7 +279,7 @@ impl<'a> Parser {
         });
         self.advance(&mut self.gc);
         
-        let root: Option<Box<Ast>> = 
+        let mut root: Option<Box<Ast>> = 
             Some(Box::new(Ast::FunDecl {
                 name: " main".to_string(),
                 fun_ty: FunctionType::TopLevel,
@@ -327,7 +327,7 @@ impl<'a> Parser {
         });
         self.advance(&mut self.gc);
 
-        let root: Option<Box<Ast>> = 
+        let mut root: Option<Box<Ast>> = 
             Some(Box::new(Ast::FunDecl {
                 name: " main".to_string(),
                 fun_ty: FunctionType::TopLevel,
@@ -336,10 +336,10 @@ impl<'a> Parser {
                 closure: None,
             }));
         
-        if !self.parse(root, &mut self.gc) {
+        if !self.parse(root, &self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&mut self.gc, 
+            self.vm.run(&mut &self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
@@ -435,12 +435,12 @@ impl<'a> Parser {
     // Entry point of parser
     fn parse(
 	&mut self,
-        root: Option<Box<Ast>>,
+        mut root: Option<Box<Ast>>,
         gc: &Gc,
     ) -> bool {
         while self.current().kind != TokenKind::Done {
             let _tk = self.current().kind;
-            let left: Option<Box<Ast>> = self.parse_stmt(None, gc);
+            let mut left: Option<Box<Ast>> = self.parse_stmt(None, gc);
             println!("left = {:#?}", left);
             if left.is_none() {
                 continue;
@@ -2253,8 +2253,7 @@ impl<'a> Compiler<'a> {
 		name: String
 	) -> Result<(), String> {
 		if let Some(mut res) = self.symbols.mods.get_mut(name) {
-			(name, value) = res;
-			self.symbols.curr_mod = &res.1;
+			self.symbols.curr_mod = &res;
 			Ok(())
 		} else {
 			Err("cannot set current module to one which is invalid")
@@ -2310,9 +2309,7 @@ impl<'a> Compiler<'a> {
         &mut self,
         ast: Option<Box<Ast>>,
         parser: &mut Parser,
-        vm: &mut VM,
         gc: &Gc,
-        compile: bool,
     ) -> Option<Managed<Closure>>
     {
         //let vm_ptr : *mut VM = ptr::from_mut(vm);
@@ -2365,7 +2362,7 @@ impl<'a> Compiler<'a> {
     }
 
     #[allow(unused_variables)]
-    fn code_gen_param<'a>
+    fn code_gen_param
     (
         &mut self,
         ast: &Ast,
@@ -2404,7 +2401,7 @@ impl<'a> Compiler<'a> {
 
     #[allow(unused_assignments)]
     #[allow(unused_variables)]
-    fn code_gen<'a>
+    fn code_gen
     (
         &mut self,
         ast: Option<Box<Ast>>,
@@ -2423,7 +2420,7 @@ impl<'a> Compiler<'a> {
                     ref listing,
                     ref closure
                 } => {
-                    self.code_gen_fun_decl(name.to_string(), fun_ty.clone(), params, listing.to_vec(), closure)
+                    self.code_gen_fun_decl(ast, name.to_string(), fun_ty.clone(), params, listing.to_vec(), closure)
                 },
                 Ast::LetDecl{
 					ref name,
@@ -2528,12 +2525,14 @@ impl<'a> Compiler<'a> {
     }
     
     fn code_gen_fun_decl(
-        &mut self, 
+        &mut self,
+        ast: Option<Box<Ast>>,
         name: String, 
         fun_ty: FunctionType, 
         params: Vec<Ast>, 
         listing: Vec<Box<Ast>>, 
-        closure: Option<Managed<Closure>>
+        closure: Option<Managed<Closure>>,
+        vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
@@ -2658,7 +2657,8 @@ impl<'a> Compiler<'a> {
     fn code_gen_let_decl(
         &mut self, 
         name: String, 
-        expr: Box<Ast>
+        expr: Box<Ast>,
+        vm: &mut VM,
     ) -> Option<Managed<Closure>>
     {
         let last = unsafe {
@@ -2706,7 +2706,9 @@ impl<'a> Compiler<'a> {
 
     fn code_gen_value(
         &mut self,
-        val: Value
+        val: Value,
+        vm: &mut VM,
+        gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         if let Some(last) = unsafe{self.symbols.calls.last_mut()} {
@@ -2767,6 +2769,7 @@ impl<'a> Compiler<'a> {
         gc: &Gc,
         name: String,
         arity: usize,
+        vm: &mut VM,
     )
     {
         let var = unsafe {
@@ -2795,9 +2798,10 @@ impl<'a> Compiler<'a> {
         &mut self,
         compiler: &mut Compiler,
         ast: &Ast,
-        gc: &Gc,
         recv: Option<Box<Ast>>,
         args: &Vec<Box<Ast>>,
+        vm: &mut VM,
+        gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         if let Some(last) = unsafe{self.symbols.calls.last_mut()} {
@@ -2840,11 +2844,11 @@ impl<'a> Compiler<'a> {
     
     #[allow(unused_assignments)]
     #[allow(unused_variables)]
-    fn code_gen_return<'a>
+    fn code_gen_return
     (
         &mut self,
         ast: Option<Box<Ast>>,
-        vm: *mut VM,
+        vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
@@ -2857,29 +2861,27 @@ impl<'a> Compiler<'a> {
                     ref listing,
                     ref closure
                 } => {
+                    
                     if self.error_count == 0 {
-                        if let Some(last) = unsafe{self.symbols.calls.last_mut()} {
-                            if listing.is_empty() {
-                                last.emit_op(OpCode::LoadNil);
-                                last.emit_op(OpCode::Return);
-                            } else {
-                                if let Some(l) = listing.last() { 
-                                    match **l {
-                                        Ast::ExprStmt{..} => {
-                                            last.emit_op(OpCode::Return);
-                                        },
-                                        Ast::ReturnStmt{ref expr, ..} => {
-                                            if let Some(e) = expr {
-                                                self.code_gen(Some::<Box<Ast>>(e.clone()), vm, gc);
-                                            } else {
-                                                last.emit_op(OpCode::LoadNil);
-                                            }
-                                            last.emit_op(OpCode::Return);
-                                        },
-                                        _ => {},
+                        if listing.is_empty() {
+                            last.emit_op(OpCode::LoadNil);
+                            last.emit_op(OpCode::Return);
+                        }
+                        if let Some(l) = listing.last() { 
+                            match **l {
+                                Ast::ExprStmt{..} => {
+                                    last.emit_op(OpCode::Return);
+                                },
+                                Ast::ReturnStmt{ref expr, ..} => {
+                                    if let Some(e) = expr {
+                                        self.code_gen(Some::<Box<Ast>>(e.clone()), vm, gc);
+                                    } else {
+                                        last.emit_op(OpCode::LoadNil);
                                     }
-                                }
-                            } 
+                                    last.emit_op(OpCode::Return);
+                                },
+                                _ => {},
+                            }
                         }
                         let c = unsafe {self.symbols.calls.last_mut().unwrap().closure};
                         if c.is_some() {
@@ -2920,7 +2922,7 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    fn emit_math_op<'a>
+    fn emit_math_op
     (
         &mut self,
         ast: &mut Option<Box<Ast>>,
@@ -3451,19 +3453,19 @@ impl VarEntry {
     }
 
     pub fn get_name(&self) -> String {
-        self.name
+        self.name.clone()
     }
 
     pub fn get_var_type(&self) -> VarType {
-        self.var_type
+        self.var_type.clone()
     }
     
     pub fn get_scope_type(&self) -> ScopeType {
-    	self.scope_type
+    	self.scope_type.clone()
     }
     
     pub fn get_access_type(&self) -> AccessType {
-    	self.access_type
+    	self.access_type.clone()
     }
     
     pub fn get_index(&self) -> usize {
@@ -3581,12 +3583,12 @@ impl FunCompiler {
         if s.ty == FunctionType::Constructor || s.ty == FunctionType::Method {
             s.push_local(
                 compiler, ast, gc, "this".to_string(), 
-                s.get_scope_depth(), false
+                scope, false
             );
         } else {
             s.push_local(
                 compiler, ast, gc, "".to_string(), 
-                s.get_scope_depth(), false
+                scope, false
             );
         } 
         s
@@ -4172,7 +4174,7 @@ impl CallStack {
 
     #[inline]
     fn get_fp(&mut self) -> usize {
-        self.stack.last().unwrap().get_fp()
+        self.stack.last_mut().unwrap().get_fp()
     }
     
     #[inline]
@@ -4182,7 +4184,7 @@ impl CallStack {
 
     #[inline]
     fn get_pc(&mut self) -> usize {
-        self.stack.last().unwrap().get_pc()
+        self.stack.last_mut().unwrap().get_pc()
     }
 
     fn clear_pc(&mut self) {
@@ -4305,9 +4307,36 @@ macro_rules! read_word {
     };
 }
 
+
+
+fn check_arity
+(
+    fun: &Value,
+    num_args: usize,
+    stack: Vec<Value>,
+) -> Result<usize, String>
+{
+    let top = self.stack.len();
+    let mut arity = 0;
+    match fun {
+        Value::Closure(c) => {
+            arity = c.get_arity();
+        },
+        _ => {
+            return Err(format!("not a function type, but {}", fun.value_type()));
+        },
+    }
+    if num_args != arity {
+        Err(format!("{} args expected, found {}", arity, num_args))
+    } else {
+        Ok(num_args)
+    }
+}
+
 #[allow(dead_code)]
 struct VM {
-    vars: Vec<Value>,
+    mod_vec: Vec<Vec<Value>>,
+    mod_index: usize,
     main_fun: Option<Managed<Closure>>,
     calls: CallStack,
     stack: Vec<Value>,
@@ -4352,7 +4381,7 @@ impl VM {
     }
     #[inline]
     fn get_pc(&mut self) -> Option<usize>{
-        if let Some(frame) = self.calls.top() {
+        if let Some(mut frame) = self.calls.top() {
             Some(frame.get_pc())
         } else {
             None
@@ -4441,29 +4470,7 @@ impl VM {
         fp
     }
 
-    fn check_arity
-	(
-            &mut self,
-            fun: &Value,
-            num_args: usize,
-	) -> Result<usize, String>
-    {
-        let top = self.stack.len();
-        let mut arity = 0;
-        match fun {
-            Value::Closure(c) => {
-                arity = c.get_arity();
-            },
-            _ => {
-                return Err(format!("not a function type, but {}", fun.value_type()));
-            },
-        }
-        if num_args != arity {
-            Err(format!("{} args expected, found {}", arity, num_args))
-        } else {
-            Ok(num_args)
-        }
-    }
+    
 
     fn call_value
 	(
@@ -4632,7 +4639,7 @@ impl VM {
                     if let Some(val) = elem {
                         self.stack.push(val);
                     } else {
-			panic!("var index out of range: {}; limit: {}", arg, self.vars.len());
+			            panic!("var index out of range: {}; limit: {}", arg, self.mod_vec[.len());
                     }
                     
                     Ok(Value::Nil)
@@ -5261,10 +5268,12 @@ impl VM {
         }
     }*/
 
-    fn debug_vars(&mut self) {
+    fn debug_vars(&self) {
         print!("NS Vars: [");
-        for i in 0..self.vars.len() {
-            print!("[{}]", self.vars[i]);
+        for j in 0..self.mod_vec.len() {
+            for i in 0..self.mod_vec[j].len() {
+                print!("[{}]", self.mod_vec[j][i]);
+            }
         }
         println!("]");
     }
@@ -5844,7 +5853,7 @@ impl VM {
     fn execute
     (
         &mut self,
-        compiler: &mut Compiler,
+        compiler: &mut Compiler<'_>,
         gc: &Gc,
         debug: bool,
         compile: bool,
@@ -5852,7 +5861,7 @@ impl VM {
     {
         self.calls.clear();
         self.stack.clear();
-        let closure = compiler.compile(root, gc, compile);
+        let closure = compiler.compile(root, parser, gc);
         if compile && closure.is_some() {
             return Ok(Value::Nil);
         }
@@ -5884,11 +5893,12 @@ impl VM {
     pub(crate) fn run
     (
         &mut self,
+        compiler: &mut Compiler<'_>,
         gc: &Gc,
         debug: bool,
         compile: bool,
     ) -> Result<Value, InterpretErrorType> {
-        self.execute(gc, debug, compile)
+        self.execute(compiler, gc, debug, compile)
     }
     
     pub fn print_backtrace(&mut self) {
