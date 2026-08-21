@@ -33,7 +33,6 @@ use crate::parser::{Parser, InterpretErrorType};
 use std::io;
 use std::io::Write;
 use std::env;
-use crate::gc::Gc;
 use std::process;
 //use crate::object::*;
 

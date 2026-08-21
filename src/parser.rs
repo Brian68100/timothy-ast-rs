@@ -6,8 +6,6 @@ use crate::opcode::*;
 use crate::closure::*;
 use crate::ast::*;
 use crate::value::*;
-use std::rc::Rc;
-use std::cell::RefCell;
 use crate::gc::{Gc, NO_GC};
 use crate::natives::*;
 use std::collections::HashMap;
@@ -291,7 +289,7 @@ impl<'a> Parser<'_> {
         if !self.parse(root, &mut self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&mut self.gc, 
+            self.vm.run(&mut self.compiler, &mut self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
@@ -339,18 +337,18 @@ impl<'a> Parser<'_> {
         if !self.parse(root, &self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&mut &self.gc, 
+            self.vm.run(&mut self.compiler, &mut &self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
 
-    pub fn load_value(
+    pub fn store_fun(
     	&mut self, 
-    	mut mod_name: String, 
-    	mut name: String, 
-    	mut value: Value
+    	name: &str,
+        arity: usize,
+    	mut fun: fn(gc: &Gc, args: &[Value])
+            -> Result<Value, String>,
     ) -> Result<(), String> {
-
         Ok(())
     }
 
@@ -2229,23 +2227,27 @@ impl<'a> Compiler<'a> {
 		parent: Option<&Module>
 	) -> Result<(), String> {
 		if self.symbols.mods.is_empty() {
-			if name == "global" {
-				self.symbols.mods.insert("global", Module::new("global", None));
+            if name == ".".to_string() {
+				self.symbols.mods.insert(".".to_string(), Module::new("".to_string(), self.symbols.mods.len(), None));
 
-				if let Some(res) = self.symbols.mods.get_mut(name) {
-					self.set_curr_mod(&res.1);
+				if let Some(res) = self.symbols.mods.get_mut(&name) {
+					self.set_curr_mod(res.name());
 				}
-				Ok(())
+				return Ok(());
 			}
 		}
-		if let Some(res) = parent.get("global") {
-			Err("global module cannot be a parent of any other module".to_string())
+		if let Some(res) = parent {
+            if res.name() == ".".to_string() {
+			    return Err("global module cannot be a parent of any other module".to_string())
+            }
+            panic!("There should be a module here!");
 		} else {
-			self.symbols.mods.insert(name, Module::new(name, parent));
-			if let Some(res) = self.symbols.mods.get_mut(name) {
-				self.set_curr_mod(&res.1);
-			}
+			self.symbols.mods.insert(name, Module::new(name, self.symbols.mods.len(), parent));
+			if let Some(res) = self.symbols.mods.get_mut(&name) {
+				return self.set_curr_mod(name);
+			};
 		}
+
 	}
 		
 	fn set_curr_mod(
@@ -2308,13 +2310,13 @@ impl<'a> Compiler<'a> {
     (
         &mut self,
         ast: Option<Box<Ast>>,
-        parser: &mut Parser,
+        vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         //let vm_ptr : *mut VM = ptr::from_mut(vm);
 		if !self.compile_flag {
-            self.code_gen(ast, vm, gc)
+            self.code_gen(ast, gc)
 		} else {
 	    	//self.code_gen_c(ast, vm, gc)
 	    	None
@@ -2527,146 +2529,139 @@ impl<'a> Compiler<'a> {
     fn code_gen_fun_decl(
         &mut self,
         ast: Option<Box<Ast>>,
-        name: String, 
-        fun_ty: FunctionType, 
-        params: Vec<Ast>, 
-        listing: Vec<Box<Ast>>, 
-        closure: Option<Managed<Closure>>,
         vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         let mut result: Option<Managed<Closure>> = None;
-
-        let ty = fun_ty.clone();
-        match ty {
-            FunctionType::TopLevel => {
-                unsafe{push_main(self)};
-                unsafe{self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone())};
-            },
-            _ => {
-                unsafe {push_function(self)};
-                unsafe {self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone())};
-            },
-        }
-
-        result = unsafe{self.symbols.calls.last_mut().unwrap().closure.clone()};
-        
-        if ty != FunctionType::TopLevel {
-            unsafe {self.begin_scope()};
-        }
-        
-        for i in params {
-            let ret = self.code_gen_param(&i.clone(), gc);
-            if !ret {
-                result = None;
-            }
-        }
-        
-        
-        for i in listing {
-            println!("here");
-            let ret = self.code_gen(Some(i.clone()), vm, gc);
-            println!("ret = {:#?}", ret);
-            if ret.is_none() {
-                result = None;
-            }
-        }
-        
-        if ty != FunctionType::TopLevel {
-            unsafe {self.end_scope()};
-        }
-
-        if self.error_count == 0 {
-            if ty == FunctionType::NamedClosure ||
-                ty == FunctionType::AnonClosure
-            { 
-                let fc =
-                    unsafe {
-                        &mut self.symbols.calls.last_mut().unwrap()
-                    };
-                
-                let prev_fc = 
-                    unsafe {
-                        &mut (&mut self.symbols.calls)[self.symbols.calls.len() - 2]
-                    };
-                if let Some(closure) = fc.closure {
-                    let constant = prev_fc.get_constant(&Value::Closure(closure));
-                    prev_fc.emit_word_op(OpCode::LoadValue, constant as usize);
-                } else {
-                    panic!("internal closure doesn't exist");
-                }
-                
-                if ty == FunctionType::NamedClosure {
-                    let last = unsafe {
-                        self.symbols.calls.last_mut().unwrap()
-                    };
-                    let scope = unsafe {
-                        self.get_scope_depth()
-                    };
-                    let var: Result<VarInfo, VarError> = 
-                        Err(VarError::new(
-                            name.clone(),
-                            VarErrorType::Undefined,
-                        ));
-                    let fun = unsafe {
-                        add_var(
-                            name, Some(params.len()), true
-                        )
-                    };
-                    
-                    match fun {
-                        Ok(var_info) => {
-                            println!("here!");
-                            unsafe {
-                                define_var(vm, prev_fc, var_info.index)
-                            };
+        if let Some(node) = ast {
+            match *ast {
+                Ast::FunDecl {..} => { 
+                    let ty = node.fun_ty.clone();
+                    match ty {
+                        FunctionType::TopLevel => {
+                            unsafe{push_main(self)};
+                            unsafe{self.symbols.calls.last_mut().unwrap().closure = Some(node.closure.clone())};
                         },
-                        _ => {},
-                    }  
-                }                
-            }
-            if result.is_some() { 
-                result = self.code_gen_return(ast, vm, gc);
-            }
-            unsafe{self.symbols.calls.pop()};
-            if ty == FunctionType::TopLevel && result.is_none() {
-                if self.error_count > 1 {
-                    println!("Found {} errors.", self.error_count);
-                } else if self.error_count == 1 {
-                    println!("Found 1 error.");
-                } else {
-                    panic!("error count should not be zero");
+                        _ => {
+                            unsafe {push_function(self)};
+                            unsafe {self.symbols.calls.last_mut().unwrap().closure = Some(node.closure.clone())};
+                        },
+                    }
+
+                    result = unsafe{self.symbols.calls.last_mut().unwrap().closure.clone()};
+                    
+                    if ty != FunctionType::TopLevel {
+                        self.begin_scope();
+                    }
+                    
+                    for i in node.params {
+                        let ret = self.code_gen_param(&i.clone(), gc);
+                        if !ret {
+                            result = None;
+                        }
+                    }
+                    
+                    
+                    for i in node.listing {
+                        println!("here");
+                        let ret = self.code_gen(Some(i.clone()), vm, gc);
+                        println!("ret = {:#?}", ret);
+                        if ret.is_none() {
+                            result = None;
+                        }
+                    }
+                    
+                    if ty != FunctionType::TopLevel {
+                        unsafe {self.end_scope()};
+                    }
+
+                    if self.error_count == 0 {
+                        if ty == FunctionType::NamedClosure ||
+                            ty == FunctionType::AnonClosure
+                        { 
+                            let fun_com =
+                                &mut self.symbols.calls.last_mut().unwrap();
+                            
+                            let prev_fun_com = 
+                                &mut (&mut self.symbols.calls)[self.symbols.calls.len() - 2];
+                            if let Some(closure) = fun_com.closure {
+                                let constant = prev_fun_com.get_constant(&Value::Closure(closure));
+                                prev_fun_com.emit_word_op(OpCode::LoadValue, constant as usize);
+                            } else {
+                                panic!("internal closure doesn't exist");
+                            }
+                            
+                            if ty == FunctionType::NamedClosure {
+                                let last = 
+                                    self.symbols.calls.last_mut().unwrap();
+
+                                let scope = 
+                                    self.get_scope_depth();
+                                let var: Result<VarInfo, VarError> = 
+                                    Err(VarError::new(
+                                        node.name.clone(),
+                                        VarErrorType::Undefined,
+                                    ));
+                                let fun =
+                                    self.add_var(
+                                        node.name, Some(node.params.len()), true
+                                    );
+                                
+                                match fun {
+                                    Ok(var_info) => {
+                                        println!("here!");
+                                        unsafe {
+                                            define_var(vm, prev_fun_com, var_info.index)
+                                        };
+                                    },
+                                    _ => {},
+                                }  
+                            }                
+                        }
+                        if result.is_some() { 
+                            result = self.code_gen_return(ast, vm, gc);
+                        }
+                        unsafe{self.symbols.calls.pop()};
+                        if ty == FunctionType::TopLevel && result.is_none() {
+                            if self.error_count > 1 {
+                                println!("Found {} errors.", self.error_count);
+                            } else if self.error_count == 1 {
+                                println!("Found 1 error.");
+                            } else {
+                                panic!("error count should not be zero");
+                            }
+                        }
+                        return result;
+                    } else {
+                        if ty == FunctionType::TopLevel {
+                            if self.error_count > 1 {
+                                eprintln!("Found {} errors.", self.error_count);
+                            } else if self.error_count == 1 {
+                                eprintln!("Found 1 error.");
+                            } else {
+                                panic!("error count should not be zero");
+                            }
+                        }
+                        return None;
+                    }
                 }
             }
-            return result;
-        } else {
-            if ty == FunctionType::TopLevel {
-                if self.error_count > 1 {
-                    println!("Found {} errors.", self.error_count);
-                } else if self.error_count == 1 {
-                    println!("Found 1 error.");
-                } else {
-                    panic!("error count should not be zero");
-                }
-            }
-            return None;
         }
     }
 
     fn code_gen_let_decl(
         &mut self, 
-        name: String, 
-        expr: Box<Ast>,
+        ast: Option<Box<Ast>>,
         vm: &mut VM,
+        gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
-        let last = unsafe {
-            self.symbols.calls.last_mut().unwrap()
-        };
-        let scope = unsafe {
-            self.get_scope_depth()
-        };
+        let last = 
+            self.symbols.calls.last_mut().unwrap();
+        let scope =
+            self.get_scope_depth();
+
         let mut var: Result<VarInfo, VarError> =
             Err(VarError::new(
                 "".to_string(),
@@ -2674,25 +2669,29 @@ impl<'a> Compiler<'a> {
             ));
             
         let mut arity: Option<usize> = None;
-        let is_function = match *expr {
-            Ast::FunDecl{
-                ref name,
-                ref fun_ty,
-                ref params, 
-                ref listing,
-                ref closure
-            } => {
-                arity = Some(params.len());
-                true
-            },
-            _ => { false },
-        };
+        if let Some(expr) = ast {
+            let function = match *expr {
+                Ast::FunDecl{
+                    ref name,
+                    ref fun_ty,
+                    ref params, 
+                    ref listing,
+                    ref closure
+                } => {
+                    arity = Some(params.len());
+                    true
+                },
+                _ => { false },
+            };
 
-        var = unsafe {add_var(vm, self, &node, gc, name, arity, true)};
-        if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
-            return None;
-        }
-            
+            if let Some(node) = ast {
+                var = self.add_var(vm, self, node, gc, node.name, arity, true);
+            }
+
+            if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
+                return None;
+            }
+        }            
         match var {
             Ok(var_info) => {
                 unsafe{define_var(vm, last, var_info.index)};
@@ -2706,55 +2705,61 @@ impl<'a> Compiler<'a> {
 
     fn code_gen_value(
         &mut self,
-        val: Value,
+        ast: Option<Box<Ast>>,
         vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
         if let Some(last) = unsafe{self.symbols.calls.last_mut()} {
-            match val {
-                Value::Int(i) => {
-                    #[cfg(not(feature = "reg_mach"))]
-                    if i >= 0 && i <= 10 {
-                        last.emit_op(OpCode::from(u8::from(OpCode::Load0) + (i as u8)));
-                    } else {
-                        let constant = last.get_constant(&val);
-                        last.emit_word_op(OpCode::LoadValue, constant as usize);
-                    }
+            if let Some(node) = ast {
+                match *node {
+                    Ast::Value{ val } => {
+                        match val {
+                            Value::Int(i) => {
+                                #[cfg(not(feature = "reg_mach"))]
+                                if i >= 0 && i <= 10 {
+                                    last.emit_op(OpCode::from(u8::from(OpCode::Load0) + (i as u8)));
+                                } else {
+                                    let constant = last.get_constant(&val);
+                                    last.emit_word_op(OpCode::LoadValue, constant as usize);
+                                }
 
-                    #[cfg(feature = "reg_mach")]
-                    if i >= -32768 && i <= 32767 {
-                        last.emit_op(OpCode::LoadI16(self.curr_reg(), *i as i16));
-                    } else {
-                        last.emit_op(OpCode::LoadReg(self.curr_reg(), self.next_avail_reg()));
+                                #[cfg(feature = "reg_mach")]
+                                if i >= -32768 && i <= 32767 {
+                                    last.emit_op(OpCode::LoadI16(self.curr_reg(), *i as i16));
+                                } else {
+                                    last.emit_op(OpCode::LoadReg(self.curr_reg(), self.next_avail_reg()));
+                                }
+                                self.symbols.calls.last_mut().unwrap().closure.clone()
+                            },
+                            Value::Float(_) => {
+                                let constant = last.get_constant(&val);
+                                last.emit_word_op(OpCode::LoadValue, constant as usize);
+                                self.symbols.calls.last_mut().unwrap().closure.clone() 
+                            },
+                            Value::Bool(b) => {
+                                if b == true {
+                                    last.emit_op(OpCode::LoadTrue);
+                                } else {
+                                    last.emit_op(OpCode::LoadFalse);
+                                }
+                                self.symbols.calls.last_mut().unwrap().closure.clone()
+                            },
+                            Value::Nil => {
+                                last.emit_op(OpCode::LoadNil);
+                                self.symbols.calls.last_mut().unwrap().closure.clone() 
+                            },
+                            Value::String(_) => {
+                                let constant = last.get_constant(&val);
+                                last.emit_word_op(OpCode::LoadValue, constant as usize);
+                                self.symbols.calls.last_mut().unwrap().closure.clone() 
+                            },
+                            _ => {
+                                self.error(&node, "value is not a valid constant".to_string());
+                                None
+                            }
+                        }
                     }
-                    self.symbols.calls.last_mut().unwrap().closure.clone()
-                },
-                Value::Float(_) => {
-                    let constant = last.get_constant(&val);
-                    last.emit_word_op(OpCode::LoadValue, constant as usize);
-                    self.symbols.calls.last_mut().unwrap().closure.clone() 
-                },
-                Value::Bool(b) => {
-                    if b == true {
-                        last.emit_op(OpCode::LoadTrue);
-                    } else {
-                        last.emit_op(OpCode::LoadFalse);
-                    }
-                    self.symbols.calls.last_mut().unwrap().closure.clone()
-                },
-                Value::Nil => {
-                    last.emit_op(OpCode::LoadNil);
-                    self.symbols.calls.last_mut().unwrap().closure.clone() 
-                },
-                Value::String(_) => {
-                    let constant = last.get_constant(&val);
-                    last.emit_word_op(OpCode::LoadValue, constant as usize);
-                    self.symbols.calls.last_mut().unwrap().closure.clone() 
-                },
-                _ => {
-                    self.error(&node, "value is not a valid constant".to_string());
-                    None
                 }
             }
         } else {
@@ -2766,31 +2771,32 @@ impl<'a> Compiler<'a> {
     fn code_gen_var
     (
         &mut self,
-        gc: &Gc,
-        name: String,
-        arity: usize,
+        ast: Option<Box<Ast>>, 
         vm: &mut VM,
+        gc: &Gc,
     )
     {
-        let var = unsafe {
-            self.resolve_mod_var(vm, &node, gc, name, None, true)
-        };
-        match var {
-            Err(e) => {
-                if e.error_type == VarErrorType::Undefined {
-                    self.error(&node, format!("variable {} is undefined", e.name));
+        if let Some(node) = ast {
+            let var =
+                self.resolve_mod_var(vm, &node, gc, node.name, None, true);
+            match var {
+                Err(e) => {
+                    if e.error_type == VarErrorType::Undefined {
+                        self.error(&node, format!("variable {} is undefined", e.name));
+                    }
+                    return None;
                 }
-                return None;
-            }
-            Ok(v) => {
-                if let Some(last) = 
-                    self.symbols.calls.last_mut()
-                {
-                    self.emit_var_load(last, v);
-                    return self.symbols.calls.last_mut().unwrap().closure;
-                };
-            },
-        };
+                Ok(v) => {
+                    if let Some(last) = 
+                        self.symbols.calls.last_mut()
+                    {
+                        self.emit_var_load(last, v);
+                        return self.symbols.calls.last_mut().unwrap().closure;
+                    };
+                },
+            };
+        }
+        None
     }
 
     fn code_gen_call
@@ -2848,6 +2854,7 @@ impl<'a> Compiler<'a> {
     (
         &mut self,
         ast: Option<Box<Ast>>,
+        compiler: &Compiler,
         vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
@@ -2855,45 +2862,47 @@ impl<'a> Compiler<'a> {
         if let Some(node) = ast {
             match *node {
                 Ast::FunDecl {
-		    ref name,
+		            ref name,
                     ref fun_ty,
                     ref params,
                     ref listing,
                     ref closure
                 } => {
-                    
-                    if self.error_count == 0 {
-                        if listing.is_empty() {
-                            last.emit_op(OpCode::LoadNil);
-                            last.emit_op(OpCode::Return);
-                        }
-                        if let Some(l) = listing.last() { 
-                            match **l {
-                                Ast::ExprStmt{..} => {
-                                    last.emit_op(OpCode::Return);
-                                },
-                                Ast::ReturnStmt{ref expr, ..} => {
-                                    if let Some(e) = expr {
-                                        self.code_gen(Some::<Box<Ast>>(e.clone()), vm, gc);
-                                    } else {
-                                        last.emit_op(OpCode::LoadNil);
-                                    }
-                                    last.emit_op(OpCode::Return);
-                                },
-                                _ => {},
+                    if let Some(last) = compiler.symbols.calls.last_mut().unwrap()
+                    { 
+                        if self.error_count == 0 {
+                            if listing.is_empty() {
+                                last.emit_op(OpCode::LoadNil);
+                                last.emit_op(OpCode::Return);
                             }
+                            if let Some(mut l) = listing.last() { 
+                                match **l {
+                                    Ast::ExprStmt{..} => {
+                                        l.emit_op(OpCode::Return);
+                                    },
+                                    Ast::ReturnStmt{ref expr, ..} => {
+                                        if let Some(e) = expr {
+                                            self.code_gen(Some::<Box<Ast>>(e.clone()), vm, gc);
+                                        } else {
+                                            last.emit_op(OpCode::LoadNil);
+                                        }
+                                        last.emit_op(OpCode::Return);
+                                    },
+                                    _ => {},
+                                }
+                            }
+                            let c = unsafe {self.symbols.calls.last_mut().unwrap().closure};
+                            if c.is_some() {
+                                c.unwrap().get_core().finish(
+                                    unsafe {self.symbols.calls.last_mut().unwrap().constant_arr.clone()},
+                                    unsafe {self.symbols.calls.last_mut().unwrap().code.clone()}
+                                );
+                                return c;
+                            }
+                            return None;
+                        } else {
+                            return None;
                         }
-                        let c = unsafe {self.symbols.calls.last_mut().unwrap().closure};
-                        if c.is_some() {
-                            c.unwrap().get_core().finish(
-                                unsafe {self.symbols.calls.last_mut().unwrap().constant_arr.clone()},
-                                unsafe {self.symbols.calls.last_mut().unwrap().code.clone()}
-                            );
-                            return c;
-                        }
-                        return None;
-                    } else {
-                        return None;
                     }
                 },
                 _ => {
@@ -3398,20 +3407,20 @@ impl<'a> Compiler<'a> {
 
 #[derive(Clone)]
 struct SymbolTables<'a> {
-    mods: HashMap<String, Module>,
-    curr_mod: &'a Module,
+    mods: HashMap<String, Module<'a>>,
+    curr_mod: &'a Module<'a>,
     calls: Vec<FunCompiler>,
 }
 
 impl <'a>SymbolTables<'a> {
     fn new() -> Self {
         Self {
-            mods: HashMap::<String, Module>::new(),
+            mods: HashMap::<String, Module<'a>>::new(),
             calls: vec![],
         }
     }
 
-    fn get_mod(&mut self, name: String) -> Result<&Module, String> {
+    fn get_mod(&mut self, name: String) -> Result<&'a Module<'a>, String> {
         let res = self.mods.get(name);
         if res.is_some() {
             Ok(res.unwrap())
@@ -3421,11 +3430,49 @@ impl <'a>SymbolTables<'a> {
     }
 }
 
-struct Module {
+struct Module<'a> {
     mod_name: String,
     mod_index: usize,
+    mod_parent: Option<&'a Module<'a>>,
     mod_vars: HashMap<String, VarEntry>,
 }
+
+impl<'a> Module<'a> {
+    fn new(
+        name: String,
+        index: usize,
+        parent: Option<&'a Module<'a>>,
+    ) -> Self {
+        Self {
+            mod_name: name,
+            mod_index: index,
+            mod_parent: parent,
+            mod_vars: HashMap::<String, VarEntry>::new(),
+        }
+    }
+
+    fn name(&self) -> String {
+        self.mod_name.clone()
+    }
+
+    fn index(&self) -> usize {
+        self.mod_index
+    }
+
+    fn parent(&self) -> Option<&'a Module> {
+        self.mod_parent.clone()
+    }
+
+    fn add_var(&mut self, name: String, var: VarEntry) {
+    }
+
+    fn get_var(
+        &mut self, 
+        name: String
+    ) -> VarEntry {
+    }
+}
+
 
 pub struct VarEntry {
     name: String,
@@ -3437,10 +3484,10 @@ pub struct VarEntry {
 
 impl VarEntry {
     fn new(
-    	name: String, 
-    	var_type: VarType, 
+    	name: String,
+    	var_type: VarType,
     	scope_type: ScopeType,
-    	accessType: AccessType,
+    	access_type: AccessType,
     	var_index: usize
     ) -> Self {
         Self {
@@ -3514,7 +3561,7 @@ impl FunCompiler {
 	) -> Self
     {
         
-        Self::function_setup(parser, ast, gc, name, arity, scope, FunctionType::NamedClosure)
+        Self::function_setup(compiler, ast, gc, name, arity, scope, FunctionType::NamedClosure)
     }
 
     fn new_anon_closure
@@ -3526,21 +3573,21 @@ impl FunCompiler {
             scope: usize,
 	) -> Self
     {
-        Self::function_setup(parser, ast, gc, "", arity, scope, FunctionType::AnonClosure)
+        Self::function_setup(compiler, ast, gc, "", arity, scope, FunctionType::AnonClosure)
     }
 
     /*fn new_function
     (
-    parser: &mut AstParser,
+    compiler: &mut Compiler,
     name: &str,
-    arity: usize
+    arity: usize,
 ) -> Self
     {
 }
     
     fn new_constructor
     (
-    parser: &mut AstParser,
+    compiler: &mut Compiler,
     arity: usize
 ) -> Self
     {
@@ -3548,7 +3595,7 @@ impl FunCompiler {
     
     fn new_method
     (
-    	parser: &mut AstParser,
+    	compiler: &mut Compiler,
     	name: &str,
     	arity: usize
 	) -> Self 
@@ -3557,13 +3604,13 @@ impl FunCompiler {
     
     fn function_setup
 	(
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &str,
-            arity: usize,
-            scope: usize,
-            ty: FunctionType,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc,
+        name: &str,
+        arity: usize,
+        scope: usize,
+        ty: FunctionType,
 	) -> Self
     {
         let mut s = Self {
@@ -3596,13 +3643,13 @@ impl FunCompiler {
 
     fn resolve_local_internal
 	(
-            &mut self,
-            compiler: *mut Compiler,
-            ast: &Ast,
-            _gc: &Gc,
-            name: &String,
-            arity: Option<usize>,
-            do_print_err: bool,
+        &mut self,
+        compiler: *mut Compiler,
+        ast: &Ast,
+        _gc: &Gc,
+        name: &String,
+        arity: Option<usize>,
+        do_print_err: bool,
 	) -> Result<VarInfo, VarError>
     {
         for i in (0..self.locals.len()).rev() { 
@@ -3637,15 +3684,15 @@ impl FunCompiler {
 
     fn resolve_upvalue_internal
 	(
-            &mut self,
-            parser: &mut Parser,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc, 
-            name: &String,
-            arity: Option<usize>,
-            print_error: bool,
-            mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
+        &mut self,
+        parser: &mut Parser,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc, 
+        name: &String,
+        arity: Option<usize>,
+        print_error: bool,
+        mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
 	) -> Result<VarInfo, VarError>
     {
         let mut fc = iter.next();
@@ -3687,14 +3734,14 @@ impl FunCompiler {
 
     fn add_upvalue
 	(
-            &mut self, 
-            compiler: *mut Compiler, 
-            ast: &Ast,
-            _gc: &Gc,
-            name: &String,
-            arity: Option<usize>,
-            index: usize, 
-            is_local: bool
+        &mut self, 
+        compiler: *mut Compiler, 
+        ast: &Ast,
+        _gc: &Gc,
+        name: &String,
+        arity: Option<usize>,
+        index: usize, 
+        is_local: bool
 	) -> Result<VarInfo, VarError>
     {
         for i in 0..self.locals.len() {
@@ -3735,13 +3782,13 @@ impl FunCompiler {
 
     fn push_local
 	(
-            &mut self,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            _gc: &Gc,
-            name: String,
-            scope: usize,
-            upvalue: bool
+        &mut self,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        _gc: &Gc,
+        name: String,
+        scope: usize,
+        upvalue: bool
 	) -> Option<&mut Local>
     {
         if self.locals.len() == MAX_LOCALS {
@@ -3755,13 +3802,13 @@ impl FunCompiler {
 
     fn declare_local
 	(
-            &mut self, 
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &String,
-            arity: Option<usize>,
-            print_error: bool,
+        &mut self, 
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc,
+        name: &String,
+        arity: Option<usize>,
+        print_error: bool,
 	) -> Result<VarInfo, VarError>
     {
         let mut actual_name = "".to_string();
@@ -3813,12 +3860,12 @@ impl FunCompiler {
 
     fn declare_local_function
 	(
-            &mut self,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &String,
-            arity: usize,
+        &mut self,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc,
+        name: &String,
+        arity: usize,
 	    print_err: bool,
 	) -> Result<VarInfo, VarError>
     {
@@ -4309,29 +4356,7 @@ macro_rules! read_word {
 
 
 
-fn check_arity
-(
-    fun: &Value,
-    num_args: usize,
-    stack: Vec<Value>,
-) -> Result<usize, String>
-{
-    let top = self.stack.len();
-    let mut arity = 0;
-    match fun {
-        Value::Closure(c) => {
-            arity = c.get_arity();
-        },
-        _ => {
-            return Err(format!("not a function type, but {}", fun.value_type()));
-        },
-    }
-    if num_args != arity {
-        Err(format!("{} args expected, found {}", arity, num_args))
-    } else {
-        Ok(num_args)
-    }
-}
+
 
 #[allow(dead_code)]
 struct VM {
@@ -4470,7 +4495,30 @@ impl VM {
         fp
     }
 
-    
+    fn check_arity
+    (
+        &self,
+        fun: &Value,
+        num_args: usize,
+        stack: Vec<Value>,
+    ) -> Result<usize, String>
+    {
+        let top = self.stack.len();
+        let mut arity = 0;
+        match fun {
+            Value::Closure(c) => {
+                arity = c.get_arity();
+            },
+            _ => {
+                return Err(format!("not a function type, but {}", fun.value_type()));
+            },
+        }
+        if num_args != arity {
+            Err(format!("{} args expected, found {}", arity, num_args))
+        } else {
+            Ok(num_args)
+        }
+    }    
 
     fn call_value
 	(
@@ -4639,7 +4687,14 @@ impl VM {
                     if let Some(val) = elem {
                         self.stack.push(val);
                     } else {
-			            panic!("var index out of range: {}; limit: {}", arg, self.mod_vec[.len());
+                        match self.stack[0].get_uintsize() {
+                            Ok(v) => {
+                                return Err(format!("var index out of range: {}; limit: {}", arg, self.mod_vec[v].len()));
+                            },
+                            Err(e) => {
+                                panic!("internal error: {}", e);
+                            }
+                        }
                     }
                     
                     Ok(Value::Nil)
@@ -5853,6 +5908,7 @@ impl VM {
     fn execute
     (
         &mut self,
+        root: Option<Box<Ast>>,
         compiler: &mut Compiler<'_>,
         gc: &Gc,
         debug: bool,
@@ -5861,7 +5917,7 @@ impl VM {
     {
         self.calls.clear();
         self.stack.clear();
-        let closure = compiler.compile(root, parser, gc);
+        let closure = compiler.compile(root, compiler, gc);
         if compile && closure.is_some() {
             return Ok(Value::Nil);
         }

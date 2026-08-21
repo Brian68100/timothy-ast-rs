@@ -2,7 +2,6 @@ use std::vec::Vec;
 use crate::value::Value;
 use crate::function_core::{FunctionType};
 use crate::closure::{Closure};
-use crate::native_fun::{NativeFun};
 use std::fmt::{Display, Formatter, Error};
 
 

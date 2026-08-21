@@ -79,10 +79,11 @@ impl Manage for NativeFun {
 
 
 pub(crate) fn add_default_fn_natives(parser: &mut Parser, gc: &Gc,) {
-    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("print".to_string(), 1, builtin_fun_print_1), &NO_GC)));
-    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 0, builtin_fun_println_0), &NO_GC)));
-    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("println".to_string(), 1, builtin_fun_println_1), &NO_GC)));
-    parser.load_value(Value::NativeFun(gc.manage(NativeFun::new("input".to_string(), 0, builtin_fun_input_0), &NO_GC))); 
+    parser.store_fun("io.print", 1, builtin_fun_print_1);
+    parser.store_fun("io.println", 0, builtin_fun_println_0);
+    parser.store_fun("io.println", 1, builtin_fun_println_1);
+    parser.store_fun("input", 0, builtin_fun_input_0);
+    parser.store_fun("input", 1, builtin_fun_input_1);
 }
 
 fn builtin_fun_print_1(gc: &Gc, args: &[Value]) -> FunResult {
@@ -121,6 +122,34 @@ fn builtin_fun_println_1(gc: &Gc, args: &[Value]) -> FunResult {
 }
 
 fn builtin_fun_input_0(gc: &Gc, args: &[Value]) -> FunResult {
+    let mut input = String::new();
+    io::stdout().flush().unwrap();
+    match io::stdin().read_line(&mut input) {
+	    Ok(num) => {
+	        Ok(Value::String(gc.manage(input.clone(), &NO_GC)))
+	    }
+	    Err(_) => {
+	        Ok(Value::Nil)
+	    }
+    }
+}
+
+fn builtin_fun_input_1(gc: &Gc, args: &[Value]) -> FunResult {
+    match args.get(0) {
+        Some(v) => {
+            match v {
+                Value::String(prompt) => {
+                    print!("{}", **prompt);
+                },
+                _ => {
+                    return Err("argument #1 is not a string".to_string());
+                }
+            }
+        },
+        None => {
+        },
+    }
+
     let mut input = String::new();
     io::stdout().flush().unwrap();
     match io::stdin().read_line(&mut input) {
