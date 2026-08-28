@@ -277,7 +277,7 @@ impl<'a> Parser<'_> {
         });
         self.advance(&mut self.gc);
         
-        let mut root: Option<Box<Ast>> = 
+        let root: Option<Box<Ast>> = 
             Some(Box::new(Ast::FunDecl {
                 name: " main".to_string(),
                 fun_ty: FunctionType::TopLevel,
@@ -286,7 +286,7 @@ impl<'a> Parser<'_> {
                 closure: None,
             }));
         
-        if !self.parse(root, &mut self.gc) {
+        if !self.parse(&root, &mut self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
             self.vm.run(&mut self.compiler, &mut self.gc, 
@@ -323,9 +323,9 @@ impl<'a> Parser<'_> {
                 value: Value::Nil,
             },
         });
-        self.advance(&mut self.gc);
+        self.advance(&self.gc);
 
-        let mut root: Option<Box<Ast>> = 
+        let root: Option<Box<Ast>> = 
             Some(Box::new(Ast::FunDecl {
                 name: " main".to_string(),
                 fun_ty: FunctionType::TopLevel,
@@ -334,7 +334,7 @@ impl<'a> Parser<'_> {
                 closure: None,
             }));
         
-        if !self.parse(root, &self.gc) {
+        if !self.parse(&root, &self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
             self.vm.run(&mut self.compiler, &mut &self.gc, 
@@ -438,7 +438,7 @@ impl<'a> Parser<'_> {
     ) -> bool {
         while self.current().kind != TokenKind::Done {
             let _tk = self.current().kind;
-            let mut left: Option<Box<Ast>> = self.parse_stmt(None, gc);
+            let left: Option<Box<Ast>> = self.parse_stmt(None, gc);
             println!("left = {:#?}", left);
             if left.is_none() {
                 continue;
@@ -2202,15 +2202,274 @@ impl<'a> AstPrinter {
     }
 }
 
-struct Compiler<'a> {
-    symbols: SymbolTables<'a>,
+
+
+
+#[derive(Clone, PartialEq)]
+enum VarType {
+	None,
+    Module,
+    Var,
+    Function,
+    Class,
+    Const,
+}
+
+#[derive(Clone, PartialEq)]
+enum ScopeType {
+    None,
+    Module,
+    Local,
+    Upvalue,
+    Class,
+}
+
+#[derive(Clone, PartialEq)]
+enum AccessType {
+    None,
+	Public,
+	Private,
+}
+
+#[derive(Clone, PartialEq)]
+enum VarErrorType {
+    None,
+    Undefined,
+    AlreadyExists,
+    TooMany,
+    SelfInit,
+    IsFunction,
+    Other,
+}
+
+#[derive(Clone)]
+struct VarInfo {
+    name: String,
+    arity: Option<usize>,
+    var_type: VarType,
+    scope_type: ScopeType,
+    access_type: AccessType,
+    scope: usize,
+    index: usize,
+    upvalue_local_index: usize,
+}
+
+impl VarInfo {
+    fn new
+	(
+        name: String,
+        arity: Option<usize>,
+        var_type: VarType,
+        scope_type: ScopeType,
+        access_type: AccessType,
+        scope: usize,
+        index: usize,
+        upvalue_local_index: usize,
+	) -> Self
+    {
+        Self {
+            name,
+            arity,
+            var_type,
+            scope_type,
+            access_type,
+            scope,
+            index,
+            upvalue_local_index,
+        }
+    }
+
+    fn get_name(&mut self) -> String {
+        self.name.clone()
+    }
+
+    fn get_arity(&mut self) -> Option<usize> {
+        self.arity
+    }
+
+    fn get_var_type(&mut self) -> VarType {
+        self.var_type.clone()
+    }
+
+    fn get_scope_type(&mut self) -> ScopeType {
+        self.scope_type.clone()
+    }
+
+    fn get_access_type(&self) -> AccessType {
+        self.access_type.clone()
+    }
+
+    fn get_scope_level(&mut self) -> usize {
+        self.scope
+    }
+
+    fn get_index(&mut self) -> usize {
+        self.index
+    }
+}
+
+#[derive(Clone)]
+struct VarError {
+    name: String,
+    var_type: VarType,
+    scope_type: ScopeType,
+    access_type: AccessType,
+    error_type: VarErrorType,
+    scope_level: usize,
+}
+
+impl VarError {
+    fn new(
+        name: String,
+        var_type: VarType,
+        scope_type: ScopeType,
+        access_type: AccessType,
+        error_type: VarErrorType,
+        scope_level: usize
+    ) -> Self
+    {
+        Self {
+            name,
+            var_type,
+            scope_type,
+            access_type,
+            error_type,
+            scope_level,
+        }
+    }
+
+    fn get_name(&mut self) -> String{
+        self.name.clone()
+    }
+
+    fn get_var_type(&self) -> VarType {
+        self.var_type.clone()
+    }
+
+    fn get_scope_type(&self) -> ScopeType {
+        self.scope_type.clone()
+    }
+
+    fn get_error_type(&self) -> VarErrorType {
+        self.error_type.clone()
+    }
+
+    fn get_scope_level(&self) -> usize {
+        self.scope_level
+    }
+}
+
+
+
+
+
+#[derive(Clone)]
+struct SymbolTables<'sym> {
+    mods: HashMap<String, Module<'m>>,
+    curr_mod: Option<&'a Module<'m>>,
+    calls: Vec<FunCompiler>,
+    curr_scope: usize,
+}
+
+impl <'sym>SymbolTables<'sym> {
+    fn new() -> Self {
+        Self {
+            mods: HashMap::<String, Module<'m>>::new(),
+            curr_mod: None,
+            calls: vec![],
+            curr_scope: 0usize,
+        }
+    }
+
+    fn curr_module(&self) -> Option<&'m Module> {
+        self.curr_mod.clone()
+    }
+
+    fn call_stack(&self) -> &[FunCompiler] {
+        &self.calls
+    }
+
+    fn scope(&self) -> usize {
+        self.curr_scope
+    }
+
+    fn get_mod(&mut self, name: String) -> Result<&'m Module<'m>, String> {
+        let res = self.mods.get(&name);
+        if res.is_some() {
+            Ok(res.unwrap())
+        } else {
+            Err(format!("Module '{}' doesn't exist", name))
+        }
+    }
+}
+
+
+#[derive(Clone)]
+struct Module<'a> {
+    mod_name: String,
+    mod_index: usize,
+    mod_parent: Option<&'a Module<'a>>,
+    mod_vars: HashMap<String, VarInfo>,
+}
+
+impl<'a> Module<'a> {
+    fn new(
+        name: String,
+        index: usize,
+        parent: Option<&'a Module<'a>>,
+    ) -> Self {
+        Self {
+            mod_name: name,
+            mod_index: index,
+            mod_parent: parent,
+            mod_vars: HashMap::<String, VarInfo>::new(),
+        }
+    }
+
+    fn name(&self) -> String {
+        self.mod_name.clone()
+    }
+
+    fn index(&self) -> usize {
+        self.mod_index
+    }
+
+    fn parent(&self) -> Option<&'a Module> {
+        self.mod_parent.clone()
+    }
+
+    fn add_var(&mut self, name: String, var: VarInfo) {
+    }
+
+    fn get_var(
+        &mut self, 
+        name: String
+    ) -> VarInfo {
+        VarInfo::new(
+            "".to_string(),
+            None,
+            VarType::None,
+            ScopeType::None,
+            AccessType::None,
+            0,
+            0,
+            0,
+        )
+    }
+}
+
+
+
+
+struct Compiler<'com> {
+    symbols: SymbolTables<'sym>,
     compile_flag: bool,
     error_count: u8,
     in_panic_mode: bool,
     in_panic_lock_mode: bool,
 }
 
-impl<'a> Compiler<'a> {
+impl<'com> Compiler<'com> {
     fn new(compile: bool) -> Self {
         Self {
             symbols: SymbolTables::new(),
@@ -2218,6 +2477,110 @@ impl<'a> Compiler<'a> {
             error_count: 0u8,
             in_panic_mode: false,
             in_panic_lock_mode: false,
+        }
+    }
+
+
+
+    // resolve fully qualified module, variable, or function name.
+    fn resolve_var(
+        &mut self,
+        name: String,
+    ) -> Result<VarInfo, VarError> {
+        let mut module_sections: Vec<&str> = name.str().split("::").collect();
+        if module_sections.is_empty() {
+            return Ok(VarInfo::new(
+                ".",
+                None,
+                VarType::Module,
+                ScopeType::None,
+                AccessType::None,
+                0,
+            ));
+        }
+
+        let mut var_chunk = module_sections.last_mut().unwrap().to_string();
+
+        return get_var(var_chunk,
+
+        let mut variable: String = module_.to_string();
+        let mut full_var: String = "".to_string();
+        let mut class: String = "".to_string();
+        let mut field: String = "".to_string();
+
+        let mut arity: String = "".to_string();
+        
+
+        let ch = name.chars();
+        
+            resolve_module_chain(
+                ch,
+                whole_module_name);
+            
+            /*} else if ch == Some('(')
+                ch.next();
+                if ch == Some('#') {
+                    ch.next();
+                    while ch.is_ascii_digit() {
+                        s.push(ch);
+                        ch.next()
+                        continue;
+                    }
+                    ret = match s.parse()::<usize> {
+                        Ok(u) => {
+                            Some(u);
+                        },
+                        Err(_) => {
+                            None;
+                        },
+                    }
+                    if ch == Some(')') { 
+                        ret
+                    }
+                } else {
+                _ => {
+                    return None;
+                }
+            }
+        }
+        None*/
+    }
+
+    fn read_module_path(
+        ch: Iterator<char>,
+        module_sections: Vec<String>
+    ) -> Result<VarInfo, VarError> {
+        let mut module_string: String;
+        let mut curr_module_section: String;
+
+        if ch.is_ascii_alphabetic() || Some('_') {
+            curr_module_section.push(ch);
+            let mut ch = ch.next();
+            while ch.is_ascii_alphabetic() || *ch == Some('_') ||
+                ch.is_ascii_digit()
+            {
+                curr_module_section.push(ch);
+                ch.next();
+            }
+            if ch == Some(':') {
+                curr_module_section.push(ch);
+                if ch.next() == Some(':') {
+                    curr_module_section.push(ch);
+                    module_sections.push(curr_module_section);
+                    resolve_var()
+                    
+                    curr_module_section.clear();
+                    continue;
+                } else {
+                    return Err(VarError::new(
+                        ));
+                }
+            } else if ch == Some('.') || ch == Some('(') {
+                
+                break;
+            }
+        } else {
+            self.resolve_mod()
         }
     }
 
@@ -2236,36 +2599,40 @@ impl<'a> Compiler<'a> {
 				return Ok(());
 			}
 		}
-		if let Some(res) = parent {
-            if res.name() == ".".to_string() {
-			    return Err("global module cannot be a parent of any other module".to_string())
-            }
-            panic!("There should be a module here!");
-		} else {
-			self.symbols.mods.insert(name, Module::new(name, self.symbols.mods.len(), parent));
-			if let Some(res) = self.symbols.mods.get_mut(&name) {
-				return self.set_curr_mod(name);
-			};
+        match parent {
+            Some(res) => {
+                if res.name() == ".".to_string() {
+			        return Err("global module cannot be a parent of any other module".to_string())
+                }
+                panic!("There should be a module here!");
+            },
+            _ => {
+			    self.symbols.mods.insert(name, Module::new(name, self.symbols.mods.len(), parent));
+			    if let Some(r) = self.symbols.mods.get_mut(&name) {
+				    return self.set_curr_mod(name);
+                } else {
+                    panic!("Could not set current module");
+                }
+			},
 		}
-
 	}
 		
 	fn set_curr_mod(
 		&mut self, 
 		name: String
 	) -> Result<(), String> {
-		if let Some(mut res) = self.symbols.mods.get_mut(name) {
-			self.symbols.curr_mod = &res;
+		if let Some(mut res) = self.symbols.mods.get_mut(&name) {
+			self.symbols.curr_mod = Some(res);
 			Ok(())
 		} else {
-			Err("cannot set current module to one which is invalid")
+			Err("cannot set current module to one which is invalid".to_string())
 		}
 	}
 	
 	fn get_curr_mod(
 		&self,
 	) -> Option<&Module> {
-		self.symbols.get_curr_mod()
+	    self.symbols.curr_mod
 	}
 
 	fn get_mod(
@@ -2278,32 +2645,73 @@ impl<'a> Compiler<'a> {
 		&mut self,
 		parser: &mut Parser,
 		name: String,
-	) -> Result<VarEntry, VarError> {
-		let curr_mod = self.symbols.get_curr_mod();
-		if let Some(res) = curr_mod.mod_vars.get_mut(name) {
-			Err(VarError::new(
+        arity: Option<usize>,
+	) -> Result<VarInfo, VarError> {
+		let curr_mod = self.get_curr_mod();
+		let Some(res) = curr_mod else {
+            return Err(VarInfo::new(
 				name.clone(),
-				VarErrorType::AlreadyExists
-			))
+                arity,
+                VarType::Var,
+                ScopeType::Module,
+                AccessType::None,
+				VarErrorType::None,
+                0,
+			));
+        };
+        let res2 = res.mod_vars.get_mut(&name);
+        if res2.is_some() {
+            Err(VarError::new(
+                name.clone(),
+                VarType::Var,
+                ScopeType::Module,
+                AccessType::None,
+                VarErrorType::AlreadyExists,
+            ))
 		} else {
 			let mut access_type = AccessType::Public;
-			if *name.chars().nth(0) == '_' {
+			if name.chars().nth(0) == Some('_') {
 				access_type = AccessType::Private;
 			}
-			let var = VarEntry::new(
+			let var = VarInfo::new(
 				name.clone(),
 				VarType::Var,
 				ScopeType::Module,
 				access_type.clone(),
-				self.symbols.get_curr_mod().mod_vars.len(),		
+				self.get_curr_mod().mod_vars.len(),		
 			);
 		}
 	}
-	
+
+    fn begin_scope(
+        &self
+    ) {
+        if let Some(last_mut) = self.symbols.calls.last_mut() {
+            last_mut.begin_scope();
+        } else {
+            panic!("could not get topmost function information");
+        }
+    }
+
+    fn end_scope(
+        &self
+    ) {
+        if let Some(last_mut) = self.symbols.calls.last_mut() {
+            last_mut.begin_scope();
+        } else {
+            panic!("could not get topmost function information");
+        }
+    }
+
+
     fn get_scope_depth(
         &self
     ) -> usize {
-        self.symbols.calls.len() - 1;
+        if let Some(last) = self.symbols.calls.last() {
+            last.get_scope_depth()
+        } else {
+            panic!("could not get scope depth");
+        }
     }
 
     fn compile
@@ -2368,7 +2776,7 @@ impl<'a> Compiler<'a> {
     (
         &mut self,
         ast: &Ast,
-        vm: *mut VM,
+        vm: &mut VM,
         gc: &Gc,
     ) -> bool
     {
@@ -2536,26 +2944,39 @@ impl<'a> Compiler<'a> {
         let mut result: Option<Managed<Closure>> = None;
         if let Some(node) = ast {
             match *ast {
-                Ast::FunDecl {..} => { 
+                Ast::FunDecl {
+                    name,
+                    fun_ty,
+                    params,
+                    listing,
+                    closure,
+                } => { 
                     let ty = node.fun_ty.clone();
-                    match ty {
+                    let mut fun = match ty {
                         FunctionType::TopLevel => {
-                            unsafe{push_main(self)};
-                            unsafe{self.symbols.calls.last_mut().unwrap().closure = Some(node.closure.clone())};
+                            FunCompiler::new_main(self);
+                            self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone());
+                        },
+                        FunType::NamedClosure => {
+                            FunCompiler::new_named_closure(self);
+                            self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone());
+                        },
+                        FunType::AnonClosure => {
+                            FunCompiler::new_anon_closure(self);
+                            self.symbols.calls.last_mut().unwrap().closure = Some(closure.clone());
                         },
                         _ => {
-                            unsafe {push_function(self)};
-                            unsafe {self.symbols.calls.last_mut().unwrap().closure = Some(node.closure.clone())};
-                        },
+                            panic!("invalid function type for Ast::FunDecl node");
+                        }
                     }
 
-                    result = unsafe{self.symbols.calls.last_mut().unwrap().closure.clone()};
+                    result = self.symbols.calls.last_mut().unwrap().closure.clone();
                     
                     if ty != FunctionType::TopLevel {
                         self.begin_scope();
                     }
                     
-                    for i in node.params {
+                    for i in params {
                         let ret = self.code_gen_param(&i.clone(), gc);
                         if !ret {
                             result = None;
@@ -2563,7 +2984,7 @@ impl<'a> Compiler<'a> {
                     }
                     
                     
-                    for i in node.listing {
+                    for i in listing {
                         println!("here");
                         let ret = self.code_gen(Some(i.clone()), vm, gc);
                         println!("ret = {:#?}", ret);
@@ -2598,22 +3019,28 @@ impl<'a> Compiler<'a> {
 
                                 let scope = 
                                     self.get_scope_depth();
-                                let var: Result<VarInfo, VarError> = 
+                                let mut scope_type = ScopeType::Module;
+                                if scope > 0 {
+                                    scope_type = ScopeType::Local;
+                                }
+                                let mut var: Result<VarInfo, VarError> = 
                                     Err(VarError::new(
-                                        node.name.clone(),
+                                        name.clone(),
+                                        VarType::Var,
+                                        scope_type,
+                                        AccessType::None,
                                         VarErrorType::Undefined,
+                                        scope,
                                     ));
                                 let fun =
                                     self.add_var(
-                                        node.name, Some(node.params.len()), true
+                                        node{name}, Some(node{params, ..}.len()), true
                                     );
                                 
                                 match fun {
                                     Ok(var_info) => {
                                         println!("here!");
-                                        unsafe {
-                                            define_var(vm, prev_fun_com, var_info.index)
-                                        };
+                                        self.define_var(vm, prev_fun_com, var_info.index)
                                     },
                                     _ => {},
                                 }  
@@ -2622,7 +3049,7 @@ impl<'a> Compiler<'a> {
                         if result.is_some() { 
                             result = self.code_gen_return(ast, vm, gc);
                         }
-                        unsafe{self.symbols.calls.pop()};
+                        self.symbols.calls.pop();
                         if ty == FunctionType::TopLevel && result.is_none() {
                             if self.error_count > 1 {
                                 println!("Found {} errors.", self.error_count);
@@ -2647,6 +3074,8 @@ impl<'a> Compiler<'a> {
                     }
                 }
             }
+        } else {
+            None
         }
     }
 
@@ -2665,7 +3094,11 @@ impl<'a> Compiler<'a> {
         let mut var: Result<VarInfo, VarError> =
             Err(VarError::new(
                 "".to_string(),
+                VarType::None,
+                ScopeType::None,
+                AccessType::None,
                 VarErrorType::Undefined,
+                0,
             ));
             
         let mut arity: Option<usize> = None;
@@ -2685,7 +3118,7 @@ impl<'a> Compiler<'a> {
             };
 
             if let Some(node) = ast {
-                var = self.add_var(vm, self, node, gc, node.name, arity, true);
+                var = self.add_var(vm, self, node, gc, node{name}, arity, true);
             }
 
             if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
@@ -2694,7 +3127,7 @@ impl<'a> Compiler<'a> {
         }            
         match var {
             Ok(var_info) => {
-                unsafe{define_var(vm, last, var_info.index)};
+                compiler.define_var(vm, last, var_info.index);
                 return last.closure;
             },
             Err(var_error) => {
@@ -2760,12 +3193,15 @@ impl<'a> Compiler<'a> {
                             }
                         }
                     }
-                }
+                } 
+            } else {
+                panic!("not an AST node");
             }
         } else {
             eprintln!("function compiler stack is empty");
             None
         }
+
     }
 
     fn code_gen_var
@@ -2774,11 +3210,11 @@ impl<'a> Compiler<'a> {
         ast: Option<Box<Ast>>, 
         vm: &mut VM,
         gc: &Gc,
-    )
+    ) -> Option<Managed<Closure>>
     {
         if let Some(node) = ast {
             let var =
-                self.resolve_mod_var(vm, &node, gc, node.name, None, true);
+                self.resolve_mod_var(vm, &node, gc, *node{name}, None, true);
             match var {
                 Err(e) => {
                     if e.error_type == VarErrorType::Undefined {
@@ -2816,7 +3252,23 @@ impl<'a> Compiler<'a> {
                     ref name,
                     ref arity,
                 } => {
-                    let var = unsafe {resolve_var(self, vm, ast, gc, name, Some(args.len()), false)};
+
+                    let mut var: Result<VarInfo, VarError> = 
+                        Err(VarError::new(
+                            "".to_string(),
+                            VarType::None,
+                            ScopeType::None,
+                            AccessType::None,
+                            VarErrorType::None,
+                            0,
+                        ));
+
+                    if let Some(last_mut) = self.symbols.calls.last_mut() {
+                        var = last_mut.resolve_var(self, vm, ast, gc, name, Some(args.len()), false);
+                    } else {
+                        panic!("could not get variable/error info");
+                    }
+
                     match var {
                         Ok(v) => {
                             self.emit_var_load(last, v);
@@ -2832,7 +3284,7 @@ impl<'a> Compiler<'a> {
                 _ => {},
             }
             for i in &*args {
-                if self.code_gen(&mut Some(i.clone()), vm, gc).is_none() {
+                if self.code_gen(Some(i.clone()), vm, gc).is_none() {
                     return None;
                 }
             }
@@ -2854,7 +3306,6 @@ impl<'a> Compiler<'a> {
     (
         &mut self,
         ast: Option<Box<Ast>>,
-        compiler: &Compiler,
         vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
@@ -2868,7 +3319,7 @@ impl<'a> Compiler<'a> {
                     ref listing,
                     ref closure
                 } => {
-                    if let Some(last) = compiler.symbols.calls.last_mut().unwrap()
+                    if let last = compiler.symbols.calls.last_mut().unwrap()
                     { 
                         if self.error_count == 0 {
                             if listing.is_empty() {
@@ -2878,7 +3329,11 @@ impl<'a> Compiler<'a> {
                             if let Some(mut l) = listing.last() { 
                                 match **l {
                                     Ast::ExprStmt{..} => {
-                                        l.emit_op(OpCode::Return);
+                                        if let Some(last_mut) = self.symbols.calls.last_mut() {
+                                            last_mut.emit_op(OpCode::Return);
+                                        } else {
+                                            panic!("could not emit return opcode");
+                                        }
                                     },
                                     Ast::ReturnStmt{ref expr, ..} => {
                                         if let Some(e) = expr {
@@ -2913,21 +3368,30 @@ impl<'a> Compiler<'a> {
         None
     }
 
-    fn emit_var_load(&mut self, fc: &mut FunCompiler, var: VarInfo) {
+    fn add_mod(&mut self, fun_com: &mut FunCompiler) {
+        fun_com.emit_op(OpCode::AddMod);
+    }
+
+    fn switch_mod(&mut self, fun_com: &mut FunCompiler, module: usize) {
+        fun_com.emit_word_op(OpCode::SwitchMod, module);
+    }
+
+    fn emit_var_load(&mut self, fun_com: &mut FunCompiler, var: VarInfo) {
         match var.scope_type {
-            ScopeType::Ns => {
-                fc.emit_word_op(OpCode::LoadVar, var.index as usize);
+            ScopeType::Module => {
+                fun_com.emit_word_op(OpCode::LoadVar, var.index as usize);
             },
             ScopeType::Local => {
                 if var.index < 9 {
-                    fc.emit_op(OpCode::from(u8::from(OpCode::LoadLocal0) + var.index as u8));
+                    fun_com.emit_op(OpCode::from(u8::from(OpCode::LoadLocal0) + var.index as u8));
                 } else {
-                    fc.emit_byte_op(OpCode::LoadLocal, var.index as u8);
+                    fun_com.emit_byte_op(OpCode::LoadLocal, var.index as u8);
                 }
             },
             ScopeType::Upvalue => {
-                fc.emit_byte_op(OpCode::LoadUpvalue, var.index as u8);
+                fun_com.emit_byte_op(OpCode::LoadUpvalue, var.index as u8);
             }
+            _ => todo!(),
         }
     }
 
@@ -2935,7 +3399,7 @@ impl<'a> Compiler<'a> {
     (
         &mut self,
         ast: &mut Option<Box<Ast>>,
-        vm: *mut VM,
+        vm: &mut VM,
         gc: &Gc,
     ) -> Option<Managed<Closure>>
     {
@@ -2943,38 +3407,38 @@ impl<'a> Compiler<'a> {
             if let Some(last) = unsafe{self.symbols.calls.last_mut()} {
                 match **node {
                     Ast::Add(ref left, ref right) => {
-                        self.code_gen(&mut left.clone(), vm, gc);
-                        self.code_gen(&mut right.clone(), vm, gc);
+                        self.code_gen(left.clone(), vm, gc);
+                        self.code_gen(right.clone(), vm, gc);
                         last.emit_math_op(MathOp::Add);
                         last.closure
                     },
                     Ast::Subtract(ref left, ref right) => {
-                        self.code_gen(&mut left.clone(), vm, gc);
-                        self.code_gen(&mut right.clone(), vm, gc);
+                        self.code_gen(left.clone(), vm, gc);
+                        self.code_gen(right.clone(), vm, gc);
                         last.emit_math_op(MathOp::Subtract);
                         last.closure
                     },
                     Ast::Multiply(ref left, ref right) => {
-                        self.code_gen(&mut left.clone(), vm, gc);
-                        self.code_gen(&mut right.clone(), vm, gc);
+                        self.code_gen(left.clone(), vm, gc);
+                        self.code_gen(right.clone(), vm, gc);
                         last.emit_math_op(MathOp::Multiply);
                         last.closure
                     },
                     Ast::Divide(ref left, ref right) => {
-                        self.code_gen(&mut left.clone(), vm, gc);
-                        self.code_gen(&mut right.clone(), vm, gc);
+                        self.code_gen(left.clone(), vm, gc);
+                        self.code_gen(right.clone(), vm, gc);
                         last.emit_math_op(MathOp::Divide);
                         last.closure
                     },
                     Ast::Modulo(ref left, ref right) => {
-                        self.code_gen(&mut left.clone(), vm, gc);
-                        self.code_gen(&mut right.clone(), vm, gc);
+                        self.code_gen(left.clone(), vm, gc);
+                        self.code_gen(right.clone(), vm, gc);
                         last.emit_math_op(MathOp::Modulo);
                         last.closure
                     },
                     Ast::Power(ref left, ref right, ..) => {
-                        self.code_gen(&mut left.clone(), vm, gc);
-                        self.code_gen(&mut right.clone(), vm, gc);
+                        self.code_gen(left.clone(), vm, gc);
+                        self.code_gen(right.clone(), vm, gc);
                         last.emit_math_op(MathOp::Power);
                         last.closure
                     },
@@ -3116,7 +3580,7 @@ impl<'a> Compiler<'a> {
 				};
 			    if let Some(closure) = fc.closure {
 				let constant = prev_fc.get_constant(&Value::Closure(closure));
-				prev_fc.emit_word_op(OpCode::LoadValue, constant as usize);
+				prev_fun_com.emit_word_op(OpCode::LoadValue, constant as usize);
 			    } else {
 				panic!("internal closure doesn't exist");
 			    }
@@ -3405,120 +3869,10 @@ impl<'a> Compiler<'a> {
 
 
 
-#[derive(Clone)]
-struct SymbolTables<'a> {
-    mods: HashMap<String, Module<'a>>,
-    curr_mod: &'a Module<'a>,
-    calls: Vec<FunCompiler>,
-}
-
-impl <'a>SymbolTables<'a> {
-    fn new() -> Self {
-        Self {
-            mods: HashMap::<String, Module<'a>>::new(),
-            calls: vec![],
-        }
-    }
-
-    fn get_mod(&mut self, name: String) -> Result<&'a Module<'a>, String> {
-        let res = self.mods.get(name);
-        if res.is_some() {
-            Ok(res.unwrap())
-        } else {
-            Err(format!("Module '{}' doesn't exist", name))
-        }
-    }
-}
-
-struct Module<'a> {
-    mod_name: String,
-    mod_index: usize,
-    mod_parent: Option<&'a Module<'a>>,
-    mod_vars: HashMap<String, VarEntry>,
-}
-
-impl<'a> Module<'a> {
-    fn new(
-        name: String,
-        index: usize,
-        parent: Option<&'a Module<'a>>,
-    ) -> Self {
-        Self {
-            mod_name: name,
-            mod_index: index,
-            mod_parent: parent,
-            mod_vars: HashMap::<String, VarEntry>::new(),
-        }
-    }
-
-    fn name(&self) -> String {
-        self.mod_name.clone()
-    }
-
-    fn index(&self) -> usize {
-        self.mod_index
-    }
-
-    fn parent(&self) -> Option<&'a Module> {
-        self.mod_parent.clone()
-    }
-
-    fn add_var(&mut self, name: String, var: VarEntry) {
-    }
-
-    fn get_var(
-        &mut self, 
-        name: String
-    ) -> VarEntry {
-    }
-}
 
 
-pub struct VarEntry {
-    name: String,
-    var_type: VarType,
-    scope_type: ScopeType,
-    access_type: AccessType,
-    var_index: usize,
-}
 
-impl VarEntry {
-    fn new(
-    	name: String,
-    	var_type: VarType,
-    	scope_type: ScopeType,
-    	access_type: AccessType,
-    	var_index: usize
-    ) -> Self {
-        Self {
-            name,
-            var_type,
-            scope_type,
-            access_type,
-            var_index,
-        }
-    }
 
-    pub fn get_name(&self) -> String {
-        self.name.clone()
-    }
-
-    pub fn get_var_type(&self) -> VarType {
-        self.var_type.clone()
-    }
-    
-    pub fn get_scope_type(&self) -> ScopeType {
-    	self.scope_type.clone()
-    }
-    
-    pub fn get_access_type(&self) -> AccessType {
-    	self.access_type.clone()
-    }
-    
-    pub fn get_index(&self) -> usize {
-        self.var_index
-    }
-}
 
 // Begin FunCompiler Stuff
 
@@ -3526,6 +3880,7 @@ impl VarEntry {
 struct FunCompiler {
     name: String,
     ty: FunctionType,
+    min_scope: usize,
     scope: usize,
     arity: usize,
 
@@ -3541,23 +3896,22 @@ struct FunCompiler {
 impl FunCompiler {
     fn new_main
 	(
-            parser: &mut Parser,
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc,
 	) -> Self 
     {
-        Self::function_setup(parser, ast, gc, "<main>", 0, 0, FunctionType::TopLevel)
+        Self::function_setup(compiler, ast, gc, "<main>", 0, 0, FunctionType::TopLevel)
     }
 
     fn new_named_closure
 	(
-            compiler: &mut Compiler,
-            ast: &Ast,
-            gc: &Gc,
-            name: &str, 
-            arity: usize, 
-            scope: usize,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc,
+        name: &str, 
+        arity: usize, 
+        scope: usize,
 	) -> Self
     {
         
@@ -3578,20 +3932,20 @@ impl FunCompiler {
 
     /*fn new_function
     (
-    compiler: &mut Compiler,
-    name: &str,
-    arity: usize,
-) -> Self
+        compiler: &mut Compiler,
+        name: &str,
+        arity: usize,
+    ) -> Self
     {
-}
+    }
     
     fn new_constructor
     (
-    compiler: &mut Compiler,
-    arity: usize
-) -> Self
+        compiler: &mut Compiler,
+        arity: usize
+    ) -> Self
     {
-}
+    }
     
     fn new_method
     (
@@ -3616,7 +3970,8 @@ impl FunCompiler {
         let mut s = Self {
             name: name.to_string(),
             ty: ty,
-            scope,
+            min_scope: scope,
+            scope: scope,
             arity: arity,
             locals: vec![],
             upvalues: vec![],
@@ -3637,14 +3992,15 @@ impl FunCompiler {
                 compiler, ast, gc, "".to_string(), 
                 scope, false
             );
-        } 
+        }
+        compiler.symbols.calls.push(s); 
         s
     }
 
     fn resolve_local_internal
 	(
         &mut self,
-        compiler: *mut Compiler,
+        compiler: &mut Compiler,
         ast: &Ast,
         _gc: &Gc,
         name: &String,
@@ -3655,12 +4011,14 @@ impl FunCompiler {
         for i in (0..self.locals.len()).rev() { 
             if self.locals[i].name == *name {
                 if !self.locals[i].defined && do_print_err {
-                    unsafe {
-                        self.error(ast, "self-initialization of local variable '".to_string() + &mut self.locals[i].name)
-                    };
+                        compiler.error(ast, "self-initialization of local variable '".to_string() + &mut self.locals[i].name)
                     return Err(VarError::new(
                         self.locals[i].name.clone(),
+                        VarType::Var,
+                        ScopeType::Local,
+                        AccessType::None,
                         VarErrorType::SelfInit,
+                        i,
                     )); 
                 } else {
                     return Ok(VarInfo::new(
@@ -3668,6 +4026,7 @@ impl FunCompiler {
                         arity,
                         VarType::Var,
                         ScopeType::Local,
+                        AccessType::None,
                         self.locals[i].scope,
                         i,
                         0,
@@ -3678,14 +4037,18 @@ impl FunCompiler {
         
         Err(VarError::new(
 	    	name.clone(),
+            VarType::Var,
+            ScopeType::Local,
+            AccessType::None,
 	    	VarErrorType::Undefined,
+            0,
 		))
     }
 
     fn resolve_upvalue_internal
 	(
         &mut self,
-        parser: &mut Parser,
+        //parser: &mut Parser,
         compiler: &mut Compiler,
         ast: &Ast,
         gc: &Gc, 
@@ -3712,11 +4075,11 @@ impl FunCompiler {
             fc = iter.next();
             if fc.is_some() {
                 if let Some(fun_compiler) = fc {
-                    let upvalue = fun_compiler.resolve_upvalue_internal(compiler, parser.vm, ast, gc, name, arity, false, iter);
+                    let upvalue = fun_compiler.resolve_upvalue_internal(compiler, ast, gc, name, arity, false, iter);
                     
                     match upvalue {
                         Ok(var_info) => {
-                            if let Some(last) = self.symbols.calls.last_mut() {
+                            if let Some(last) = compiler.symbols.calls.last_mut() {
                                 return last.add_upvalue(compiler, ast, gc, name, arity, var_info.upvalue_local_index, false);
                             }
                         },
@@ -3727,15 +4090,19 @@ impl FunCompiler {
         }
 
         Err(VarError::new(
-	    name.clone(),
-	    VarErrorType::Undefined,
-	))
+	        name.clone(),
+            VarType::Var,
+            ScopeType::Upvalue,
+            AccessType::None,
+	        VarErrorType::Undefined,
+            0,
+	    ))
     }
 
     fn add_upvalue
 	(
         &mut self, 
-        compiler: *mut Compiler, 
+        compiler: &mut Compiler, 
         ast: &Ast,
         _gc: &Gc,
         name: &String,
@@ -3751,6 +4118,7 @@ impl FunCompiler {
                     arity,
                     VarType::Var,
                     ScopeType::Upvalue,
+                    AccessType::None,
                     self.locals[i].scope,
                     i,
                     0,
@@ -3759,10 +4127,14 @@ impl FunCompiler {
         }
 
         if self.upvalues.len() >= MAX_UPVALUES {
-            unsafe {self.error(ast, "too many upvalues".to_string())};
+            compiler.error(ast, "too many upvalues".to_string());
             return Err(VarError::new(
                 name.clone(),
+                VarType::Var,
+                ScopeType::Upvalue,
+                AccessType::None,
                 VarErrorType::TooMany,
+                MAX_UPVALUES,
             ));
         }
 
@@ -3774,6 +4146,7 @@ impl FunCompiler {
             arity,
             VarType::Var,
             ScopeType::Upvalue,
+            AccessType::None,
             self.locals[index].scope,
             self.upvalues.len() - 1,
             index,
@@ -3792,7 +4165,7 @@ impl FunCompiler {
 	) -> Option<&mut Local>
     {
         if self.locals.len() == MAX_LOCALS {
-            unsafe {self.error(ast, "too many locals in function".to_string())};
+            compiler.error(ast, "too many locals in function".to_string());
             return None;
         }
         self.locals.push(Local::new(name.to_string(), scope, upvalue));
@@ -3828,20 +4201,28 @@ impl FunCompiler {
                 if i.name == *actual_name {
                     if print_error {
                         unsafe {
-                            self.error(
+                            compiler.error(
                                 ast, "local variable '".to_string() + &i.name + "' already exists"
                             )
                         };
                     }
                     return Err(VarError::new(
                         actual_name.clone(),
+                        VarType::Var,
+                        ScopeType::Local,
+                        AccessType::None,
                         VarErrorType::AlreadyExists,
+                        i.scope,
                     ));
                 }
             } else {
                 return Err(VarError::new(
                     actual_name.clone(),
+                    VarType::Var, 
+                    ScopeType::Local,
+                    AccessType::None,
                     VarErrorType::Undefined,
+                    i.scope,
                 ));
             }
         }
@@ -3852,6 +4233,7 @@ impl FunCompiler {
             arity,
             VarType::Var,
             ScopeType::Local,
+            AccessType::None,
             scope,
             self.locals.len() - 1,
             0,
@@ -3871,11 +4253,15 @@ impl FunCompiler {
     {
         let fun_name = format!("{}(#{})", name, arity as u32);
         if self.local_fun_symtab.get(&fun_name).is_some() {
-            unsafe {self.error(ast, "local function '".to_string() + &fun_name + "' already exists")};
+            compiler.error(ast, "local function '".to_string() + &fun_name + "' already exists");
             Err(
                 VarError::new(
                     fun_name,
+                    VarType::Function,
+                    ScopeType::Local,
+                    AccessType::None,
                     VarErrorType::AlreadyExists,
+                    self.get_scope_depth(),
                 )
             )
         } else {
@@ -3886,6 +4272,7 @@ impl FunCompiler {
                 Some(arity),
                 VarType::Var,
                 ScopeType::Local,
+                AccessType::None,
                 self.get_scope_depth(),
                 constant,
                 0,
@@ -4005,120 +4392,7 @@ impl Upvalue {
     }
 }
 
-#[derive(Clone, PartialEq)]
-enum VarType {
-	Unknown,
-    Var,
-    Function,
-    Class,
-    Const,
-}
 
-#[derive(Clone, PartialEq)]
-enum ScopeType {
-    Module,
-    Local,
-    Upvalue,
-    Class,
-}
-
-#[derive(Clone, PartialEq)]
-enum AccessType {
-	Public,
-	Private,
-}
-
-#[derive(Clone, PartialEq)]
-enum VarErrorType {
-    Undefined,
-    AlreadyExists,
-    TooMany,
-    SelfInit,
-    IsFunction,
-    Other,
-}
-
-#[derive(Clone)]
-struct VarInfo {
-    name: String,
-    arity: Option<usize>,
-    var_type: VarType,
-    scope_type: ScopeType,
-    scope: usize,
-    index: usize,
-    upvalue_local_index: usize,
-}
-
-impl VarInfo {
-    fn new
-	(
-            name: String,
-            arity: Option<usize>,
-            var_type: VarType,
-            scope_type: ScopeType,
-            scope: usize,
-            index: usize,
-            upvalue_local_index: usize,
-	) -> Self
-    {
-        Self {
-            name,
-            arity,
-            var_type,
-            scope_type,
-            scope,
-            index,
-            upvalue_local_index,
-        }
-    }
-
-    fn get_name(&mut self) -> String {
-        self.name.clone()
-    }
-
-    fn get_arity(&mut self) -> Option<usize> {
-        self.arity
-    }
-
-    fn get_var_type(&mut self) -> VarType {
-        self.var_type.clone()
-    }
-
-    fn get_scope_depth(&mut self) -> usize {
-        self.scope
-    }
-
-    fn get_index(&mut self) -> usize {
-        self.index
-    }
-}
-
-#[derive(Clone)]
-struct VarError {
-    name: String,
-    error_type: VarErrorType,
-}
-
-impl VarError {
-    fn new(
-        name: String,
-        error_type: VarErrorType,
-    ) -> Self
-    {
-        Self {
-            name,
-            error_type,
-        }
-    }
-
-    fn get_name(&mut self) -> String{
-        self.name.clone()
-    }
-
-    fn get_error_type(&mut self) -> VarErrorType {
-        self.error_type.clone()
-    }
-}
 
 // End FunCompiler Stuff
 
@@ -4375,13 +4649,12 @@ impl VM {
     pub fn new() -> Self
     {
         Self {
-            vars:Vec::<Value>::new(),
+            mod_vec: Vec::<Vec::<Value>::new()>::new()
+            mod_index: 0usize,
             main_fun: None,
-            ast_parser: None,
             calls: CallStack::new(),
             stack: Vec::<Value>::new(),
             sp: 0usize,
-
         }
     } 
 
@@ -4453,21 +4726,29 @@ impl VM {
     }
 
     fn get_var(&mut self, index: usize) -> Option<Value> {
-        if let Some(val) = self.vars.get_mut(index) {
+        if let Some(val) = self.mod_vec[self.mod_index].get_mut(index) {
             Some((*val).clone())
         } else {
             None
         }
     }
 
-    fn set_var(&mut self, index: usize, value: Value) {
-        if let Some(val) = self.vars.get_mut(index) {
+    fn set_var(
+        &mut self, 
+        index: usize, 
+        value: Value
+    ) -> Option<&Value>
+    {
+        if let Some(val) = self.mod_vec[self.mod_index].get_mut(index) {
             *val = value;
+            Some(val)
+        } else {
+            None
         }
     }
 
     fn add_var(&mut self) {
-        self.vars.push(Value::Nil);
+        self.mod_vec[self.mod_index].push(Value::Nil);
     }
 
     fn push_call_frame
@@ -4500,7 +4781,6 @@ impl VM {
         &self,
         fun: &Value,
         num_args: usize,
-        stack: Vec<Value>,
     ) -> Result<usize, String>
     {
         let top = self.stack.len();
@@ -4522,15 +4802,15 @@ impl VM {
 
     fn call_value
 	(
-            &mut self,   
-            num_args: usize,
-            debug: bool,
-            gc: &Gc,
+        &mut self,   
+        num_args: usize,
+        debug: bool,
+        gc: &Gc,
 	) -> Result<Value, String>
     {
         let fun_index = self.stack.len() - (num_args as usize) - 1;
-        let fun = &mut self.stack[fun_index];
-        let args = &mut self.stack[fun_index..fun_index + (num_args as usize) + 1];
+        let fun = &self.stack[fun_index];
+        let args = &self.stack[fun_index + 1..fun_index + (num_args as usize) + 1];
         match self.check_arity(fun, num_args) {
             Ok(_) => {},
             Err(e) => {
@@ -4631,6 +4911,12 @@ impl VM {
                     } else {
                         panic!("accessed stack from out of bounds");
                     } 
+                    Ok(Value::Nil)
+                },
+                OpCode::AddMod => {
+                    Ok(Value::Nil)
+                },
+                OpCode::SwitchMod => {
                     Ok(Value::Nil)
                 },
                 OpCode::LoadTrue => {
@@ -5917,7 +6203,7 @@ impl VM {
     {
         self.calls.clear();
         self.stack.clear();
-        let closure = compiler.compile(root, compiler, gc);
+        let closure = compiler.compile(root, self, gc);
         if compile && closure.is_some() {
             return Ok(Value::Nil);
         }
@@ -5949,12 +6235,13 @@ impl VM {
     pub(crate) fn run
     (
         &mut self,
+        root: Option<Box<Ast>>,
         compiler: &mut Compiler<'_>,
         gc: &Gc,
         debug: bool,
         compile: bool,
     ) -> Result<Value, InterpretErrorType> {
-        self.execute(compiler, gc, debug, compile)
+        self.execute(root, compiler, gc, debug, compile)
     }
     
     pub fn print_backtrace(&mut self) {
