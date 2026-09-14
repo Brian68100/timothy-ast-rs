@@ -13,6 +13,8 @@ use std::iter::Rev;
 use ordered_float::{OrderedFloat, Pow};
 
 
+
+
 pub(crate) const MAX_MODULES: usize = 65536;
 pub(crate) const MAX_LOCALS: usize = 256;
 pub(crate) const MAX_UPVALUES: usize = 256;
@@ -100,7 +102,7 @@ struct LexerData {
     prev: Token,
 }
 
-pub struct Parser<'a> {
+pub struct Parser {
     lexer_stack: Vec<LexerData>,
     error_count: usize,
     gc: Gc,
@@ -110,11 +112,11 @@ pub struct Parser<'a> {
     
     in_panic_mode: bool,
     in_panic_lock_mode: bool,
-    compiler: Compiler<'a>,
+    compiler: Compiler,
     vm: VM,
 }
 
-impl<'a> Parser<'_> { 
+impl Parser { 
     pub fn new(
         print_ast: bool,
         compile: bool,
@@ -286,10 +288,10 @@ impl<'a> Parser<'_> {
                 closure: None,
             }));
         
-        if !self.parse(&root, &mut self.gc) {
+        if !self.parse(root, &mut self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&mut self.compiler, &mut self.gc, 
+            self.vm.run(root, &mut self.compiler, &mut self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
@@ -334,10 +336,10 @@ impl<'a> Parser<'_> {
                 closure: None,
             }));
         
-        if !self.parse(&root, &self.gc) {
+        if !self.parse(root, &self.gc) {
             Err(InterpretErrorType::ParseError)
         } else {
-            self.vm.run(&mut self.compiler, &mut &self.gc, 
+            self.vm.run(root, &mut self.compiler, &mut &self.gc, 
                 self.debug_flag, self.compile_flag)
         }
     }
@@ -2367,23 +2369,25 @@ impl VarError {
 
 
 #[derive(Clone)]
-struct SymbolTables<'sym> {
-    global_mod: Module<'m>,
-    curr_mod: Option<&'m Module<'m>>,
+struct SymbolTables {
+    global_mod: Module,
+    curr_mod: Option<*mut Module>,
     calls: Vec<FunCompiler>,
+    curr_scope: usize,
+    //curr_class: Option<Class>,
 }
 
-impl <'sym>SymbolTables<'sym> {
+impl SymbolTables {
     fn new() -> Self {
         Self {
-            mods: HashMap::<String, Module<'m>>::new(),
+            global_mod: Module::new(),
             curr_mod: None,
             calls: vec![],
             curr_scope: 0usize,
         }
     }
 
-    fn curr_module(&self) -> Option<&'m Module> {
+    fn curr_module(&self) -> Option<*mut Module> {
         self.curr_mod.clone()
     }
 
@@ -2392,10 +2396,14 @@ impl <'sym>SymbolTables<'sym> {
     }
 
     fn scope(&self) -> usize {
-        self.calls.curr_scope()
+        self.calls.last.unwrap().curr_scope()
     }
 
-    fn get_mod(&mut self, name: String) -> Result<&'m Module<'m>, String> {
+    fn get_mod(
+        &mut self,
+        name: String
+    ) -> Result<Option<*mut Module>, String> 
+    {
         let res = self.mods.get(&name);
         if res.is_some() {
             Ok(res.unwrap())
@@ -2407,25 +2415,25 @@ impl <'sym>SymbolTables<'sym> {
 
 
 #[derive(Clone)]
-struct Module<'m> {
+struct Module {
     mod_name: String,
     mod_index: usize,
-    mod_parent: Option<&'m Module<'m>>,
-    mod_children: HashMap<String, &'m Module<'m>>,
+    mod_parent: Option<*const Module>,
+    mod_children: HashMap<String, Module>,
     mod_vars: HashMap<String, VarInfo>,
 }
 
-impl<'m> Module<'m> {
+impl Module {
     fn new(
         name: String,
         index: usize,
-        parent: Option<&'m Module<'m>>, 
+        parent: Option<*const Module>, 
     ) -> Self {
         Self {
             mod_name: name,
             mod_index: index,
             mod_parent: parent,
-            mod_children: HashMap::<String, Module<'m>>::new(),
+            mod_children: HashMap::<String, Module>::new(),
             mod_vars: HashMap::<String, VarInfo>::new(),
         }
     }
@@ -2438,13 +2446,13 @@ impl<'m> Module<'m> {
         self.mod_index
     }
 
-    fn parent(&self) -> Option<&'a Module> {
+    fn parent(&self) -> Option<*const Module> {
         self.mod_parent.clone()
     }
 
     fn add_mod(
         &mut self,
-        &mut 'com Compiler<'com>,
+        compiler: &mut Compiler,
         module: Module,
     ) -> Result<VarInfo, VarError> {
         self.mod_children.insert(module.name(), module.clone());
@@ -2470,9 +2478,27 @@ impl<'m> Module<'m> {
     
     fn add_var(
         &mut self,
+        ast: &Ast,
         name: String,
+        arity: Option<usize>
     ) -> Result<VarInfo, VarError> {
-        
+        if self.get_scope_depth() == 0 {
+            self.resolve_var(
+                ast,
+                name,
+                arity,
+                false,
+            )    
+        } else {
+            let mut last_mut = self.symbols.calls.last().unwrap();
+            last_mut.resolve_local(
+                self,
+                ast,
+                name,
+                arity,
+                false,
+            )
+        }
     }
 
     fn get_var(
@@ -2495,15 +2521,15 @@ impl<'m> Module<'m> {
 
 
 
-struct Compiler<'com> {
-    symbols: SymbolTables<'sym>,
+struct Compiler {
+    symbols: SymbolTables,
     compile_flag: bool,
     error_count: u8,
     in_panic_mode: bool,
     in_panic_lock_mode: bool,
 }
 
-impl<'com> Compiler<'com> {
+impl Compiler {
     fn new(compile: bool) -> Self {
         Self {
             symbols: SymbolTables::new(),
@@ -2519,10 +2545,11 @@ impl<'com> Compiler<'com> {
     // resolve fully qualified module, variable, or function name.
     fn resolve_var(
         &mut self,
+        ast: &Ast,
         name: String,
+        arity: Option<usize>,
     ) -> Result<VarInfo, VarError> {
         let mut module_sections: Vec<&str> = name.str().split("::").collect();
-        
         if module_sections[0] == "" && module_sections.len() == 1 {
             return Err(VarError::new(
                 "::",
@@ -2530,21 +2557,27 @@ impl<'com> Compiler<'com> {
                 VarType::Module,
                 ScopeType::None,
                 AccessType::None,
+                VarErrorType::MalformedName,
                 0,
             ));
-        }
+        } 
 
-        let module_name = "".to_string();
+        let mut module_name = "".to_string();
 
-        for i in 0..module_sections.len() - 1 {
-            module_name.extend("::".to_string());
-            module_name.extend(module_sections[i.to_string()]);
+        for i in 0..module_sections.len() {
+            if module_sections.len() > 1 {
+                module_name.extend("::".to_string());
+            } else {
+                module_name = name;
+                break;
+            }
+            module_name.extend(module_sections[i].to_string());
             if let Some(nm) = module_sections.get(i) {
                 if module_sections.len() > 1 {
                     if nm == "" {
                         if i > 0 {
                             return Err(VarErr::new(
-                                name.clone();
+                                name.clone(),
                                 VarType::None,
                                 ScopeType::None,
                                 AccessType::None,
@@ -2556,81 +2589,102 @@ impl<'com> Compiler<'com> {
                         }
                     }
                     let mut mod_result = match 
-                        resolve_module_chunk(&module_sections, i)
+                        resolve_module_chunk(&module_sections, i, arity)
                     {
                         Ok(var) => {
-                            if var{var_type} == VarType::Module {
+                            if var.var_type == VarType::Module {
                                 continue;
-                            } else if i == 0 && var{var_type} != VarType::Module && var{var_type} != VarType::None {
-                                if var{scope_type} == ScopeType::Module || var{scope_type} == ScopeType::Local || var{scope_type} == ScopeType::Upvalue
+                            } else if i == 0 && var.var_type != VarType::Module && var.var_type != VarType::None {
+                                if var.scope_type == ScopeType::Module || var.scope_type == ScopeType::Local || var.scope_type == ScopeType::Upvalue
                                 {
                                     return var;
                                 } else {
                                     return Err(VarError::new(
-                                        var{var_name}.clone();
-                                        var{var_type}.clone();
-                                        var{access_type}.clone();
-                                        VarErrorType::InvalidType
+                                        var.var_name.clone(),
+                                        var.var_type.clone(),
+                                        var.access_type.clone(),
+                                        VarErrorType::InvalidType,
+                                        0,
                                     ));
                                 }
                             } else {
-                                
+                                return Err(VarError::new(
+                                    var.var_name.clone(),
+                                    var.var_type.clone(),
+                                    var.access_type.clone(),
+                                    VarErrorType::InvalidType,
+                                    0,
+                                ));    
                             }
                         },
                         Err(err) => {
-                        
+                           return err;
                         },
-                    }
+                    };
                 }
             }
         }
+        resolve_module_chunk(
+            module_sections,
+            0,
+        )
     }
 
     fn resolve_module_chunk(
-        module_sections: Vec<String>
+        &mut self,
+        ast: &Ast,
+        module_sections: Vec<String>,
         index: usize,
+        arity: Option<usize>,
+        do_print_on_err: bool,
     ) -> Result<VarInfo, VarError> {
-        let ch = module_sections[i].chars().next();
+        let ch = module_sections[index].chars().next();
 
-        let mut curr_module_section: String = module_sections[i].to_string();
-        while ch.is_ascii_whitespace() {
-            ch.next();
-        }
-        if ch.is_ascii_alphabetic() || Some('_') {
-            curr_module_section.push(ch);
-            let mut ch = ch.next();
-            while ch.is_ascii_alphabetic() || *ch == Some('_') ||
-                ch.is_ascii_digit()
+        let mut curr_module_section: String = module_sections[index];
+        if module_sections.len() == 1 && index == 0 {
+            match self.symbols.calls.last_mut().unwrap()
+                .resolve_local(
+                    self,
+                    ast,
+                    curr_module_section, 
+                    arity,
+                    do_print_on_err,
+                )
             {
-                curr_module_section.push(ch);
-                ch.next();
+                Ok(var) => {
+                    var
+                },
+                Err(err) => {
+                    match self.symbols.calls.last_mut().unwrap()
+                        .resolve_upvalue(
+                            self,
+                            ast,
+                            curr_module_section,  
+                            arity,
+                            do_print_on_err,
+                        )
+                    {
+                        Ok(var) => {
+                            var
+                        },
+                        Err(err) => {
+                            self.symbols.curr_mod.get_var_rel(
+                                curr_module_section,
+                                arity,
+                            )
+                        },
+                    }
+                },
             }
-            if ch == Some(':') {
-                curr_module_section.push(ch);
-                if ch.next() == Some(':') {
-                    curr_module_section.push(ch);
-                    module_sections.push(curr_module_section);
-                    resolve_var()
-                    
-                    curr_module_section.clear();
-                    continue;
-                } else {
-                    return Err(VarError::new(
-                        ));
-                }
-            } else if ch == Some('.') || ch == Some('(') {
-                
-                break;
-            }
-        } else {
-            self.resolve_mod()
+        } else if index == module_sections.len() - 1 {
+
         }
     }
 
     fn resolve_var_from_info(
-        &mut self
+        &mut self,
         ast: Option<Box<Ast>>,
-        string: String,
+        name: String,
         mut count: &mut usize,
         arity: Option<usize>,
     ) -> Result<VarInfo, VarError>
@@ -2641,11 +2695,11 @@ impl<'com> Compiler<'com> {
             } else {
             }
         }
-        string.extend("::");
+        name.extend("::");
         if let Some(node) = ast {
             match *node {
                 Ast::Variable{name, next} => {
-                    string.extend(name);
+                    name.extend(name);
                     if let Some(nxt) = next {
                         if *count < 5 {
                             return self.resolve_var_from_info(
@@ -2656,8 +2710,8 @@ impl<'com> Compiler<'com> {
                             );
                         } else {
                             return Err(VarError::new(
-                                string,
-                                VarType::None
+                                name,
+                                VarType::None,
                                 ScopeType::None,
                                 AccessType::None,
                                 VarErrorType::PathTooLong,
@@ -2665,7 +2719,7 @@ impl<'com> Compiler<'com> {
                         }
                     } else {
                         return self.resolve_var(
-                            string,
+                            name,
                         );
                     }
                 },
@@ -2681,35 +2735,68 @@ impl<'com> Compiler<'com> {
 
     fn declare_var(
         &mut self,
-        s: String,
+        name: String,
+        arity: usize,
+        var_type: VarType,
+        scope_type: ScopeType,
+        access_type: AccessType,
+        scope: usize,
     ) -> Result<VarInfo, VarError>
     {
-        let ret = match resolve_var(s) {
+        let ret = match resolve_var(name) {
             Ok(var_info) => {
-            },
-            Err(err_info) => {
-                match err_info{
+                Err(VarError::new(
                     name,
+                    arity,
                     var_type,
                     scope_type,
                     access_type,
-                    var_error_type,
-                    index,
-                    } => {
-                        if var_type == VarType::Var {
-                            match var_error_type {
-                                VarErrorType::AlreadyExists |
-                                VarErrorType::ReInit => {
-                                    return err_info;
-                                },
-                                _ => {
-                                },
-                            }
-                        }
-                    },
+                    VarErrorType::AlreadyExists
+                ))
+            },
+            Err(err_info) => {
+                if err_info.err_type == VarErrorType::Undefined {
+                    Ok(VarInfo::new(
+                        name,
+                        arity,
+                        err_info.var_type,
+                        err_info.scope_type,
+                        err_info.access_type,
+                        self.symbols.curr_mod.mod_vars.len(),
+                        scope,
+                    ))
+                } else {
+                    err_info
                 }
             },
-        }
+        };
+
+        ret = match ret {
+            Ok(var_info) => {
+                self.add_var( 
+                    name, 
+                    arity, 
+                    var_info.var_type,
+                    var_info.scope_type,
+                    scope,
+                )
+            },
+            Err(err_info) => {
+                err_info
+            },
+        };
+        ret
+    }
+
+    fn add_local(
+        &mut self,
+        name: String,
+        arity: usize,
+        var_type: VarType,
+        scope_type: ScopeType,
+        scope: usize,
+    ) -> Result<VarInfo, VarError>
+    {
     }
 
 	fn declare_mod(
@@ -3096,7 +3183,7 @@ impl<'com> Compiler<'com> {
                         _ => {
                             panic!("invalid function type for Ast::FunDecl node");
                         }
-                    }
+                    };
 
                     result = self.symbols.calls.last_mut().unwrap().closure.clone();
                     
@@ -3162,7 +3249,7 @@ impl<'com> Compiler<'com> {
                                     ));
                                 let fun =
                                     self.add_var(
-                                        node{name}, Some(node{params, ..}.len()), true
+                                        node.name, Some(node.params.len()), true
                                     );
                                 
                                 match fun {
@@ -3237,16 +3324,19 @@ impl<'com> Compiler<'com> {
                     ref fun_ty,
                     ref params, 
                     ref listing,
-                    ref closure
+                    ref closure,
                 } => {
                     arity = Some(params.len());
+                    var = self.add_var(name, arity);
                     true
                 },
-                _ => { false },
+                _ => {
+                    false
+                },
             };
 
             if let Some(node) = ast {
-                var = self.add_var(vm, self, node, gc, node{name}, arity, true);
+                
             }
 
             if self.code_gen(Some(expr.clone()), vm, gc).is_none() {
@@ -3255,7 +3345,7 @@ impl<'com> Compiler<'com> {
         }            
         match var {
             Ok(var_info) => {
-                compiler.define_var(vm, last, var_info.index);
+                self.define_var(vm, last, var_info.index);
                 return last.closure;
             },
             Err(var_error) => {
@@ -3452,7 +3542,7 @@ impl<'com> Compiler<'com> {
                     ref listing,
                     ref closure
                 } => {
-                    if let last = compiler.symbols.calls.last_mut().unwrap()
+                    if let last = self.symbols.calls.last_mut().unwrap()
                     { 
                         if self.error_count == 0 {
                             if listing.is_empty() {
@@ -4143,8 +4233,26 @@ impl FunCompiler {
                 scope, false
             );
         }
-        compiler.symbols.calls.push(s); 
+        compiler.symbols.calls.push(s.clone()); 
         s
+    }
+
+    fn resolve_local(
+        &mut self,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        name: String,
+        arity: Option<usize>,
+        do_print_on_err: bool,
+    ) -> Result<VarInfo, VarError>
+    {
+        resolve_local_internal(
+            compiler,
+            ast,
+            name,
+            arity,
+            do_print_on_err,
+        )
     }
 
     fn resolve_local_internal
@@ -4152,16 +4260,15 @@ impl FunCompiler {
         &mut self,
         compiler: &mut Compiler,
         ast: &Ast,
-        _gc: &Gc,
         name: &String,
         arity: Option<usize>,
-        do_print_err: bool,
+        do_print_on_err: bool,
 	) -> Result<VarInfo, VarError>
     {
         for i in (0..self.locals.len()).rev() { 
             if self.locals[i].name == *name {
-                if !self.locals[i].defined && do_print_err {
-                        compiler.error(ast, "self-initialization of local variable '".to_string() + &mut self.locals[i].name)
+                if !self.locals[i].defined && do_print_on_err {
+                        compiler.error(ast, "self-initialization of local variable '".to_string() + &mut self.locals[i].name);
                     return Err(VarError::new(
                         self.locals[i].name.clone(),
                         VarType::Var,
@@ -4193,6 +4300,27 @@ impl FunCompiler {
 	    	VarErrorType::Undefined,
             0,
 		))
+    }
+
+    fn resolve_upvalue(
+        &mut self,
+        compiler: &mut Compiler,
+        ast: &Ast,
+        gc: &Gc,
+        name: &String,
+        arity: Option<usize>,
+        do_print_on_error: bool,
+    ) -> Result<VarInfo, VarError>
+    {
+        resolve_upvalue_internal(
+            compiler,
+            ast,
+            gc,
+            name.clone(),
+            arity,
+            do_print_on_error,
+            compiler.symbols.calls.iter().rev()
+        )
     }
 
     fn resolve_upvalue_internal
@@ -4336,45 +4464,35 @@ impl FunCompiler {
     {
         let mut actual_name = "".to_string();
         if let Some(a) = arity {
-            actual_name = format!("{}(#{})", name, a);
+            // format name, arity
+            actual_name = format!("{}(#{})", name, a); 
         } else {
+            // just the name
             actual_name = name.to_string();
         }
         let mut iter = self.locals.iter_mut().rev();
         let mut scope = 0usize;
-        loop { 
-            if let Some(i) = iter.next() {
-                if i.scope < self.scope {
-                    scope = i.scope;
-                    break;
+        loop {
+            let i = iter.next(); 
+            if i.scope < self.scope {
+                scope = i.scope;
+                break;
+            }
+            if i.name == *actual_name {
+                if print_error {
+                    compiler.error(
+                        ast, "local variable '".to_string() + &i.name + "' already exists"
+                    );
                 }
-                if i.name == *actual_name {
-                    if print_error {
-                        unsafe {
-                            compiler.error(
-                                ast, "local variable '".to_string() + &i.name + "' already exists"
-                            )
-                        };
-                    }
-                    return Err(VarError::new(
-                        actual_name.clone(),
-                        VarType::Var,
-                        ScopeType::Local,
-                        AccessType::None,
-                        VarErrorType::AlreadyExists,
-                        i.scope,
-                    ));
-                }
-            } else {
                 return Err(VarError::new(
                     actual_name.clone(),
-                    VarType::Var, 
+                    VarType::Var,
                     ScopeType::Local,
                     AccessType::None,
-                    VarErrorType::Undefined,
+                    VarErrorType::AlreadyExists,
                     i.scope,
                 ));
-            }
+            } 
         }
         self.push_local(compiler, ast, gc, actual_name.clone(), scope, false);
         
@@ -4403,7 +4521,7 @@ impl FunCompiler {
     {
         let fun_name = format!("{}(#{})", name, arity as u32);
         if self.local_fun_symtab.get(&fun_name).is_some() {
-            compiler.error(ast, "local function '".to_string() + &fun_name + "' already exists");
+            compiler.error(ast, format!("local function '{}' already exists", fun_name));
             Err(
                 VarError::new(
                     fun_name,
@@ -4799,7 +4917,7 @@ impl VM {
     pub fn new() -> Self
     {
         Self {
-            mod_vec: Vec::<Vec::<Value>::new()>::new()
+            mod_vec: vec![vec![]],
             mod_index: 0usize,
             main_fun: None,
             calls: CallStack::new(),
@@ -6345,7 +6463,7 @@ impl VM {
     (
         &mut self,
         root: Option<Box<Ast>>,
-        compiler: &mut Compiler<'_>,
+        compiler: *mut Compiler,
         gc: &Gc,
         debug: bool,
         compile: bool,
@@ -6353,7 +6471,7 @@ impl VM {
     {
         self.calls.clear();
         self.stack.clear();
-        let closure = compiler.compile(root, self, gc);
+        let closure = unsafe {(*compiler).compile(root, self, gc)};
         if compile && closure.is_some() {
             return Ok(Value::Nil);
         }
@@ -6386,7 +6504,7 @@ impl VM {
     (
         &mut self,
         root: Option<Box<Ast>>,
-        compiler: &mut Compiler<'_>,
+        compiler: *mut Compiler,
         gc: &Gc,
         debug: bool,
         compile: bool,

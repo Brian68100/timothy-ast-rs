@@ -144,7 +144,7 @@ pub enum OpCode {
     PopN,
     Dup,
     AddMod,
-    SwitchMod,
+    LoadMod,
     LoadTrue,
     LoadFalse,
     LoadNil,
@@ -226,7 +226,7 @@ impl From<u8> for OpCode {
             2  => OpCode::PopN,
             3  => OpCode::Dup,
             4  => OpCode::AddMod,
-            5  => OpCode::SwitchMod,
+            5  => OpCode::LoadMod,
             6  => OpCode::LoadTrue,
             7  => OpCode::LoadFalse,
             8  => OpCode::LoadNil,
@@ -309,8 +309,8 @@ impl From<OpCode> for u8 {
             OpCode::Pop => 1,
             OpCode::PopN => 2,
             OpCode::Dup => 3,
-            OpCode::AddMods => 4,
-            OpCode::SwitchMod => 5,
+            OpCode::AddMod => 4,
+            OpCode::LoadMod => 5,
             OpCode::LoadTrue => 6,
             OpCode::LoadFalse => 7,
             OpCode::LoadNil => 8,
@@ -402,10 +402,10 @@ impl Display for OpCode {
                 write!(f, "DUP")
             },
             OpCode::AddMod => {
-                write!(f, "ADD_MODS")
+                write!(f, "ADD_MOD")
             },
-            OpCode::ChangeMod => {
-                write!(f, "SWITCH_MOD")
+            OpCode::LoadMod => {
+                write!(f, "LOAD_MOD")
             }
             OpCode::LoadTrue => {
                 write!(f, "LOAD_TRUE")
