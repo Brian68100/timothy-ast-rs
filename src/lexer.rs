@@ -1,12 +1,12 @@
-use std::io::BufReader;
-use std::io::BufRead;
-use std::fs::File;
-use std::option::Option;
-use std::collections::HashMap;
-use crate::value::Value;
-use crate::token::*;
-use ordered_float::OrderedFloat;
 use crate::gc::{Gc, NO_GC};
+use crate::token::*;
+use crate::value::Value;
+use ordered_float::OrderedFloat;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::option::Option;
 
 pub struct Lexer {
     fname: String,
@@ -24,8 +24,7 @@ pub struct Lexer {
 }
 
 fn is_letter(c: char) -> bool {
-    c.is_ascii_lowercase() ||
-    c.is_ascii_uppercase() || c == '_'
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
 }
 
 fn is_num(c: char) -> bool {
@@ -60,7 +59,6 @@ fn get_keywords() -> HashMap<String, TokenKind> {
     ])
 }
 
-
 impl Lexer {
     pub fn new_from_text(input: &mut String) -> Self {
         Self {
@@ -80,7 +78,7 @@ impl Lexer {
     }
     pub fn new_from_file(f: String) -> Option<Lexer> {
         let fresult: Result<File, std::io::Error> = File::open(f.clone());
-        
+
         let mut l: Lexer = Lexer {
             fname: f,
             is_string_input: false,
@@ -96,21 +94,22 @@ impl Lexer {
             nest: 0,
         };
         match fresult {
-            Ok(file) => { 
+            Ok(file) => {
                 l.br = Some(BufReader::new(file));
                 let br = l.br.as_mut().unwrap();
                 let result = br.read_line(&mut l.buf);
                 match result {
-                    Ok(_) => {
-                    },
-                    Err(e) => { eprintln!("lexer error: {}", e);
+                    Ok(_) => {}
+                    Err(e) => {
+                        eprintln!("lexer error: {}", e);
                         return None;
-                    },
+                    }
                 }
-            },
-            Err(e) => { eprintln!("lexer error: {}", e);
-                        return None;
-            },
+            }
+            Err(e) => {
+                eprintln!("lexer error: {}", e);
+                return None;
+            }
         }
         Some(l)
     }
@@ -119,21 +118,19 @@ impl Lexer {
         if self.pos >= self.buf.len() && self.last {
             return true;
         }
-        false 
+        false
     }
 
     pub fn file_name(&mut self) -> String {
         self.fname.to_string().clone()
     }
     fn peek(&mut self) -> char {
-        if !self.at_end() &&  
-            self.pos < self.buf.len() 
-        {
+        if !self.at_end() && self.pos < self.buf.len() {
             return self.buf.chars().nth(self.pos).unwrap();
         }
         '\0'
     }
-    
+
     fn peek_next(&mut self) -> char {
         if self.pos + 1 < self.buf.len() {
             return self.buf.chars().nth(self.pos + 1).unwrap();
@@ -147,13 +144,13 @@ impl Lexer {
             self.colno += 1;
             return self.buf.chars().nth(self.pos - 1).unwrap();
         }
-        
+
         self.end = self.pos;
-        
+
         if !self.at_end() && !self.is_string_input {
             self.buf.clear();
             let br = self.br.as_mut().unwrap();
-            let result = br.read_line(&mut self.buf); 
+            let result = br.read_line(&mut self.buf);
             match result {
                 Ok(num) => {
                     if num == 0 {
@@ -165,17 +162,18 @@ impl Lexer {
                     self.colno += 1;
                     self.begin = 0;
                     self.end = 0;
-                    
+
                     return self.peek();
-                },
-                    Err(e) => { eprintln!("lexer error: {}", e);
-                    return '\0'; 
-                },
-            } 
+                }
+                Err(e) => {
+                    eprintln!("lexer error: {}", e);
+                    return '\0';
+                }
+            }
         }
         '\0'
-    } 
-    fn match_char(&mut self, c : char) -> bool {
+    }
+    fn match_char(&mut self, c: char) -> bool {
         if c == self.peek() {
             self.advance();
             return true;
@@ -198,11 +196,25 @@ impl Lexer {
         let name: String = self.buf[begin..end].to_string();
         let value = self.kwds.get(&name);
         println!("name = {}", name);
-                
+
         if let Some(val) = value {
-            return Token::new(*val, TokenType::Keyword, name.clone(), self.lineno, self.colno, Value::Nil)
+            return Token::new(
+                *val,
+                TokenType::Keyword,
+                name.clone(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            );
         } else {
-            Token::new(TokenKind::Ident, TokenType::Ident, name.clone(), self.lineno, self.colno, Value::Nil)
+            Token::new(
+                TokenKind::Ident,
+                TokenType::Ident,
+                name.clone(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            )
         }
     }
 
@@ -225,37 +237,59 @@ impl Lexer {
                 self.advance();
             }
             end = self.pos;
-            return Token::new(kind, TokenType::Ident, self.buf[begin..end].to_string(), 
-                self.lineno, self.colno, Value::Nil);
+            return Token::new(
+                kind,
+                TokenType::Ident,
+                self.buf[begin..end].to_string(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            );
         }
 
         end = self.pos;
-        Token::new(TokenKind::Hash, TokenType::Operator, self.buf[begin..end].to_string(), 
-            self.lineno, self.colno, Value::Nil)
+        Token::new(
+            TokenKind::Hash,
+            TokenType::Operator,
+            self.buf[begin..end].to_string(),
+            self.lineno,
+            self.colno,
+            Value::Nil,
+        )
     }
 
     fn read_number(&mut self) -> Token {
-        let begin = self.pos - 1; 
-        loop { 
+        let begin = self.pos - 1;
+        loop {
             if !is_num(self.peek()) {
                 break;
-            } 
+            }
             self.advance();
         }
         let mut end = self.pos;
         // Be sure not to advance if the next character is not a dot.
-        if self.peek() != '.' || 
-            (self.peek() == '.' && is_letter(self.peek_next()))
-        {
+        if self.peek() != '.' || (self.peek() == '.' && is_letter(self.peek_next())) {
             match self.buf[begin..end].to_string().parse() {
                 Ok(num) => {
-                    return Token::new(TokenKind::Int, TokenType::Other, self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Int(num));
-                },
+                    return Token::new(
+                        TokenKind::Int,
+                        TokenType::Other,
+                        self.buf[begin..end].to_string(),
+                        self.lineno,
+                        self.colno,
+                        Value::Int(num),
+                    );
+                }
                 Err(_) => {
-                    return Token::new(TokenKind::Err, TokenType::Err, "lexer error: invalid integer token".to_string(),
-                        self.lineno, self.colno, Value::Nil);
-                },
+                    return Token::new(
+                        TokenKind::Err,
+                        TokenType::Err,
+                        "lexer error: invalid integer token".to_string(),
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
+                }
             }
         }
         if is_num(self.peek_next()) {
@@ -270,82 +304,108 @@ impl Lexer {
             end = self.pos;
         }
         match self.buf[begin..end].to_string().parse::<f64>() {
-            Ok(num) => {
-                Token::new(TokenKind::Float, TokenType::Other, self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Float(OrderedFloat(num)))
-            },
-            Err(_) => {
-                Token::new(TokenKind::Err, TokenType::Err, "lexer error: invalid floating point token".to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+            Ok(num) => Token::new(
+                TokenKind::Float,
+                TokenType::Other,
+                self.buf[begin..end].to_string(),
+                self.lineno,
+                self.colno,
+                Value::Float(OrderedFloat(num)),
+            ),
+            Err(_) => Token::new(
+                TokenKind::Err,
+                TokenType::Err,
+                "lexer error: invalid floating point token".to_string(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            ),
         }
-    } 
+    }
 
     fn read_string(&mut self, gc: &Gc) -> Token {
         let begin = self.pos - 1;
         loop {
-            if self.peek() == '\\' &&
-                self.peek_next() == '"'
-            {
+            if self.peek() == '\\' && self.peek_next() == '"' {
                 self.advance();
                 self.advance();
                 continue;
             } else if self.peek() == '"' {
                 self.advance();
-                return Token::new(TokenKind::String, TokenType::Other, self.buf[begin..self.pos].to_string(),
-                    self.lineno, self.colno, Value::String(gc.manage(self.buf[begin + 1..self.pos - 1].to_string(), &NO_GC)));
+                return Token::new(
+                    TokenKind::String,
+                    TokenType::Other,
+                    self.buf[begin..self.pos].to_string(),
+                    self.lineno,
+                    self.colno,
+                    Value::String(gc.manage(self.buf[begin + 1..self.pos - 1].to_string(), &NO_GC)),
+                );
             } else if self.peek() == '\n' {
-                return Token::new(TokenKind::Err, TokenType::Err, "lexer error: unterminated string constant".to_string(),
-                    self.lineno, self.colno, Value::Nil);
+                return Token::new(
+                    TokenKind::Err,
+                    TokenType::Err,
+                    "lexer error: unterminated string constant".to_string(),
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                );
             }
             self.advance();
         }
     }
 
-	fn skip_single_line_comment(&mut self) -> Option<bool> {
-		self.nest = 0;
-		if self.peek() == '/' {
-			if self.peek_next() == '/' {
-				self.advance();
-				self.advance();
-				loop {
-					let chr = self.peek();
+    fn skip_single_line_comment(&mut self) -> Option<bool> {
+        self.nest = 0;
+        if self.peek() == '/' {
+            if self.peek_next() == '/' {
+                self.advance();
+                self.advance();
+                loop {
+                    let chr = self.peek();
                     if chr == '\n' {
-						self.advance();
+                        self.advance();
                         break;
                     } else if chr == '\0' {
-						if self.nest != 0 {
-							println!("lexer error: {}: {}:{}: mismatched multiline comment delimiters", self.file_name(), self.lineno, self.colno);
+                        if self.nest != 0 {
+                            println!(
+                                "lexer error: {}: {}:{}: mismatched multiline comment delimiters",
+                                self.file_name(),
+                                self.lineno,
+                                self.colno
+                            );
                             return Some(false);
                         }
                         return None;
                     }
                     self.advance();
                 }
-			} else if self.peek_next() == '*' {
-				self.advance();
+            } else if self.peek_next() == '*' {
+                self.advance();
                 self.advance();
                 self.nest += 1;
                 if self.nest > 8 {
-					println!("lexer error: {}: {}:{}: maximum multiline nesting depth exceeded; the limit is 8", self.file_name(), self.lineno, self.colno);
-					return Some(false);
-				}
-			}
-		} else if self.peek() == '*' && 
-            self.peek_next() == '/' 
-        {
-			self.nest -= 1;
-			if self.nest != 0 {
-				println!("lexer error: {}: {}:{}: mismatched multiline comment delimiters", self.file_name(), self.lineno, self.colno);
+                    println!("lexer error: {}: {}:{}: maximum multiline nesting depth exceeded; the limit is 8", self.file_name(), self.lineno, self.colno);
+                    return Some(false);
+                }
+            }
+        } else if self.peek() == '*' && self.peek_next() == '/' {
+            self.nest -= 1;
+            if self.nest != 0 {
+                println!(
+                    "lexer error: {}: {}:{}: mismatched multiline comment delimiters",
+                    self.file_name(),
+                    self.lineno,
+                    self.colno
+                );
                 return Some(false);
             }
         }
-		Some(true)
-	}
+        Some(true)
+    }
     fn skip_whitespace(&mut self) -> bool {
-		self.nest = 0;
+        self.nest = 0;
         loop {
-			self.skip_single_line_comment();
+            self.skip_single_line_comment();
             match self.peek() {
                 '\n' | '\t' | ' ' => {
                     if self.peek() == '\n' {
@@ -362,49 +422,66 @@ impl Lexer {
                                     self.colno = 1;
                                 }
                                 self.advance();
-                            },
+                            }
                             '\0' => {
                                 if self.advance() == '\0' {
                                     return true;
                                 }
-                            },
+                            }
                             _ => {
                                 //self.advance();
                                 return true;
-                            },
+                            }
                         }
                     }
-                },
+                }
                 '\0' => {
                     if self.advance() == '\0' {
                         if self.nest != 0 {
-                            println!("lexer error: {}: {}:{}: mismatched multiline comment delimiters", self.file_name(), self.lineno, self.colno - 1);
+                            println!(
+                                "lexer error: {}: {}:{}: mismatched multiline comment delimiters",
+                                self.file_name(),
+                                self.lineno,
+                                self.colno - 1
+                            );
                             return false;
                         }
                         return true;
                     }
                     return true;
-                },
+                }
                 _ => {
                     if self.nest == 0 {
                         return true;
                     }
-                },
-            } 
+                }
+            }
         }
-    } 
+    }
 
     pub fn scan(&mut self, gc: &Gc) -> Token {
         if !self.skip_whitespace() {
-            return Token::new(TokenKind::Err, TokenType::Err, "".to_string(),
-                self.lineno, self.colno, Value::Nil);
+            return Token::new(
+                TokenKind::Err,
+                TokenType::Err,
+                "".to_string(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            );
         }
 
         let ch: char = self.advance();
- 
+
         if self.at_end() {
-            return Token::new(TokenKind::Done, TokenType::None, "".to_string(),
-                self.lineno, self.colno, Value::Nil);
+            return Token::new(
+                TokenKind::Done,
+                TokenType::None,
+                "".to_string(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            );
         }
         if is_letter(ch) {
             return self.read_identifier();
@@ -419,13 +496,17 @@ impl Lexer {
             return self.read_string(gc);
         }
 
-        let mut begin = 0; 
-       
+        let mut begin = 0;
+
         if ch == '@' && self.peek() == '(' {
             self.advance();
-            return Token::new(TokenKind::AnonClosure, TokenType::Operator,
+            return Token::new(
+                TokenKind::AnonClosure,
+                TokenType::Operator,
                 "@(".to_string(),
-                self.lineno, self.colno, Value::Nil
+                self.lineno,
+                self.colno,
+                Value::Nil,
             );
         }
 
@@ -434,303 +515,544 @@ impl Lexer {
         }
 
         match ch {
-            '\0' => {
-                Token::new(TokenKind::Done, TokenType::None,
+            '\0' => Token::new(
+                TokenKind::Done,
+                TokenType::None,
                 "".to_string(),
-                self.lineno, self.colno, Value::Nil)
-            },
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            ),
             '(' => {
                 let end = self.pos;
-                Token::new(TokenKind::LParen, TokenType::Operator, 
+                Token::new(
+                    TokenKind::LParen,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             ')' => {
                 let end = self.pos;
-                Token::new(TokenKind::RParen, TokenType::Operator, 
+                Token::new(
+                    TokenKind::RParen,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '{' => {
                 let end = self.pos;
                 println!("end = {}", end);
-                Token::new(TokenKind::LBrace, TokenType::Operator, 
+                Token::new(
+                    TokenKind::LBrace,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '}' => {
                 let end = self.pos;
                 println!("(begin, end) = ({}, {})", begin, end);
-                Token::new(TokenKind::RBrace, TokenType::Operator, 
+                Token::new(
+                    TokenKind::RBrace,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '[' => {
                 if self.match_char(']') {
                     if self.match_char('=') {
                         let end = self.pos;
-                        return Token::new(TokenKind::IndexAssignMethod, TokenType::Operator, 
+                        return Token::new(
+                            TokenKind::IndexAssignMethod,
+                            TokenType::Operator,
                             self.buf[begin..end].to_string(),
-                            self.lineno, self.colno, Value::Nil);
+                            self.lineno,
+                            self.colno,
+                            Value::Nil,
+                        );
                     }
                     let end = self.pos;
-                    return Token::new(TokenKind::IndexMethod, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::IndexMethod,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::LBracket, TokenType::Operator, 
+                Token::new(
+                    TokenKind::LBracket,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             ']' => {
-                
                 let end = self.pos;
-                Token::new(TokenKind::RBracket, TokenType::Operator, 
+                Token::new(
+                    TokenKind::RBracket,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '?' => {
                 let end = self.pos;
-                Token::new(TokenKind::Question, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Question,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             ';' => {
                 let end = self.pos;
-                Token::new(TokenKind::Semicolon, TokenType::Other, 
+                Token::new(
+                    TokenKind::Semicolon,
+                    TokenType::Other,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             ',' => {
                 let end = self.pos;
-                Token::new(TokenKind::Comma, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Comma,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '.' => {
                 let end = self.pos;
-                Token::new(TokenKind::Dot, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Dot,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             ':' => {
                 let end = self.pos;
-                Token::new(TokenKind::Colon, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Colon,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '+' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::AddAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::AddAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Add, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Add,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '-' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::SubtractAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::SubtractAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Subtract, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Subtract,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '*' => {
                 if self.match_char('*') {
                     if self.match_char('=') {
                         let end = self.pos;
-                        return Token::new(TokenKind::PowerAssign, TokenType::Operator, 
-                        self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        return Token::new(
+                            TokenKind::PowerAssign,
+                            TokenType::Operator,
+                            self.buf[begin..end].to_string(),
+                            self.lineno,
+                            self.colno,
+                            Value::Nil,
+                        );
                     }
                     let end = self.pos;
-                    return Token::new(TokenKind::Power, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::Power,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::MultiplyAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::MultiplyAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Multiply, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Multiply,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '/' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::DivideAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::DivideAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Divide, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Divide,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '%' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::ModuloAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::ModuloAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Modulo, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Modulo,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '!' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::NotEqual, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::NotEqual,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::LNot, TokenType::Operator, 
+                Token::new(
+                    TokenKind::LNot,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '=' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::Equal, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::Equal,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Assign, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Assign,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '<' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::LessEqual, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::LessEqual,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 if self.match_char('<') {
                     if self.match_char('=') {
                         let end = self.pos;
-                        return Token::new(TokenKind::LShiftAssign, TokenType::Operator, 
+                        return Token::new(
+                            TokenKind::LShiftAssign,
+                            TokenType::Operator,
                             self.buf[begin..end].to_string(),
-                            self.lineno, self.colno, Value::Nil);
+                            self.lineno,
+                            self.colno,
+                            Value::Nil,
+                        );
                     }
                     let end = self.pos;
-                    return Token::new(TokenKind::LShift, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::LShift,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Less, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Less,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '>' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::GreaterEqual, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::GreaterEqual,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 if self.match_char('<') {
                     if self.match_char('=') {
                         let end = self.pos;
-                        return Token::new(TokenKind::RShiftAssign, TokenType::Operator, 
+                        return Token::new(
+                            TokenKind::RShiftAssign,
+                            TokenType::Operator,
                             self.buf[begin..end].to_string(),
-                            self.lineno, self.colno, Value::Nil);
+                            self.lineno,
+                            self.colno,
+                            Value::Nil,
+                        );
                     }
                     let end = self.pos;
-                    return Token::new(TokenKind::RShift, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::RShift,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Greater, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Greater,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '&' => {
                 if self.match_char('&') {
                     let end = self.pos;
-                    return Token::new(TokenKind::LAnd, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::LAnd,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::AndAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::AndAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::And, TokenType::Operator, 
+                Token::new(
+                    TokenKind::And,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '|' => {
                 if self.match_char('|') {
                     let end = self.pos;
-                    return Token::new(TokenKind::LOr, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::LOr,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::OrAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::OrAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Or, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Or,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            }, 
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '~' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::NotAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::NotAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::Not, TokenType::Operator, 
+                Token::new(
+                    TokenKind::Not,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             '^' => {
                 if self.match_char('=') {
                     let end = self.pos;
-                    return Token::new(TokenKind::XOrAssign, TokenType::Operator, 
+                    return Token::new(
+                        TokenKind::XOrAssign,
+                        TokenType::Operator,
                         self.buf[begin..end].to_string(),
-                        self.lineno, self.colno, Value::Nil);
+                        self.lineno,
+                        self.colno,
+                        Value::Nil,
+                    );
                 }
                 let end = self.pos;
-                Token::new(TokenKind::XOr, TokenType::Operator, 
+                Token::new(
+                    TokenKind::XOr,
+                    TokenType::Operator,
                     self.buf[begin..end].to_string(),
-                    self.lineno, self.colno, Value::Nil)
-            },
+                    self.lineno,
+                    self.colno,
+                    Value::Nil,
+                )
+            }
             /*'"' => {
                 self.read_string();
             },*/
-            _ => { 
-                Token::new(TokenKind::Err, TokenType::Err, "unknown token".to_string(),
-                self.lineno, self.colno, Value::Nil)
-            }
+            _ => Token::new(
+                TokenKind::Err,
+                TokenType::Err,
+                "unknown token".to_string(),
+                self.lineno,
+                self.colno,
+                Value::Nil,
+            ),
         }
     }
 }
@@ -738,7 +1060,7 @@ impl Lexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_empty_lexer_input() {
         test_input(&mut "".to_string());
@@ -762,9 +1084,12 @@ mod tests {
         test_input(&mut "fun f(x) { return x; };".to_string());
         test_input(&mut "fun g(x, y) { return x * y; };".to_string());
         test_input(&mut "fun h(a,b) { a / b; };".to_string());
-        test_input(&mut "fun i(x) {
+        test_input(
+            &mut "fun i(x) {
                       x;
-                    };".to_string());
+                    };"
+            .to_string(),
+        );
     }
     #[test]
     fn test_lexer_function_call() {
@@ -772,8 +1097,8 @@ mod tests {
     }
 
     fn test_input(string: &mut String) {
-        let mut gc = Gc::new();
-        let mut l = Lexer::new_from_string(string);
+        let gc = Gc::new();
+        let mut l = Lexer::new_from_text(string);
         loop {
             let result = l.scan(&gc);
             if result.kind == TokenKind::Done {

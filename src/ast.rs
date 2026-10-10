@@ -7,10 +7,7 @@ use std::fmt::{Display, Formatter, Error};
 
 #[derive(Clone, Debug)]
 pub enum Ast {
-    Program {
-        listing: Vec<Box<Ast>>,
-    },
-    FunDecl {
+    ClosureDecl {
         fun_ty: FunctionType,
 	    name: String,
 	    params: Vec<Box<Ast>>,
@@ -79,23 +76,36 @@ pub enum Ast {
     Value {
         val: Value,
     },
-
     DblColon {
-	    l: Box<Ast>, 
-	    r: Box<Ast>,
+	    l: Option<Box<Ast>>, 
+	    r: Option<Box<Ast>>,
     },
-    Variable {
+    VariableId {
         name: String,
-	    arity: Option<usize>,
+        method: bool,
+        arity: Option<usize>,
+    },
+    Call {
+    	recv: Option<Box<Ast>>, 
+    	args: Vec<Box<Ast>>
     },
     //Instance Field
     Field {
         name: String
+        
     },
     // Class Static Field
     StaticField { 
         name: String
     },
+    MemberDot {
+    	l: Option<Box<Ast>>, 
+    	r: Option<Box<Ast>>
+    },
+    ModuleId {
+    	name: String,
+    },
+    
     LNot(Option<Box<Ast>>),
     Not(Option<Box<Ast>>),
     Negate(Option<Box<Ast>>),
@@ -125,16 +135,12 @@ pub enum Ast {
     XOrAssign(Option<Box<Ast>>, Option<Box<Ast>>),
     LShiftAssign(Option<Box<Ast>>, Option<Box<Ast>>),
     RShiftAssign(Option<Box<Ast>>, Option<Box<Ast>>),
-
-    Call(Option<Box<Ast>>, Vec<Box<Ast>>),
-    MemberDot(Option<Box<Ast>>, Option<Box<Ast>>),
-    NSDot(Option<Box<Ast>>, Option<Box<Ast>>),
 }
 
 impl Display for Ast {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            Ast::FunDecl {..} => {write!(f, "Fun Decl")},
+            Ast::ClosureDecl {..} => {write!(f, "Closure Decl")},
             Ast::LetDecl {..} => {write!(f, "Let Stmt")},
             Ast::ReturnStmt {..} => {write!(f, "Return Stmt")},
             Ast::Block {..} => {write!(f, "Block")},
@@ -166,8 +172,8 @@ impl Display for Ast {
             Ast::RShiftAssign(..) => {write!(f, "Compound R-Shift")},
             Ast::ExprStmt {..} => {write!(f, "Expr Stmt")},
             Ast::Value {..} => {write!(f, "Value")},
-            Ast::Variable {..} => {write!(f, "Variable")},
-            Ast::Call(..) => {write!(f, "Call")},
+            Ast::VariableId {..} => {write!(f, "Variable ID")},
+            Ast::Call{..} => {write!(f, "Call")},
             _ => {write!(f, "<error>")},
         }
     }
