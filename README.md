@@ -1,4 +1,4 @@
-A simple, fully featured virtual machine (VM) written in Rust
+A simple, fully featured virtual machine (VM) written in Rust (currently in development)
 
 To run it as a shell, on the command line, type:
 
