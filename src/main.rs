@@ -31,8 +31,7 @@ pub mod prelude {
 
 use crate::gc::{Gc /*NO_GC*/};
 //use crate::natives::*;
-use crate::parser::{InterpretErrorType, Parser};
-use crate::vm::VM;
+use crate::parser::{InterpretErrorType, Parser, VM};
 use std::env;
 use std::io;
 use std::io::Write;

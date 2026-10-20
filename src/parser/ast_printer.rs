@@ -1,3 +1,5 @@
+use crate::ast::*;
+
 #[derive(PartialEq)]
 enum PrinterState {
     Done,

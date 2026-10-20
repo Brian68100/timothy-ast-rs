@@ -90,8 +90,7 @@ pub enum TokenKind {
     
 }
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TokenType {
     Err,
     None,

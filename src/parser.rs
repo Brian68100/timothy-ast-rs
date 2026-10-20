@@ -1943,60 +1943,7 @@ impl Parser {
     // End Pratt Parser methods
 }
 
-#[cfg(test)]
 
-mod tests {
-    use super::*;
-    use crate::gc::Gc;
-
-    #[test]
-    fn test_add_ns_var() {
-        let mut deps = prep_for_test();
-
-        let mut code = "let var = 10;";
-        let mut parser = Parser::new();
-        let mut result = parser.parse_text(
-            &mut code.to_string(),
-            &mut deps.1,
-            &mut deps.0,
-            false,
-            false,
-            false,
-        );
-        assert_eq!(result, Ok(Value::Int(10)));
-
-        code = "var;";
-        result = parser.parse_text(
-            &mut code.to_string(),
-            &mut deps.1,
-            &mut deps.0,
-            false,
-            false,
-            false,
-        );
-        assert_eq!(result, Ok(Value::Int(10)));
-    }
-
-    fn test_add_two_and_two() {
-        let mut deps = prep_for_test();
-
-        let code = "2 + 2";
-        let mut parser = Parser::new();
-        let result = parser.parse_text(
-            &mut code.to_string(),
-            &mut deps.1,
-            &mut deps.0,
-            false,
-            false,
-            false,
-        );
-        assert_eq!(result, Ok(Value::Int(4)))
-    }
-
-    fn prep_for_test() -> (VM, Gc) {
-        (VM::new(), Gc::new())
-    }
-}
 
 
 
@@ -2011,7 +1958,11 @@ struct Module {
 }
 
 impl Module {
-    fn new(name: String, index: usize, parent_index: Option<usize>) -> Self {
+    fn new(
+    	name: String, 
+    	index: usize, 
+    	parent_index: Option<usize>
+    ) -> Self {
         Self {
             mod_name: name,
             mod_index: index,
@@ -2029,8 +1980,8 @@ impl Module {
         self.mod_index
     }
 
-    fn parent_index(&self) -> usize {
-        self.mod_parent_index.clone()
+    fn parent_index(&self) -> Option<usize> {
+        self.mod_parent_index
     }
 
     /*fn add_mod(
@@ -2066,22 +2017,50 @@ impl Module {
         }
     }*/
 
+	fn add_var_internal(
+		&mut self,
+		compiler: &mut Compiler,
+		ast: Option<Box<Ast>>,
+		gc: &Gc,
+		arity: Option<usize>,
+		print_error: bool,
+	) -> Result<VarInfo, VarError> {
+		match compiler.get_scope_depth() {
+			0usize => {
+       			compiler.resolve_mod_var(ast, gc, arity, print_error)
+            },
+            _ => {
+            	let mut last_mut = compiler.symbols.calls.last_mut().unwrap();
+            	last_mut.resolve_other_var(compiler, ast, gc, arity,
+            		print_error)
+            },
+        }
+	}
+
     fn add_var(
         &mut self,
         compiler: &mut Compiler,
         ast: Option<Box<Ast>>,
-        name: &String,
+        gc: &Gc,
         arity: Option<usize>,
-        do_print_on_error: bool,
+        print_error: bool,
     ) -> Result<VarInfo, VarError> {
-        if let Some(node) = ast {
-            let var: Result<VarInfo, VarError> = if compiler.get_scope_depth() == 0 {
-                compiler.resolve_mod_var(&*node, arity, do_print_on_error)
-            } else {
-                let mut last_mut = compiler.symbols.calls.last_mut().unwrap();
-                last_mut.resolve_local(compiler, &*node, &name, arity, do_print_on_error)
-            };
-            var
+    	if let Some(node) = ast {
+    		match *node {
+    			Ast::ClosureDecl { name, .. } => {
+    				self.add_var_internal(
+    					compiler, ast, gc, None, print_error
+    				)
+    			},
+    			Ast::VariableId { name, .. } => {
+       				add_var_internal(
+    					compiler, ast, gc, None, print_error
+    				)
+            	},
+            	_ => {
+            		Err(VarError::default())
+            	}
+            }
         } else {
             Err(VarError::default())
         }
@@ -2106,6 +2085,7 @@ struct SymbolTables {
     mod_indexes: HashMap<String, usize>,
     mods: Vec<Module>,
     curr_mod: Option<usize>,
+    
     calls: Vec<FunCompiler>,
     curr_scope: usize,
     //curr_class: Option<Class>,
@@ -2117,6 +2097,7 @@ impl SymbolTables {
             mod_indexes: HashMap::<String, usize>::new(),
             mods: vec![],
             curr_mod: None,
+            
             calls: vec![],
             curr_scope: 0usize,
         }
@@ -2157,8 +2138,8 @@ struct FunCompiler {
     scope: usize,
     arity: usize,
 
-    locals: Vec<Local>,
-    upvalues: Vec<Upvalue>,
+    locals: Vec<LocalEntry>,
+    upvalues: Vec<UpvalueEntry>,
     code: Vec<u8>,
     constants: HashMap<Value, usize>,
     constant_arr: Vec<Value>,
@@ -2284,9 +2265,33 @@ impl FunCompiler {
         s
     }
 
-    fn resolve_local_or_upvalue(
+    
+
+	fn resolve_other_var(
+		&mut self,
+		compiler: &Compiler,
+		ast: Option<Box<Ast>>,
+		gc: &Gc,
+		arity: Option<usize>,
+		print_err: bool,
+	) -> Result<VarInfo, VarError> {
+		if let Some(node) = ast {
+			match *node {
+				Ast::ClosureDecl { token, .. } |
+				Ast::VariableId { token, .. } => {
+					resolve_local_or_upvalue(compiler, token, gc, None, print_err)
+				},
+				Ast::FunctionId { token, arity, .. } => {
+					resolve_local_or_upvalue(compiler, token, gc, Some(arity), print_err)
+				}
+			}
+		}
+	}
+
+	fn resolve_local_or_upvalue(
         &mut self,
-        compiler: Rc<Compiler>,
+        compiler: &Compiler,
+        gc: &Gc,
         token: Box<Token>,
         name: &String,
         arity: Option<usize>,
@@ -2317,35 +2322,31 @@ impl FunCompiler {
 
     fn resolve_local(
         &mut self,
-        compiler: Rc<Compiler>,
+        compiler: &Compiler,
         gc: &Gc,
         token: Box<Token>, // required for inner (*compiler).error()
-        name: &String,
         arity: Option<usize>,
-        do_print_on_err: bool,
+        print_err: bool,
     ) -> Result<VarInfo, VarError> {
-        resolve_local_internal(compiler, name, arity, do_print_on_err)
+        resolve_local_internal(compiler, token, arity, print_err)
     }
 
     pub(crate) fn resolve_local_internal(
         &mut self,
-        compiler: Rc<Compiler>,
+        compiler: &Compiler,
         gc: &Gc,
         token: Box<Token>, // required for (*compiler).error()
-        name: &String,
         arity: Option<usize>,
-        do_print_on_err: bool,
+        print_err: bool,
     ) -> Result<VarInfo, VarError> {
         for i in (0..self.locals.len()).rev() {
-            if self.locals[i].name == *name {
-                if !self.locals[i].defined && do_print_on_err {
-                    unsafe {
-                        (*compiler).error(
-                            ast,
-                            "self-initialization of local variable '".to_string()
-                                + &mut self.locals[i].name,
-                        )
-                    };
+            if self.locals[i].name == token.lexeme {
+                if !self.locals[i].defined && print_err {
+                    compiler.error(
+                        token,
+                        "self-initialization of local variable '".to_string()
+                            + &mut self.locals[i].name,
+                    );
                     return Err(VarError::new(
                         self.locals[i].name.clone(),
                         VarType::Var,
@@ -2355,22 +2356,35 @@ impl FunCompiler {
                         i,
                     ));
                 } else {
-                    return Ok(VarInfo::new(
-                        self.locals[i].name.clone(),
-                        arity,
-                        VarType::Var,
-                        ScopeType::Local,
-                        AccessType::None,
-                        self.locals[i].scope,
-                        i,
-                        0,
-                    ));
+                	if arity.is_some() {
+                		return Ok(VarInfo::new(
+		                    self.locals[i].name.clone(),
+		                    arity,
+		                    VarType::Function,
+		                    ScopeType::Local,
+		                    AccessType::None,
+		                    self.locals[i].scope,
+		                    i,
+		                    0,
+		                ));
+		            } else {
+		                return Ok(VarInfo::new(
+		                    self.locals[i].name.clone(),
+		                    None,
+		                    VarType::Var,
+		                    ScopeType::Local,
+		                    AccessType::None,
+		                    self.locals[i].scope,
+		                    i,
+		                    0,
+		                ));
+		            }
                 }
             }
         }
 
         Err(VarError::new(
-            name.clone(),
+            token.lexeme.clone(),
             VarType::Var,
             ScopeType::Local,
             AccessType::None,
@@ -2381,18 +2395,16 @@ impl FunCompiler {
 
     pub(crate) fn resolve_upvalue(
         &mut self,
-        compiler:  Compiler,
+        compiler:  &Compiler,
         gc: &Gc,
-        token: &Token,
-        name: &String,
+        token: Box<Token>,
         arity: Option<usize>,
         do_print_on_error: bool,
     ) -> Result<VarInfo, VarError> {
         resolve_upvalue_internal(
             compiler,
-            ast,
+            token,
             gc,
-            name.clone(),
             arity,
             do_print_on_error,
             compiler.symbols.calls.iter().rev(),
@@ -2402,26 +2414,24 @@ impl FunCompiler {
     pub(crate) fn resolve_upvalue_internal(
         &mut self,
         //parser: &mut Parser,
-        compiler: *mut Compiler,
+        compiler: &mut Compiler,
         gc: &Gc,
-        token: &Token,
-        name: &String,
+        token: Box<Token>,
         arity: Option<usize>,
         print_error: bool,
         mut iter: Rev<std::slice::IterMut<'_, FunCompiler>>,
     ) -> Result<VarInfo, VarError> {
         let mut fc = iter.next();
         if let Some(ref mut fun_compiler) = fc {
-            let local = fun_compiler.resolve_local_internal(compiler, ast, gc, name, arity, true);
+            let local = fun_compiler.resolve_local_internal(compiler, token, gc, arity, true);
             match local {
                 Ok(var_info) => {
                     if let Some(fun_compiler) = fc {
                         fun_compiler.locals[var_info.index].upvalue = true;
                         return fun_compiler.add_upvalue(
                             compiler,
-                            ast,
+                            token,
                             gc,
-                            &name,
                             arity,
                             var_info.upvalue_local_index,
                             true,
@@ -2435,16 +2445,15 @@ impl FunCompiler {
             if fc.is_some() {
                 if let Some(fun_compiler) = fc {
                     let upvalue = fun_compiler
-                        .resolve_upvalue_internal(compiler, ast, gc, name, arity, false, iter);
+                        .resolve_upvalue_internal(compiler, token, gc, arity, false, iter);
 
                     match upvalue {
                         Ok(var_info) => {
                             if let Some(last) = compiler.symbols.calls.last_mut() {
                                 return last.add_upvalue(
                                     compiler,
-                                    ast,
+                                    token,
                                     gc,
-                                    name,
                                     arity,
                                     var_info.upvalue_local_index,
                                     false,
@@ -2458,9 +2467,9 @@ impl FunCompiler {
         }
 
         Err(VarError::new(
-            name.clone(),
+           	token.lexeme.clone(),
             VarType::Var,
-            ScopeType::Upvalue,
+            ScopeType::UpvalueEntry,
             AccessType::None,
             VarErrorType::Undefined,
             0,
@@ -2469,7 +2478,7 @@ impl FunCompiler {
 
     fn add_upvalue(
         &mut self,
-        compiler: Rc<Compiler>,
+        compiler: &Compiler,
         token: &Token,
         gc: &Gc,
         name: &String,
@@ -2483,7 +2492,7 @@ impl FunCompiler {
                     self.locals[i].name.clone(),
                     arity,
                     VarType::Var,
-                    ScopeType::Upvalue,
+                    ScopeType::UpvalueEntry,
                     AccessType::None,
                     self.locals[i].scope,
                     i,
@@ -2493,25 +2502,25 @@ impl FunCompiler {
         }
 
         if self.upvalues.len() >= MAX_UPVALUES {
-            compiler.error(ast, "too many upvalues".to_string());
+            compiler.error(token, "too many upvalues".to_string());
             return Err(VarError::new(
                 name.clone(),
                 VarType::Var,
-                ScopeType::Upvalue,
+                ScopeType::UpvalueEntry,
                 AccessType::None,
                 VarErrorType::TooMany,
                 MAX_UPVALUES,
             ));
         }
 
-        let upvalue = Upvalue::new(is_local, index);
+        let upvalue = UpvalueEntry::new(is_local, index);
         self.upvalues.push(upvalue);
 
         Ok(VarInfo::new(
             self.locals[index].name.clone(),
             arity,
             VarType::Var,
-            ScopeType::Upvalue,
+            ScopeType::UpvalueEntry,
             AccessType::None,
             self.locals[index].scope,
             self.upvalues.len() - 1,
@@ -2527,13 +2536,13 @@ impl FunCompiler {
         name: String,
         scope: usize,
         upvalue: bool,
-    ) -> Option<&mut Local> {
+    ) -> Option<&mut LocalEntry> {
         if self.locals.len() == MAX_LOCALS {
             compiler.error(ast, "too many locals in function".to_string());
             return None;
         }
         self.locals
-            .push(Local::new(name.to_string(), scope, upvalue));
+            .push(LocalEntry::new(name.to_string(), scope, upvalue));
 
         self.locals.last_mut()
     }
@@ -2576,7 +2585,7 @@ impl FunCompiler {
                 return Err(VarError::new(
                     actual_name.clone(),
                     VarType::Var,
-                    ScopeType::Local,
+                    ScopeType::LocalEntry,
                     AccessType::None,
                     VarErrorType::AlreadyExists,
                     i.unwrap().scope,
@@ -2589,7 +2598,7 @@ impl FunCompiler {
             actual_name.clone(),
             arity,
             VarType::Var,
-            ScopeType::Local,
+            ScopeType::LocalEntry,
             AccessType::None,
             scope,
             self.locals.len() - 1,
@@ -2612,7 +2621,7 @@ impl FunCompiler {
             Err(VarError::new(
                 fun_name,
                 VarType::Function,
-                ScopeType::Local,
+                ScopeType::LocalEntry,
                 AccessType::None,
                 VarErrorType::AlreadyExists,
                 self.get_scope_depth(),
@@ -2624,7 +2633,7 @@ impl FunCompiler {
                 fun_name.clone(),
                 Some(arity),
                 VarType::Var,
-                ScopeType::Local,
+                ScopeType::LocalEntry,
                 AccessType::None,
                 self.get_scope_depth(),
                 constant,
@@ -2755,7 +2764,7 @@ impl UpvalueEntry {
 
 
 #[derive(Clone, PartialEq)]
-pub enum VarType {
+enum VarType {
 	None,
     Module,
     Var,
@@ -2765,16 +2774,16 @@ pub enum VarType {
 }
 
 #[derive(Clone, PartialEq)]
-pub enum ScopeType {
+enum ScopeType {
     None,
     Module,
-    Local,
-    Upvalue,
+    LocalEntry,
+    UpvalueEntry,
     Class,
 }
 
 #[derive(Clone, PartialEq)]
-pub enum AccessType {
+enum AccessType {
     None,
 	Public,
 	Private,
@@ -2784,7 +2793,7 @@ pub enum AccessType {
 
 
 #[derive(Clone)]
-pub struct VarInfo {
+struct VarInfo {
     name: String,
     arity: Option<usize>,
     var_type: VarType,
@@ -2796,7 +2805,7 @@ pub struct VarInfo {
 }
 
 impl VarInfo {
-    pub fn new
+    fn new
 	(
         name: String,
         arity: Option<usize>,
@@ -2820,40 +2829,40 @@ impl VarInfo {
         }
     }
 
-    pub fn get_name(&mut self) -> String {
+    fn get_name(&mut self) -> String {
         self.name.clone()
     }
 
-    pub fn get_arity(&mut self) -> Option<usize> {
+    fn get_arity(&mut self) -> Option<usize> {
         self.arity
     }
 
-    pub fn get_var_type(&mut self) -> VarType {
+    fn get_var_type(&mut self) -> VarType {
         self.var_type.clone()
     }
 
-    pub fn get_scope_type(&mut self) -> ScopeType {
+    fn get_scope_type(&mut self) -> ScopeType {
         self.scope_type.clone()
     }
 
-    pub fn get_access_type(&self) -> AccessType {
+    fn get_access_type(&self) -> AccessType {
         self.access_type.clone()
     }
 
-    pub fn get_scope_level(&mut self) -> usize {
+    fn get_scope_level(&mut self) -> usize {
         self.scope
     }
 
-    pub fn get_index(&mut self) -> usize {
+    fn get_index(&mut self) -> usize {
         self.index
     }
 }
 
 #[derive(Clone, PartialEq)]
-pub enum VarErrorType {
+enum VarErrorType {
     None,
     Undefined,
-    InvalidType,
+    InvalidVarType,
     AlreadyExists,
     TooMany,
     SelfInit,
@@ -2863,7 +2872,7 @@ pub enum VarErrorType {
 }
 
 #[derive(Clone)]
-pub struct VarError {
+struct VarError {
     name: String,
     var_type: VarType,
     scope_type: ScopeType,
@@ -2873,7 +2882,7 @@ pub struct VarError {
 }
 
 impl VarError {
-    pub fn new(
+    fn new(
         name: String,
         var_type: VarType,
         scope_type: ScopeType,
@@ -2892,23 +2901,23 @@ impl VarError {
         }
     }
 
-    pub fn get_name(&mut self) -> String{
+    fn get_name(&mut self) -> String{
         self.name.clone()
     }
 
-    pub fn get_var_type(&self) -> VarType {
+    fn get_var_type(&self) -> VarType {
         self.var_type.clone()
     }
 
-    pub fn get_scope_type(&self) -> ScopeType {
+    fn get_scope_type(&self) -> ScopeType {
         self.scope_type.clone()
     }
 
-    pub fn get_error_type(&self) -> VarErrorType {
+    fn get_error_type(&self) -> VarErrorType {
         self.error_type.clone()
     }
 
-    pub fn get_scope_level(&self) -> usize {
+    fn get_scope_level(&self) -> usize {
         self.scope_level
     }
 }
@@ -2990,26 +2999,30 @@ impl Compiler {
     // resolve fully qualified module, variable, or function name.
     fn resolve_mod_var(
         &mut self,
-        ast: &Ast,
+        ast: Option<Box<Ast>>,
+        gc: &Gc,
         arity: Option<usize>,
-        do_print_on_error: bool,
+        print_error: bool,
     ) -> Result<VarInfo, VarError> {
         let result: Result<VarInfo, VarError> = Err(VarError::default());
+        let mut first_l = false;
         let mut name = "".to_string();
         let mut rest = "".to_string();
-
-        self.build_name_result_from_ast(ast, None, arity, &mut name, &mut rest)
+        
+        self.build_name_result_from_ast(ast, None, arity, &mut first_l, &mut name, &mut rest)
     }
 
     fn build_name_result_from_ast(
         &mut self,
         left: Option<Box<Ast>>,
         right: Option<Box<Ast>>,
+        gc: &Gc,
         arity: Option<usize>,
+        mut first_l: &mut bool,
         mut nm: &mut String,
         mut rest: &mut String,
     ) -> Result<VarInfo, VarError> {
-        let first_l = true;
+        *first_l = true;
         if let Some(node_l) = left {
             match *node_l {
                 Ast::DblColon { l, r, level } => {
@@ -3036,7 +3049,7 @@ impl Compiler {
                     ));
                 }
                 Ast::VariableId {
-                    name, arity, level, ..
+                    name, level, ..
                 } => {
                     let rest = name.clone();
                     let mut access = AccessType::Public;
@@ -3055,7 +3068,28 @@ impl Compiler {
                         0usize,
                         0usize,
                     ));
-                }
+                },
+                Ast::FunctionId {
+                	name, arity, level, ..
+                } => {
+                	let rest = name.clone();
+                	let mut access = AccessType::Public;
+                    let mut ch = rest.chars();
+                    ch.next();
+                    if name.chars().nth(0) == Some('_') {
+                        access = AccessType::Private;
+                    }
+                    return Ok(VarInfo::new(
+                        *nm + &rest,
+                        arity,
+                        VarType::Function,
+                        ScopeType::Module,
+                        access,
+                        0usize,
+                        0usize,
+                        0usize,
+                    ));
+                },
                 _ => todo!(),
             }
         } else {
@@ -3137,8 +3171,8 @@ impl Compiler {
                                 && var.var_type != VarType::None
                             {
                                 if var.scope_type == ScopeType::Module
-                                    || var.scope_type == ScopeType::Local
-                                    || var.scope_type == ScopeType::Upvalue
+                                    || var.scope_type == ScopeType::LocalEntry
+                                    || var.scope_type == ScopeType::UpvalueEntry
                                 {
                                     return Ok(var);
                                 } else {
@@ -3147,7 +3181,7 @@ impl Compiler {
                                         var.var_type.clone(),
                                         var.scope_type.clone(),
                                         var.access_type.clone(),
-                                        VarErrorType::InvalidType,
+                                        VarErrorType::InvalidVarType,
                                         0,
                                     ));
                                 }
@@ -3157,7 +3191,7 @@ impl Compiler {
                                     var.var_type.clone(),
                                     var.scope_type.clone(),
                                     var.access_type.clone(),
-                                    VarErrorType::InvalidType,
+                                    VarErrorType::InvalidVarType,
                                     0,
                                 ));
                             }
@@ -3498,7 +3532,7 @@ impl Compiler {
     #[allow(unused_variables)]
     fn code_gen(
         &mut self,
-        compiler: Rc<Compiler>,
+        compiler: &Compiler,
         ast: Option<Box<Ast>>,
         vm: &mut VM,
         gc: &Gc,
@@ -3685,7 +3719,7 @@ impl Compiler {
                                 let scope = self.get_scope_depth();
                                 let mut scope_type = ScopeType::Module;
                                 if scope > 0 {
-                                    scope_type = ScopeType::Local;
+                                    scope_type = ScopeType::LocalEntry;
                                 }
                                 let mut var: Result<VarInfo, VarError> = Err(VarError::new(
                                     name.clone(),
@@ -4070,14 +4104,14 @@ impl Compiler {
             ScopeType::Module => {
                 fun_com.emit_word_op(OpCode::LoadVar, var.index as usize);
             }
-            ScopeType::Local => {
+            ScopeType::LocalEntry => {
                 if var.index < 9 {
                     fun_com.emit_op(OpCode::from(u8::from(OpCode::LoadLocal0) + var.index as u8));
                 } else {
                     fun_com.emit_byte_op(OpCode::LoadLocal, var.index as u8);
                 }
             }
-            ScopeType::Upvalue => {
+            ScopeType::UpvalueEntry => {
                 fun_com.emit_byte_op(OpCode::LoadUpvalue, var.index as u8);
             }
             _ => todo!(),
@@ -4553,4 +4587,1657 @@ impl Compiler {
         None
         }
     }*/
+}
+
+
+
+
+#[derive(Debug, Clone, PartialEq)]
+struct CallFrame {
+    fun: Value,
+    closure: Option<Managed<Closure>>,
+    core: Option<Managed<FunctionCore>>,
+    pc: usize,
+    fp: usize,
+}
+
+impl CallFrame {
+    pub fn new(fun: Value) -> Self {
+        let _closure: Option<Managed<Closure>> = None;
+        let _core: Option<Managed<FunctionCore>> = None;
+
+        match fun {
+            Value::Closure(c) => Self {
+                fun,
+                closure: Some(c),
+                core: Some(c.get_core()),
+                pc: 0,
+                fp: 0,
+            },
+            _ => {
+                panic!("'{}' got pushed onto the call stack!", fun);
+            }
+        }
+    }
+    pub fn get_fun(&mut self) -> &Value {
+        &mut self.fun
+    }
+
+    pub fn get_closure(&mut self) -> Option<Managed<Closure>> {
+        self.closure
+    }
+
+    fn get_core(&mut self) -> Option<Managed<FunctionCore>> {
+        self.core
+    }
+
+    fn get_pc(&mut self) -> usize {
+        self.pc.clone()
+    }
+
+    fn inc_pc(&mut self, amount: usize) -> Option<usize> {
+        if self.pc + amount > 200_000 {
+            None
+        } else {
+            self.pc += amount;
+            Some(self.pc)
+        }
+    }
+
+    fn dec_pc(&mut self, amount: usize) -> Option<usize> {
+        let mut new_pc = self.pc as isize;
+        new_pc -= amount as isize;
+        if new_pc < 0 {
+            None
+        } else {
+            self.pc -= amount;
+            Some(self.pc)
+        }
+    }
+
+    #[inline]
+    fn get_fp(&mut self) -> usize {
+        self.fp
+    }
+
+    #[inline]
+    fn set_fp(&mut self, index: usize) -> usize {
+        self.fp = index;
+        self.fp
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CallStack {
+    stack: Vec<CallFrame>,
+}
+
+impl CallStack {
+    fn new() -> Self {
+        Self { stack: vec![] }
+    }
+
+    #[inline]
+    fn get_fp(&mut self) -> usize {
+        self.stack.last_mut().unwrap().get_fp()
+    }
+
+    #[inline]
+    fn set_fp(&mut self, index: usize) {
+        self.stack.last_mut().unwrap().set_fp(index);
+    }
+
+    #[inline]
+    fn get_pc(&mut self) -> usize {
+        self.stack.last_mut().unwrap().get_pc()
+    }
+
+    fn clear_pc(&mut self) {
+        self.stack.last_mut().unwrap().pc = 0;
+    }
+
+    #[inline]
+    fn inc_pc(&mut self, amount: usize) -> Option<usize> {
+        if let Some(last) = self.stack.last_mut() {
+            last.inc_pc(amount)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn dec_pc(&mut self, amount: usize) -> Option<usize> {
+        if let Some(last) = self.stack.last_mut() {
+            last.dec_pc(amount)
+        } else {
+            None
+        }
+    }
+
+    fn top(&mut self) -> Option<CallFrame> {
+        if let Some(last) = self.stack.last() {
+            return Some(last.clone());
+        } else {
+            None
+        }
+    }
+
+    fn next_from_top(&mut self) -> Option<CallFrame> {
+        if self.stack.len() > 1 {
+            let tmp = self.stack.len() - 2;
+            let nxt = self.stack[tmp].clone();
+            Some(nxt)
+        } else {
+            None
+        }
+    }
+
+    fn push(&mut self, fun: Value) {
+        self.stack.push(CallFrame::new(fun))
+    }
+
+    fn pop(&mut self) -> Option<CallFrame> {
+        self.stack.pop()
+    }
+
+    fn clear(&mut self) {
+        self.stack.clear();
+    }
+
+    #[allow(unused_assignments)]
+    pub(crate) fn get_backtrace(&mut self) -> String {
+        let mut string = format!("\nBacktrace:\n");
+
+        let mut iter = self.stack.iter();
+        loop {
+            let elem = iter.next();
+            if elem.is_none() {
+                break;
+            }
+
+            let mut arity = 0usize;
+            let mut name = String::from("");
+            let mut fun_ty = FunctionType::NamedClosure;
+            let mut fun_ty_name = String::from("");
+            let filename = String::from("");
+            if let Some(f) = elem {
+                match f.fun {
+                    Value::Closure(c) => {
+                        name = c.get_core().get_name();
+                        arity = c.get_core().get_arity();
+                        fun_ty = c.get_core().get_type();
+                        match fun_ty {
+                            FunctionType::TopLevel => {
+                                fun_ty_name = String::from("top-level");
+                            }
+                            FunctionType::NamedClosure => {
+                                fun_ty_name = String::from("named closure");
+                            }
+                            FunctionType::AnonClosure => {
+                                fun_ty_name = String::from("anonymous closure");
+                            }
+                            _ => {
+                                unreachable!();
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+                string = string
+                    + &format!(
+                        "[ {} {}(#{}) at {} line {} ]\n\n",
+                        fun_ty_name, name, arity, filename, 0,
+                    );
+            }
+        }
+        string
+    }
+}
+
+pub fn is_false(x: Value) -> bool {
+    x == Value::Nil || (x.is_bool() && !x.as_bool())
+}
+
+macro_rules! read_byte {
+    ($pc:ident, $code:ident, $out:ident) => {
+        $pc += 1;
+        let $out = $code[$pc - 1];
+    };
+}
+
+macro_rules! read_word {
+    ($pc:ident, $code:ident, $out:ident) => {
+        $pc += 2;
+        let $out = (($code[$pc - 2] as usize) << 8usize) | $code[$pc - 1] as usize;
+    };
+}
+
+#[allow(dead_code)]
+pub struct VM {
+    compiler: Compiler,
+    mod_vec: Vec<Vec<Value>>,
+    mod_index: usize,
+    main_fun: Option<Managed<Closure>>,
+    calls: CallStack,
+    stack: Vec<Value>,
+    sp: usize,
+}
+
+#[allow(dead_code)]
+impl VM {
+    pub fn new() -> Self {
+        Self {
+            compiler: Compiler::new(),
+            mod_vec: vec![vec![]],
+            mod_index: 0usize,
+            main_fun: None,
+            calls: CallStack::new(),
+            stack: Vec::<Value>::new(),
+            sp: 0usize,
+        }
+    }
+
+    #[inline]
+    fn get_sp(&mut self) -> usize {
+        self.sp
+    }
+
+    #[inline]
+    fn set_sp(&mut self, index: usize) {
+        self.sp = index;
+    }
+
+    #[inline]
+    fn get_fp(&mut self) -> usize {
+        self.calls.get_fp()
+    }
+
+    #[inline]
+    fn set_fp(&mut self, index: usize) {
+        self.calls.set_fp(index);
+    }
+    #[inline]
+    fn get_pc(&mut self) -> Option<usize> {
+        if let Some(mut frame) = self.calls.top() {
+            Some(frame.get_pc())
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn inc_pc(&mut self, amount: usize) -> Option<usize> {
+        if let Some(mut frame) = self.calls.top() {
+            frame.inc_pc(amount)
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn dec_pc(&mut self, amount: usize) -> Option<usize> {
+        if let Some(mut frame) = self.calls.top() {
+            frame.dec_pc(amount)
+        } else {
+            None
+        }
+    }
+    fn get_stack_at_index(&mut self, index: usize) -> Option<Value> {
+        if let Some(val) = self.stack.get(index) {
+            Some((*val).clone())
+        } else {
+            None
+        }
+    }
+
+    fn get_stack_top(&mut self) -> Option<Value> {
+        if let Some(val) = self.stack.last_mut() {
+            Some((*val).clone())
+        } else {
+            None
+        }
+    }
+
+    fn stack_push(&mut self, value: Value) {
+        self.stack.push(value);
+    }
+
+    fn stack_pop(&mut self) {
+        self.stack.pop();
+    }
+
+    fn get_var(&mut self, index: usize) -> Option<Value> {
+        if let Some(val) = self.mod_vec[self.mod_index].get_mut(index) {
+            Some((*val).clone())
+        } else {
+            None
+        }
+    }
+
+    fn set_var(&mut self, index: usize, value: Value) -> Option<&Value> {
+        if let Some(val) = self.mod_vec[self.mod_index].get_mut(index) {
+            *val = value;
+            Some(val)
+        } else {
+            None
+        }
+    }
+
+    fn add_var(&mut self) {
+        self.mod_vec[self.mod_index].push(Value::Nil);
+    }
+
+    fn push_call_frame(&mut self, num_args: usize) {
+        let top = self.stack.len();
+        let call = &mut self.stack[top - num_args as usize - 1];
+        self.calls.push(call.clone());
+        self.calls.set_fp(top - num_args as usize - 1);
+        self.calls.clear_pc();
+    }
+
+    fn pop_call_frame(&mut self, mut fp: usize) -> usize {
+        self.stack.resize(fp + 1, Value::Nil);
+
+        if let Some(new_top) = self.calls.next_from_top() {
+            fp = new_top.fp;
+        } else if let Some(new_top) = self.calls.top() {
+            fp = new_top.fp;
+        }
+        self.calls.pop();
+        fp
+    }
+
+    fn check_arity(&self, fun: &Value, num_args: usize) -> Result<usize, String> {
+        let top = self.stack.len();
+        let mut arity = 0;
+        match fun {
+            Value::Closure(c) => {
+                arity = c.get_arity();
+            }
+            _ => {
+                return Err(format!("not a function type, but {}", fun.value_type()));
+            }
+        }
+        if num_args != arity {
+            Err(format!("{} args expected, found {}", arity, num_args))
+        } else {
+            Ok(num_args)
+        }
+    }
+
+    fn call_value(&mut self, num_args: usize, debug: bool, gc: &Gc) -> Result<Value, String> {
+        let fun_index = self.stack.len() - (num_args as usize) - 1;
+        let fun = &self.stack[fun_index];
+        let args = &self.stack[fun_index + 1..fun_index + (num_args as usize) + 1];
+        match self.check_arity(fun, num_args) {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(e);
+            }
+        }
+        match fun {
+            Value::Closure(_) => self.call_closure(num_args, gc, debug),
+            _ => Err(format!("not a function type, but {}", fun.value_type())),
+        }
+    }
+
+    #[allow(unused_assignments)]
+    fn call_closure(&mut self, num_args: usize, gc: &Gc, debug: bool) -> Result<Value, String> {
+        let mut pc = 0usize;
+
+        if let Some(counter) = self.get_pc() {
+            pc = counter;
+        } else {
+            panic!("no functions on call stack");
+        }
+        /*if debug {
+        return call_closure_debug(self, u8, gc);
+        }*/
+
+        self.push_call_frame(num_args);
+
+        let mut result = Ok(Value::Nil);
+        let mut curr_byte = 0u8;
+        let _sp = self.get_sp();
+        let mut fp = self.get_fp();
+        let mut closure: Managed<Closure> = self.stack[fp].as_closure();
+        let fc = closure.get_core();
+        let code: &[u8] = fc.get_code();
+
+        let _sp = 0usize;
+        while pc < fc.len() && result == Ok(Value::Nil) {
+            closure = self.stack[fp].as_closure();
+            fp = self.calls.get_fp();
+
+            read_byte!(pc, code, byte);
+            curr_byte = byte;
+
+            let opcode = OpCode::from(curr_byte);
+
+            #[cfg(feature = "debug_opcode")]
+            {
+                println!("Opcode {}:", opcode);
+            }
+            #[cfg(feature = "debug_vars")]
+            {
+                println!("");
+                self.debug_vars();
+            }
+            #[cfg(feature = "debug_stack")]
+            {
+                println!("");
+                self.debug_stack(fp);
+            }
+
+            result = match opcode {
+                OpCode::PushN => {
+                    read_byte!(pc, code, arg);
+                    for _i in 0..arg {
+                        self.stack.push(Value::Nil);
+                    }
+
+                    Ok(Value::Nil)
+                }
+                OpCode::Pop => {
+                    self.stack_pop();
+                    Ok(Value::Nil)
+                }
+                OpCode::PopN => {
+                    read_byte!(pc, code, arg);
+                    for _i in 0..arg {
+                        self.stack_pop();
+                    }
+
+                    Ok(Value::Nil)
+                }
+                OpCode::Dup => {
+                    let last = self.get_stack_top();
+                    if let Some(i) = last {
+                        self.stack.push(i.clone());
+                    } else {
+                        panic!("accessed stack from out of bounds");
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::AddMod => Ok(Value::Nil),
+                OpCode::LoadMod => Ok(Value::Nil),
+                OpCode::LoadTrue => {
+                    self.stack.push(Value::Bool(true));
+                    Ok(Value::Nil)
+                }
+                OpCode::LoadFalse => {
+                    self.stack.push(Value::Bool(false));
+                    Ok(Value::Nil)
+                }
+                OpCode::LoadNil => {
+                    self.stack.push(Value::Nil);
+                    Ok(Value::Nil)
+                }
+                OpCode::Load0
+                | OpCode::Load1
+                | OpCode::Load2
+                | OpCode::Load3
+                | OpCode::Load4
+                | OpCode::Load5
+                | OpCode::Load6
+                | OpCode::Load7
+                | OpCode::Load8
+                | OpCode::Load9
+                | OpCode::Load10 => {
+                    self.stack.push(Value::Int(
+                        (u8::from(opcode) - (u8::from(OpCode::Load0))) as i64,
+                    ));
+                    Ok(Value::Nil)
+                }
+                OpCode::LoadValue => {
+                    read_word!(pc, code, arg);
+                    self.stack
+                        .push(closure.get_core().get_constants()[arg as usize].clone());
+                    Ok(Value::Nil)
+                }
+                OpCode::Array => Ok(Value::Nil),
+                OpCode::Dict => Ok(Value::Nil),
+                OpCode::DefVar => {
+                    read_word!(pc, code, index);
+                    let top = self.get_stack_top();
+
+                    if let Some(val) = top {
+                        self.set_var(index as usize, val);
+                    } else {
+                        panic!("stack is empty");
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::LoadVar => {
+                    read_word!(pc, code, arg);
+                    let elem = self.get_var(arg as usize).clone();
+                    if let Some(val) = elem {
+                        self.stack.push(val);
+                    } else {
+                        match self.stack[0].get_uintsize() {
+                            Ok(v) => {
+                                return Err(format!(
+                                    "var index out of range: {}; limit: {}",
+                                    arg,
+                                    self.mod_vec[v].len()
+                                ));
+                            }
+                            Err(e) => {
+                                panic!("internal error: {}", e);
+                            }
+                        }
+                    }
+
+                    Ok(Value::Nil)
+                }
+                OpCode::StoreVar => {
+                    read_word!(pc, code, arg);
+                    if let Some(j) = self.get_stack_top() {
+                        self.set_var(arg as usize, j.clone());
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::LoadLocal => Ok(Value::Nil),
+                OpCode::LoadLocal0 => Ok(Value::Nil),
+                OpCode::LoadLocal1 => Ok(Value::Nil),
+                OpCode::LoadLocal2 => Ok(Value::Nil),
+                OpCode::LoadLocal3 => Ok(Value::Nil),
+                OpCode::LoadLocal4 => Ok(Value::Nil),
+                OpCode::LoadLocal5 => Ok(Value::Nil),
+                OpCode::LoadLocal6 => Ok(Value::Nil),
+                OpCode::LoadLocal7 => Ok(Value::Nil),
+                OpCode::LoadLocal8 => Ok(Value::Nil),
+                OpCode::StoreLocal => Ok(Value::Nil),
+                OpCode::StoreLocal0 => Ok(Value::Nil),
+                OpCode::StoreLocal1 => Ok(Value::Nil),
+                OpCode::StoreLocal2 => Ok(Value::Nil),
+                OpCode::StoreLocal3 => Ok(Value::Nil),
+                OpCode::StoreLocal4 => Ok(Value::Nil),
+                OpCode::StoreLocal5 => Ok(Value::Nil),
+                OpCode::StoreLocal6 => Ok(Value::Nil),
+                OpCode::StoreLocal7 => Ok(Value::Nil),
+                OpCode::StoreLocal8 => Ok(Value::Nil),
+                OpCode::LoadUpvalue => Ok(Value::Nil),
+                OpCode::StoreUpvalue => Ok(Value::Nil),
+                OpCode::LoadField => Ok(Value::Nil),
+                OpCode::StoreField => Ok(Value::Nil),
+                OpCode::LoadStatic => Ok(Value::Nil),
+                OpCode::StoreStatic => Ok(Value::Nil),
+                OpCode::LoadMethod => Ok(Value::Nil),
+                OpCode::LoadStaticMethod => Ok(Value::Nil),
+                OpCode::LoadSuperMethod => Ok(Value::Nil),
+                OpCode::JumpFwd => {
+                    read_word!(pc, code, arg);
+                    pc += arg as usize;
+                    Ok(Value::Nil)
+                }
+                OpCode::JumpBack => {
+                    read_word!(pc, code, arg);
+                    pc -= arg as usize;
+                    Ok(Value::Nil)
+                }
+                OpCode::JumpTrue => {
+                    read_word!(pc, code, arg);
+                    let val = self.get_stack_top();
+                    if let Some(i) = val {
+                        if !is_false(i.clone()) {
+                            pc += arg as usize;
+                        }
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::JumpFalse => {
+                    read_word!(pc, code, arg);
+                    let val = self.get_stack_top();
+                    if let Some(i) = val {
+                        if is_false(i.clone()) {
+                            pc += arg as usize;
+                        }
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::DefStatic => Ok(Value::Nil),
+                OpCode::Method => Ok(Value::Nil),
+                OpCode::StaticMethod => Ok(Value::Nil),
+                OpCode::Instance => Ok(Value::Nil),
+                OpCode::Closure => Ok(Value::Nil),
+                OpCode::CloseUpvalue => Ok(Value::Nil),
+                OpCode::Call => {
+                    read_byte!(pc, code, num_args);
+                    println!("num_args = {}", num_args);
+
+                    match self.call_value((num_args as usize) + 1, debug, gc) {
+                        Ok(ref res) => {
+                            let top = self.stack.len();
+                            self.stack[top - (num_args as usize) - 1] = res.clone();
+                            Ok(res.clone())
+                        }
+                        Err(e) => Err(e),
+                    }
+                }
+                OpCode::Return => {
+                    if let Some(val) = self.calls.top() {
+                        fp = val.fp;
+                    } else {
+                        panic!("no calls left on the call stack");
+                    }
+
+                    let top = self.stack.len();
+                    let last = self.stack[top - 1].clone();
+                    self.stack[fp] = last.clone();
+                    fp = self.pop_call_frame(fp);
+
+                    Ok(last.clone())
+                }
+                OpCode::Ternary => Ok(Value::Nil),
+                OpCode::Neg => {
+                    if let Some(i) = self.get_stack_top() {
+                        match i {
+                            Value::Int(int) => {
+                                let val: Value = Value::Int(-int);
+                                let mut elem = self.get_stack_top();
+                                if let Some(ref mut e) = elem {
+                                    *e = val;
+                                } else {
+                                    panic!("stack is empty");
+                                }
+                                Ok(Value::Nil)
+                            }
+                            Value::Float(float) => {
+                                let val: Value = Value::Float(-float);
+                                let mut elem = self.get_stack_top();
+                                if let Some(ref mut e) = elem {
+                                    *e = val;
+                                } else {
+                                    panic!("stack is empty");
+                                }
+                                Ok(Value::Nil)
+                            }
+                            _ => Err("cannot negate value".to_string()),
+                        }
+                    } else {
+                        panic!("stack is empty");
+                    }
+                }
+                OpCode::Print => {
+                    if let Some(val) = self.get_stack_top() {
+                        print!("{}", val);
+                    } else {
+                        panic!("stack is empty");
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::Println => {
+                    if let Some(val) = self.get_stack_top() {
+                        println!("{}", val);
+                    } else {
+                        panic!("stack is empty");
+                    }
+                    Ok(Value::Nil)
+                }
+                OpCode::Input => Ok(Value::Nil),
+                OpCode::MathOp => {
+                    read_byte!(pc, code, arg);
+                    self.execute_math_op(MathOp::from(arg), gc)
+                }
+                OpCode::MathAssignOp => Ok(Value::Nil),
+                OpCode::BitwiseOp => Ok(Value::Nil),
+                OpCode::BitwiseAssignOp => Ok(Value::Nil),
+                OpCode::Invalid => {
+                    panic!("{}", "invalid instruction".to_string());
+                }
+            };
+        }
+
+        match result {
+            Ok(ref res) => {
+                let top = self.stack.len();
+                self.stack[top - (num_args as usize) - 1] = res.clone();
+                Ok(res.clone())
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /*fn call_closure_debug
+    (
+        &mut self,
+        num_args: u8,
+        gc: &Gc,
+    )
+    {
+        self.push_call_frame(num_args);
+
+        let mut result = Ok(Value::Nil);
+        let mut curr_byte = 0u8;
+        let _sp = self.get_sp();
+        let mut fp = self.get_fp();
+        let mut closure: Managed<Closure> = self.stack[fp].as_closure();
+        let fc = closure.get_core();
+        let code: &[u8] = fc.get_code();
+
+
+        let _sp = 0usize;
+
+        let mut debugger = Debugger::new();
+        while pc < fc.len() && result == Ok(Value::Nil) {
+        read_byte!(pc, code, byte);
+
+        let opcode = OpCode::from(byte);
+
+        let mut command = debugger.get_command() {
+
+            result = match opcode {
+                OpCode::PushN => {
+                    read_byte!(pc, code, arg);
+                    for _i in 0..arg {
+                        self.stack.push(Value::Nil);
+                    }
+
+                    Ok(Value::Nil)
+                },
+                OpCode::Pop => {
+                    self.stack_pop();
+                    Ok(Value::Nil)
+                },
+                OpCode::PopN => {
+                    read_byte!(pc, code, arg);
+                    for _i in 0..arg {
+                        self.stack_pop();
+                    }
+                    Ok(Value::Nil)
+                },
+                OpCode::Dup => {
+                    let last = self.get_stack_top();
+                    if let Some(i) = last {
+                        self.stack.push(i.clone());
+                    } else {
+                        panic!("accessed stack from out of bounds");
+                    }
+                    Ok(Value::Nil)
+            },
+                OpCode::LoadTrue => {
+                self.stack.push(Value::Bool(true));
+                Ok(Value::Nil)
+            },
+                OpCode::LoadFalse => {
+                self.stack.push(Value::Bool(false));
+                Ok(Value::Nil)
+            },
+                OpCode::LoadNil => {
+                self.stack.push(Value::Nil);
+                Ok(Value::Nil)
+            },
+                OpCode::Load0 |
+                OpCode::Load1 |
+                OpCode::Load2 |
+                OpCode::Load3 |
+                OpCode::Load4 |
+                OpCode::Load5 |
+                OpCode::Load6 |
+                OpCode::Load7 |
+                OpCode::Load8 |
+                OpCode::Load9 |
+                OpCode::Load10 => {
+                self.stack.push(Value::Int((u8::from(opcode) - (u8::from(OpCode::Load0))) as i64));
+                Ok(Value::Nil)
+            },
+                OpCode::LoadValue => {
+                read_word!(pc, code, arg);
+                self.stack.push(closure.get_core().get_constants()[arg as usize].clone());
+                Ok(Value::Nil)
+            },
+                OpCode::Array => {
+                Ok(Value::Nil)
+            },
+                OpCode::Dict => {
+                Ok(Value::Nil)
+            },
+                OpCode::DefVar => {
+                read_word!(pc, code, arg);
+                let top = self.get_stack_top();
+
+                if let Some(val) = top {
+                self.add_var(val);
+            } else {
+                panic!("stack is empty");
+            }
+                Ok(Value::Nil)
+            },
+                OpCode::LoadVar => {
+                read_word!(pc, code, arg);
+                let elem = self.get_var(arg as usize).clone();
+                if let Some(val) = elem {
+                self.stack.push(val);
+            } else {
+                unreachable!();
+            }
+
+                Ok(Value::Nil)
+            },
+                OpCode::StoreVar => {
+                read_word!(pc, code, arg);
+                if let Some(j) = self.get_stack_top() {
+                self.set_var(arg as usize, j.clone());
+            }
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal0 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal1 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal2 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal3 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal4 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal5 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal6 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal7 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadLocal8 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal0 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal1 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal2 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal3 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal4 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal5 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal6 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal7 => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreLocal8 => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadUpvalue => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreUpvalue => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadField => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreField => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadStatic => {
+                Ok(Value::Nil)
+            },
+                OpCode::StoreStatic => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadMethod => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadStaticMethod => {
+                Ok(Value::Nil)
+            },
+                OpCode::LoadSuperMethod => {
+                Ok(Value::Nil)
+            },
+                OpCode::JumpFwd => {
+                read_word!(pc, code, arg);
+                pc += arg as usize;
+                Ok(Value::Nil)
+            },
+                OpCode::JumpBack => {
+                read_word!(pc, code, arg);
+                pc -= arg as usize;
+                Ok(Value::Nil)
+            },
+                OpCode::JumpTrue => {
+                read_word!(pc, code, arg);
+                let val = self.get_stack_top();
+                if let Some(i) = val {
+                if !is_false(i.clone()) {
+                pc += arg as usize;
+            }
+            }
+                Ok(Value::Nil)
+            },
+                OpCode::JumpFalse => {
+                read_word!(pc, code, arg);
+                let val = self.get_stack_top();
+                if let Some(i) = val {
+                if is_false(i.clone()) {
+                pc += arg as usize;
+            }
+            }
+                Ok(Value::Nil)
+            },
+                OpCode::DefStatic => {
+                Ok(Value::Nil)
+            },
+                OpCode::Method => {
+                Ok(Value::Nil)
+            },
+                OpCode::StaticMethod => {
+                Ok(Value::Nil)
+            },
+                OpCode::Instance => {
+                Ok(Value::Nil)
+            },
+                OpCode::Closure => {
+                Ok(Value::Nil)
+            },
+                OpCode::CloseUpvalue => {
+                Ok(Value::Nil)
+            },
+                OpCode::Call => {
+                read_byte!(pc, code, num_args);
+                println!("num_args = {}", num_args);
+
+
+                match self.call_value(num_args, debug, gc) {
+                Ok(ref res) => {
+                let top = self.stack.len();
+                self.stack[top - (num_args as usize) - 1] = res.clone();
+                Ok(res.clone())
+            },
+                Err(e) => {
+                Err(e)
+            },
+            }
+            },
+                OpCode::Return => {
+                if let Some(val) = self.calls.top() {
+                fp = val.fp;
+            } else {
+                panic!("no calls left on the call stack");
+            }
+                let
+                let top = self.stack.len();
+                let last = self.stack[top - 1].clone();
+                self.stack[fp] = last.clone();
+                fp = self.pop_call_frame(fp);
+
+                Ok(last.clone())
+            },
+                OpCode::Ternary => {
+                Ok(Value::Nil)
+            },
+                OpCode::Neg => {
+                if let Some(i) = self.get_stack_top() {
+                match i {
+                Value::Int(int) => {
+                let val: Value = Value::Int(-int);
+                let mut elem = self.get_stack_top();
+                if let Some(ref mut e) = elem {
+                 *e = val;
+            } else {
+                panic!("stack is empty");
+            }
+                Ok(Value::Nil)
+            },
+                Value::Float(float) => {
+                let val: Value = Value::Float(-float);
+                let mut elem = self.get_stack_top();
+                if let Some(ref mut e) = elem {
+                 *e = val;
+            } else {
+                panic!("stack is empty");
+            }
+                Ok(Value::Nil)
+            },
+                _ => Err("cannot negate value".to_string())
+            }
+            } else {
+                panic!("stack is empty");
+            }
+            },
+                OpCode::Print => {
+                if let Some(val) = self.get_stack_top() {
+                print!("{}", val);
+            } else {
+                panic!("stack is empty");
+            }
+                Ok(Value::Nil)
+            },
+                OpCode::Println => {
+                if let Some(val) = self.get_stack_top() {
+                println!("{}", val);
+            } else {
+                panic!("stack is empty");
+            }
+                Ok(Value::Nil)
+            },
+                OpCode::Input => {
+                Ok(Value::Nil)
+            },
+                OpCode::MathOp => {
+                read_byte!(pc, code, arg);
+                self.execute_math_op(MathOp::from(arg), gc)
+            },
+                OpCode::MathAssignOp => {
+                Ok(Value::Nil)
+            },
+                OpCode::BitwiseOp => {
+                Ok(Value::Nil)
+            },
+                OpCode::BitwiseAssignOp => {
+                Ok(Value::Nil)
+            },
+                OpCode::Invalid => {
+                panic!("{}", "invalid instruction".to_string());
+            }
+            };
+            }
+
+                match result {
+                Ok(ref res) => {
+                let top = self.stack.len();
+                self.stack[top - (num_args as usize) - 1] = res.clone();
+                Ok(res.clone())
+            },
+                Err(e) => {
+                Err(e)
+            },
+        }
+    }*/
+
+    fn debug_vars(&self) {
+        print!("NS Vars: [");
+        for j in 0..self.mod_vec.len() {
+            for i in 0..self.mod_vec[j].len() {
+                print!("[{}]", self.mod_vec[j][i]);
+            }
+        }
+        println!("]");
+    }
+    fn debug_stack(&mut self, fp: usize) {
+        print!("[");
+        for i in 0..self.stack.len() {
+            print!("[");
+            if i == fp {
+                print!("> ");
+            }
+            print!("{}", self.stack[i]);
+            if i == fp {
+                print!(" <");
+            }
+            print!("]");
+        }
+        println!("]");
+    }
+
+    fn execute_math_op(&mut self, op: MathOp, gc: &Gc) -> Result<Value, String> {
+        match op {
+            MathOp::Add => self.execute_add(gc),
+            MathOp::Subtract => self.execute_subtract(gc),
+            MathOp::Multiply => self.execute_multiply(gc),
+            MathOp::Divide => self.execute_divide(gc),
+            MathOp::Modulo => self.execute_modulo(gc),
+            MathOp::Power => self.execute_power(gc),
+            _ => {
+                panic!("invalid math operator");
+            }
+        }
+    }
+
+    fn execute_math_assign_op(&mut self, op: MathOp, gc: &Gc) -> Result<Value, String> {
+        match op {
+            MathOp::Add => self.execute_add_assign(gc),
+            MathOp::Subtract => self.execute_subtract_assign(gc),
+            MathOp::Multiply => self.execute_multiply_assign(gc),
+            MathOp::Divide => self.execute_divide_assign(gc),
+            MathOp::Modulo => self.execute_modulo_assign(gc),
+            MathOp::Power => self.execute_power_assign(gc),
+            _ => {
+                panic!("invalid compound assignment operator");
+            }
+        }
+    }
+
+    fn execute_add(&mut self, gc: &Gc) -> Result<Value, String> {
+        let arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(val1) => match arg2 {
+                Value::Int(val2) => {
+                    arg1 = Value::Int(val1 + val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(val1) => match arg2 {
+                Value::Float(val2) => {
+                    arg1 = Value::Float(val1 + val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::String(val1) => match arg2 {
+                Value::String(val2) => {
+                    arg1 = Value::String(gc.manage(format!("{}{}", *val1, *val2), &NO_GC));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "+: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_subtract(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(val1) => match arg2 {
+                Value::Int(val2) => {
+                    arg1 = Value::Int(val1 - val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(val1) => match arg2 {
+                Value::Float(val2) => {
+                    arg1 = Value::Float(val1 - val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "-: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_multiply(&mut self, gc: &Gc) -> Result<Value, String> {
+        let arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(val1) => match arg2 {
+                Value::Int(val2) => {
+                    arg1 = Value::Int(val1 * val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(val1) => match arg2 {
+                Value::Float(val2) => {
+                    arg1 = Value::Float(val1 * val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::String(val1) => match arg2 {
+                Value::Int(val2) => {
+                    arg1 = Value::String(gc.manage(val1.repeat(val2 as usize), &NO_GC));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "*: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_divide(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(val1) => match arg2 {
+                Value::Int(val2) => {
+                    if val2 <= 0 {
+                        return Err(String::from("division by zero"));
+                    }
+                    arg1 = Value::Int(val1 / val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(val1) => match arg2 {
+                Value::Float(val2) => {
+                    if val2 <= OrderedFloat(0.0) {
+                        return Err(String::from("division by zero"));
+                    }
+                    arg1 = Value::Float(val1 / val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "/: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_modulo(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(val1) => match arg2 {
+                Value::Int(val2) => {
+                    if val2 <= 0 {
+                        return Err(String::from("modulo by zero"));
+                    }
+                    arg1 = Value::Int(val1 / val2);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "/: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_power(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(val1) => match arg2 {
+                Value::Int(val2) => {
+                    arg1 = Value::Int(val1.pow(val2 as u32));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(val1) => match arg2 {
+                Value::Float(val2) => {
+                    arg1 = Value::Float(val1.pow(val2));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "**: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    // compound assignment math operators
+    fn execute_add_assign(&mut self, gc: &Gc) -> Result<Value, String> {
+        let mut arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    *val1 += *val2;
+                    arg1 = Value::Int(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(ref mut val1) => match arg2 {
+                Value::Float(ref mut val2) => {
+                    *val1 += *val2;
+                    arg1 = Value::Float(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::String(ref mut val1) => match arg2 {
+                Value::String(ref mut val2) => {
+                    **val1 = format!("{}{}", **val1, **val2);
+                    arg1 = Value::String(gc.manage(val1.to_string(), &NO_GC));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "+=: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_subtract_assign(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let mut arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    *val1 -= *val2;
+                    arg1 = Value::Int(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(ref mut val1) => match arg2 {
+                Value::Float(ref mut val2) => {
+                    *val1 -= *val2;
+                    arg1 = Value::Float(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "-=: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_multiply_assign(&mut self, gc: &Gc) -> Result<Value, String> {
+        let mut arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    *val1 *= *val2;
+                    arg1 = Value::Int(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(ref mut val1) => match arg2 {
+                Value::Float(val2) => {
+                    *val1 *= *val2;
+                    arg1 = Value::Float(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::String(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    **val1 = val1.repeat(*val2 as usize);
+                    arg1 = Value::String(gc.manage(val1.clone().to_string(), &NO_GC));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "*=: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_divide_assign(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let mut arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    if *val2 <= 0 {
+                        return Err(String::from("division by zero"));
+                    }
+                    *val1 /= *val2;
+                    arg1 = Value::Int(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(ref mut val1) => match arg2 {
+                Value::Float(ref mut val2) => {
+                    if *val2 <= OrderedFloat(0.0) {
+                        return Err(String::from("division by zero"));
+                    }
+                    *val1 /= *val2;
+                    arg1 = Value::Float(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "/=: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_modulo_assign(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let mut arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    if *val2 <= 0 {
+                        return Err(String::from("modulo by zero"));
+                    }
+                    *val1 %= *val2;
+                    arg1 = Value::Int(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "%=: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute_power_assign(&mut self, _gc: &Gc) -> Result<Value, String> {
+        let mut arg2 = self.stack.pop().unwrap();
+        let mut arg1 = self.stack.pop().unwrap();
+
+        match arg1 {
+            Value::Int(ref mut val1) => match arg2 {
+                Value::Int(ref mut val2) => {
+                    arg1 = Value::Int(val1.pow(val1.pow(*val2 as u32) as u32));
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            Value::Float(ref mut val1) => match arg2 {
+                Value::Float(ref mut val2) => {
+                    *val1 = val1.pow(*val2);
+                    arg1 = Value::Float(*val1);
+                    self.stack.push(arg1.clone());
+                    return Ok(arg1);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        Err(format!(
+            "**=: invalid operands {} and {}",
+            arg1.value_type(),
+            arg2.value_type()
+        ))
+    }
+
+    fn execute(
+        &mut self,
+        root: &Option<Box<Ast>>,
+        compiler: &Compiler,
+        gc: &Gc,
+        debug: bool,
+        compile: bool,
+    ) -> Result<Value, InterpretErrorType> {
+        self.calls.clear();
+        self.stack.clear();
+        let closure = compiler.compile(root, self, gc);
+        if compile && closure.is_some() {
+            return Ok(Value::Nil);
+        }
+
+        if let Some(c) = closure {
+            self.main_fun = closure;
+
+            // push main function onto the stack
+            self.stack.push(Value::Closure(c));
+
+            self.push_call_frame(0usize);
+            let result = self.call_closure(0usize, &gc, debug);
+            match result {
+                Ok(val) => {
+                    return Ok(val);
+                }
+                Err(e) => {
+                    println!("\n\nRuntime error.");
+                    self.print_backtrace();
+                    println!("Error: {}", e);
+                    return Err(InterpretErrorType::RuntimeError);
+                }
+            }
+        } else {
+            return Err(InterpretErrorType::CompileTimeError);
+        }
+    }
+
+    pub(crate) fn run(
+        &mut self,
+        root: &Option<Box<Ast>>,
+        gc: &Gc,
+        debug: bool,
+        compile: bool,
+    ) -> Result<Value, InterpretErrorType> {
+        let compiler = self.compiler;
+        self.execute(root, &compiler, gc, debug, compile)
+    }
+
+    pub fn print_backtrace(&mut self) {
+        println!("{}", self.calls.get_backtrace());
+    }
+}
+
+
+
+
+
+
+#[cfg(test)]
+
+mod tests {
+    use super::*;
+    use crate::gc::Gc;
+
+    #[test]
+    fn test_add_ns_var() {
+        let mut deps = prep_for_test();
+
+        let mut code = "let var = 10;";
+        let mut parser = Parser::new();
+        let mut result = parser.parse_text(
+            &mut code.to_string(),
+            &mut deps.1,
+            &mut deps.0,
+            false,
+            false,
+            false,
+        );
+        assert_eq!(result, Ok(Value::Int(10)));
+
+        code = "var;";
+        result = parser.parse_text(
+            &mut code.to_string(),
+            &mut deps.1,
+            &mut deps.0,
+            false,
+            false,
+            false,
+        );
+        assert_eq!(result, Ok(Value::Int(10)));
+    }
+
+    fn test_add_two_and_two() {
+        let mut deps = prep_for_test();
+
+        let code = "2 + 2";
+        let mut parser = Parser::new();
+        let result = parser.parse_text(
+            &mut code.to_string(),
+            &mut deps.1,
+            &mut deps.0,
+            false,
+            false,
+            false,
+        );
+        assert_eq!(result, Ok(Value::Int(4)))
+    }
+
+    fn prep_for_test() -> (VM, Gc) {
+        (VM::new(), Gc::new())
+    }
 }
